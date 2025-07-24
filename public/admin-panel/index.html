@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestión de Alumnos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6f8;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #153E75;
+    }
+    form, table {
+      max-width: 1200px;
+      margin: auto;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    input, select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #153E75;
+      color: white;
+      cursor: pointer;
+    }
+    .acciones button {
+      margin-right: 5px;
+      padding: 5px 10px;
+    }
+    .search-filter {
+      max-width: 1200px;
+      margin: auto;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    @media (max-width: 768px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestión de Alumnos</h1>
+
+  <div class="search-filter">
+    <input type="text" id="buscar" placeholder="Buscar por DNI, Nombre o Apellido" style="flex:1;">
+    <select id="filtroClase">
+      <option value="">Todas las clases</option>
+      <option value="Teatro">Teatro</option>
+      <option value="Danza">Danza</option>
+    </select>
+  </div>
+
+  <form id="formAlumno">
+    <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
+    <input type="text" placeholder="Nombre" name="nombre" required>
+    <input type="text" placeholder="Apellido" name="apellido" required>
+    <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
+    <input type="number" placeholder="Edad" name="edad" readonly>
+    <input type="text" placeholder="Teléfono" name="telefono">
+    <input type="text" placeholder="Nombre contacto emergencia" name="contacto_nombre">
+    <input type="text" placeholder="Tel. contacto emergencia" name="contacto_telefono">
+    <input type="date" placeholder="Inicio actividad" name="fecha_inicio">
+    <select name="tipo_clase" required>
+      <option value="">Tipo de clase</option>
+      <option value="Teatro">Teatro</option>
+      <option value="Danza">Danza</option>
+    </select>
+    <select name="estado_pago" required>
+      <option value="Al día">Al día</option>
+      <option value="En mora">En mora</option>
+      <option value="Becado">Becado</option>
+    </select>
+    <label><input type="checkbox" name="activo" checked> Activo</label>
+    <button type="submit">Guardar</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th onclick="ordenarPor('numero')">N° Alumno</th>
+        <th onclick="ordenarPor('apellido')">Apellido</th>
+        <th>Nombre</th>
+        <th>DNI</th>
+        <th>Edad</th>
+        <th>Teléfono</th>
+        <th>Contacto</th>
+        <th>Inicio</th>
+        <th>Clase</th>
+        <th>Pago</th>
+        <th>Activo</th>
+        <th>Opciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaAlumnos">
+      <!-- Aquí se insertan los alumnos -->
+    </tbody>
+  </table>
+
+  <script>
+    function calcularEdad(input) {
+      const fecha = new Date(input.value);
+      const hoy = new Date();
+      let edad = hoy.getFullYear() - fecha.getFullYear();
+      const m = hoy.getMonth() - fecha.getMonth();
+      if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
+      input.form.edad.value = edad;
+    }
+
+    function ordenarPor(campo) {
+      // Pendiente de implementación JS para ordenar tabla
+    }
+
+    document.getElementById('formAlumno').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Lógica de guardado
+    });
+  </script>
+
+</body>
+</html>
