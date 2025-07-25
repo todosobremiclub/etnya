@@ -133,6 +133,7 @@
       <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
       <input type="text" placeholder="Nombre" name="nombre" required>
       <input type="text" placeholder="Apellido" name="apellido" required>
+      <input type="text" placeholder="DNI" name="dni">
       <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
       <input type="number" placeholder="Edad" name="edad" readonly>
       <input type="text" placeholder="Teléfono" name="telefono">
@@ -175,8 +176,7 @@
       <!-- Aquí se insertan los alumnos -->
     </tbody>
   </table>
-
-  <script>
+<script>
   function calcularEdad(input) {
     const fecha = new Date(input.value);
     const hoy = new Date();
@@ -263,6 +263,7 @@
       form.numero_alumno.value = alumno.numero_alumno;
       form.nombre.value = alumno.nombre;
       form.apellido.value = alumno.apellido;
+      form.dni.value = alumno.dni || '';
       form.fecha_nacimiento.value = alumno.fecha_nacimiento?.slice(0, 10);
       form.edad.value = alumno.edad;
       form.telefono.value = alumno.telefono;
@@ -302,6 +303,16 @@
     }
   }
 
+  document.getElementById('buscar').addEventListener('input', function () {
+    const filtro = this.value.toLowerCase();
+    const filas = document.querySelectorAll('#tablaAlumnos tr');
+
+    filas.forEach(fila => {
+      const texto = fila.textContent.toLowerCase();
+      fila.style.display = texto.includes(filtro) ? '' : 'none';
+    });
+  });
+
   document.getElementById('formAlumno').addEventListener('submit', async function (e) {
     e.preventDefault();
     const form = e.target;
@@ -309,6 +320,7 @@
       numero_alumno: form.numero_alumno.value,
       nombre: form.nombre.value,
       apellido: form.apellido.value,
+      dni: form.dni.value,
       fecha_nacimiento: form.fecha_nacimiento.value,
       edad: form.edad.value,
       telefono: form.telefono.value,
