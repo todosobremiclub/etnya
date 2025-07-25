@@ -186,13 +186,15 @@
     tbody.innerHTML = '';
     tipos.forEach(t => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
+     tr.innerHTML = `
   <td>${t.modalidad}</td>
   <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
-        <td class="acciones">
-          <button onclick="eliminarTipo(${t.id})">🗑</button>
-        </td>
-      `;
+  <td class="acciones">
+    <button onclick="editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
+    <button onclick="eliminarTipo(${t.id})">🗑</button>
+  </td>
+`;
+
       tbody.appendChild(tr);
     });
   }
