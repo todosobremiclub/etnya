@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Ruta para obtener todos los alumnos
+// Obtener todos los alumnos
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM alumnos ORDER BY numero_alumno ASC');
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Ruta para guardar nuevo alumno
+// Guardar nuevo alumno
 router.post('/', async (req, res) => {
   const {
     numero_alumno,
@@ -51,4 +51,17 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Eliminar alumno por ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM alumnos WHERE id = $1', [id]);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al eliminar alumno:', err);
+    res.status(500).send('Error al eliminar alumno');
+  }
+});
+
 module.exports = router;
+
