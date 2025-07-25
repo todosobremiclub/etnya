@@ -10,7 +10,10 @@ app.use(express.json());
 
 // Rutas
 const alumnosRoutes = require('./routes/alumnosRoutes');
+const tiposClaseRoutes = require('./routes/tiposClase'); // ✅ nueva ruta
+
 app.use('/alumnos', alumnosRoutes);
+app.use('/tipos-clase', tiposClaseRoutes); // ✅ endpoint para configuración
 
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, 'public/admin-panel')));
