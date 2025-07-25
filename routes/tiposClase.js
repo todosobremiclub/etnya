@@ -40,4 +40,22 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Editar tipo de clase
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { modalidad, precio } = req.body;
+
+  try {
+    await pool.query(
+      'UPDATE tipos_clase SET modalidad = $1, precio = $2 WHERE id = $3',
+      [modalidad, precio, id]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al actualizar tipo de clase:', err);
+    res.status(500).send('Error interno');
+  }
+});
+
+
 module.exports = router;

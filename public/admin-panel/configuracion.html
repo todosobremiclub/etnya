@@ -187,8 +187,8 @@
     tipos.forEach(t => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${t.modalidad}</td>
-        <td>$${t.precio}</td>
+  <td>${t.modalidad}</td>
+  <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
         <td class="acciones">
           <button onclick="eliminarTipo(${t.id})">🗑</button>
         </td>
