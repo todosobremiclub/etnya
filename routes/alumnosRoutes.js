@@ -19,6 +19,7 @@ router.post('/', async (req, res) => {
     numero_alumno,
     nombre,
     apellido,
+    dni,
     fecha_nacimiento,
     edad,
     telefono,
