@@ -180,6 +180,8 @@
 </main>
 
 <script>
+  let editandoId = null;
+
   async function cargarTiposClase() {
     const res = await fetch('/tipos-clase');
     const tipos = await res.json();
@@ -187,17 +189,24 @@
     tbody.innerHTML = '';
     tipos.forEach(t => {
       const tr = document.createElement('tr');
-     tr.innerHTML = `
-  <td>${t.modalidad}</td>
-  <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
-  <td class="acciones">
-    <button onclick="editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
-    <button onclick="eliminarTipo(${t.id})">🗑</button>
-  </td>
-`;
-
+      tr.innerHTML = `
+        <td>${t.modalidad}</td>
+        <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
+        <td class="acciones">
+          <button onclick="editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
+          <button onclick="eliminarTipo(${t.id})">🗑</button>
+        </td>
+      `;
       tbody.appendChild(tr);
     });
+  }
+
+  function editarTipo(id, modalidad, precio) {
+    const form = document.getElementById('formTipoClase');
+    form.modalidad.value = modalidad;
+    form.precio.value = precio;
+    editandoId = id;
+    form.querySelector('button[type="submit"]').textContent = "Actualizar";
   }
 
   document.getElementById('formTipoClase').addEventListener('submit', async function(e) {
@@ -207,13 +216,26 @@
       modalidad: form.modalidad.value,
       precio: form.precio.value
     };
-    const res = await fetch('/tipos-clase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos)
-    });
+
+    let res;
+    if (editandoId) {
+      res = await fetch(`/tipos-clase/${editandoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+    } else {
+      res = await fetch('/tipos-clase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+    }
+
     if (res.ok) {
       form.reset();
+      editandoId = null;
+      form.querySelector('button[type="submit"]').textContent = "Guardar";
       cargarTiposClase();
     } else {
       alert('Error al guardar tipo de clase');
