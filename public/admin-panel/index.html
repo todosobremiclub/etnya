@@ -212,19 +212,23 @@
         alumnos.forEach(alumno => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${alumno.numero_alumno}</td>
-            <td>${alumno.apellido}</td>
-            <td>${alumno.nombre}</td>
-            <td>${alumno.dni || ''}</td>
-            <td>${alumno.edad || ''}</td>
-            <td>${alumno.telefono || ''}</td>
-            <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
-            <td>${alumno.fecha_inicio ? alumno.fecha_inicio.slice(0, 10) : ''}</td>
-            <td>${alumno.tipo_clase || ''}</td>
-            <td>${alumno.estado_pago || ''}</td>
-            <td>${alumno.activo ? '✅' : '❌'}</td>
-            <td class="acciones"></td>
-          `;
+  <td>${alumno.numero_alumno}</td>
+  <td>${alumno.apellido}</td>
+  <td>${alumno.nombre}</td>
+  <td>${alumno.dni || ''}</td>
+  <td>${alumno.edad || ''}</td>
+  <td>${alumno.telefono || ''}</td>
+  <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
+  <td>${alumno.fecha_inicio ? alumno.fecha_inicio.slice(0, 10) : ''}</td>
+  <td>${alumno.tipo_clase || ''}</td>
+  <td>${alumno.estado_pago || ''}</td>
+  <td>${alumno.activo ? '✅' : '❌'}</td>
+  <td class="acciones">
+    <button onclick="editarAlumno(${alumno.id})">🖉</button>
+    <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
+  </td>
+`;
+
           tbody.appendChild(tr);
         });
       } catch (err) {

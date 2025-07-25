@@ -63,5 +63,53 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Actualizar alumno por ID
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    numero_alumno,
+    nombre,
+    apellido,
+    fecha_nacimiento,
+    edad,
+    telefono,
+    contacto_nombre,
+    contacto_telefono,
+    fecha_inicio,
+    tipo_clase,
+    estado_pago,
+    activo
+  } = req.body;
+
+  try {
+    await pool.query(
+      `UPDATE alumnos SET
+        numero_alumno = $1,
+        nombre = $2,
+        apellido = $3,
+        fecha_nacimiento = $4,
+        edad = $5,
+        telefono = $6,
+        contacto_nombre = $7,
+        contacto_telefono = $8,
+        fecha_inicio = $9,
+        tipo_clase = $10,
+        estado_pago = $11,
+        activo = $12
+      WHERE id = $13`,
+      [
+        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+        telefono, contacto_nombre, contacto_telefono,
+        fecha_inicio, tipo_clase, estado_pago, activo, id
+      ]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al actualizar alumno:', err);
+    res.status(500).send('Error al actualizar alumno');
+  }
+});
+
+
 module.exports = router;
 
