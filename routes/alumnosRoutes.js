@@ -64,6 +64,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Actualizar alumno por ID
+// Actualizar alumno por ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const {
@@ -83,18 +84,38 @@ router.put('/:id', async (req, res) => {
   } = req.body;
 
   try {
+    // Validar si ese número de alumno ya existe en otro registro
+    const existente = await pool.query(
+      'SELECT id FROM alumnos WHERE numero_alumno = $1 AND id != $2',
+      [numero_alumno, id]
+    );
+
+    if (existente.rows.length > 0) {
+      return res.status(400).send('El número de alumno ya está en uso por otro alumno.');
+    }
+
     await pool.query(
-  `INSERT INTO alumnos (
-    numero_alumno, nombre, apellido, dni, fecha_nacimiento, edad,
-    telefono, contacto_nombre, contacto_telefono,
-    fecha_inicio, tipo_clase, estado_pago, activo
-  ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-  [
-    numero_alumno, nombre, apellido, dni, fecha_nacimiento, edad,
-    telefono, contacto_nombre, contacto_telefono,
-    fecha_inicio, tipo_clase, estado_pago, activo
-  ]
-);
+      `UPDATE alumnos SET
+        numero_alumno = $1,
+        nombre = $2,
+        apellido = $3,
+        dni = $4,
+        fecha_nacimiento = $5,
+        edad = $6,
+        telefono = $7,
+        contacto_nombre = $8,
+        contacto_telefono = $9,
+        fecha_inicio = $10,
+        tipo_clase = $11,
+        estado_pago = $12,
+        activo = $13
+      WHERE id = $14`,
+      [
+        numero_alumno, nombre, apellido, dni, fecha_nacimiento, edad,
+        telefono, contacto_nombre, contacto_telefono,
+        fecha_inicio, tipo_clase, estado_pago, activo, id
+      ]
+    );
 
     res.sendStatus(200);
   } catch (err) {
