@@ -59,6 +59,17 @@
       gap: 10px;
       justify-content: space-between;
     }
+    #toggleFormulario {
+      display: block;
+      margin: 10px auto 20px;
+      padding: 10px 20px;
+      font-size: 14px;
+      background-color: #153E75;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
     @media (max-width: 768px) {
       form {
         grid-template-columns: 1fr;
@@ -79,29 +90,33 @@
     </select>
   </div>
 
-  <form id="formAlumno">
-    <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
-    <input type="text" placeholder="Nombre" name="nombre" required>
-    <input type="text" placeholder="Apellido" name="apellido" required>
-    <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
-    <input type="number" placeholder="Edad" name="edad" readonly>
-    <input type="text" placeholder="Teléfono" name="telefono">
-    <input type="text" placeholder="Nombre contacto emergencia" name="contacto_nombre">
-    <input type="text" placeholder="Tel. contacto emergencia" name="contacto_telefono">
-    <input type="date" placeholder="Inicio actividad" name="fecha_inicio">
-    <select name="tipo_clase" required>
-      <option value="">Tipo de clase</option>
-      <option value="Teatro">Teatro</option>
-      <option value="Danza">Danza</option>
-    </select>
-    <select name="estado_pago" required>
-      <option value="Al día">Al día</option>
-      <option value="En mora">En mora</option>
-      <option value="Becado">Becado</option>
-    </select>
-    <label><input type="checkbox" name="activo" checked> Activo</label>
-    <button type="submit">Guardar</button>
-  </form>
+  <button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar nuevo alumno</button>
+
+  <div id="contenedorFormulario" style="display: none;">
+    <form id="formAlumno">
+      <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
+      <input type="text" placeholder="Nombre" name="nombre" required>
+      <input type="text" placeholder="Apellido" name="apellido" required>
+      <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
+      <input type="number" placeholder="Edad" name="edad" readonly>
+      <input type="text" placeholder="Teléfono" name="telefono">
+      <input type="text" placeholder="Nombre contacto emergencia" name="contacto_nombre">
+      <input type="text" placeholder="Tel. contacto emergencia" name="contacto_telefono">
+      <input type="date" placeholder="Inicio actividad" name="fecha_inicio">
+      <select name="tipo_clase" required>
+        <option value="">Tipo de clase</option>
+        <option value="Teatro">Teatro</option>
+        <option value="Danza">Danza</option>
+      </select>
+      <select name="estado_pago" required>
+        <option value="Al día">Al día</option>
+        <option value="En mora">En mora</option>
+        <option value="Becado">Becado</option>
+      </select>
+      <label><input type="checkbox" name="activo" checked> Activo</label>
+      <button type="submit">Guardar</button>
+    </form>
+  </div>
 
   <table>
     <thead>
@@ -137,6 +152,18 @@
 
     function ordenarPor(campo) {
       // Pendiente de implementación JS para ordenar tabla
+    }
+
+    function toggleFormulario() {
+      const contenedor = document.getElementById('contenedorFormulario');
+      const boton = document.getElementById('toggleFormulario');
+      if (contenedor.style.display === 'none') {
+        contenedor.style.display = 'block';
+        boton.textContent = '✖ Cancelar carga';
+      } else {
+        contenedor.style.display = 'none';
+        boton.textContent = '➕ Cargar nuevo alumno';
+      }
     }
 
     document.getElementById('formAlumno').addEventListener('submit', function(e) {
