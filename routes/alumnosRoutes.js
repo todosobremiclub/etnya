@@ -33,10 +33,11 @@ router.post('/', async (req, res) => {
   try {
     await pool.query(
       `INSERT INTO alumnos (
-        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
-        telefono, contacto_nombre, contacto_telefono,
-        fecha_inicio, tipo_clase, estado_pago, activo
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+  numero_alumno, nombre, apellido, dni, fecha_nacimiento, edad,
+  telefono, contacto_nombre, contacto_telefono,
+  fecha_inicio, tipo_clase, estado_pago, activo
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+`,
       [
         numero_alumno, nombre, apellido, fecha_nacimiento, edad,
         telefono, contacto_nombre, contacto_telefono,
@@ -69,6 +70,7 @@ router.put('/:id', async (req, res) => {
     numero_alumno,
     nombre,
     apellido,
+    dni,
     fecha_nacimiento,
     edad,
     telefono,
