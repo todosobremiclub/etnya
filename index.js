@@ -4,18 +4,18 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Importar rutas
+// Rutas
 const alumnosRoutes = require('./routes/alumnosRoutes');
-
-// Usar rutas
 app.use('/alumnos', alumnosRoutes);
 
-// Servir frontend
+// Servir frontend estático
 app.use(express.static(path.join(__dirname, 'public/admin-panel')));
 
+// Iniciar servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
