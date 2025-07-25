@@ -1,10 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // Asegurate de tener esto apuntando a tu conexión PostgreSQL
+const pool = require('../db');
 
-// Ruta de prueba
-router.get('/', (req, res) => {
-  res.send('Listado de alumnos');
+// Ruta para obtener todos los alumnos
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM alumnos ORDER BY numero_alumno ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener alumnos:', err);
+    res.status(500).send('Error al obtener alumnos');
+  }
 });
 
 // Ruta para guardar nuevo alumno
