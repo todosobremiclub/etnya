@@ -43,7 +43,6 @@ router.post('/', async (req, res) => {
         fecha_inicio, tipo_clase, estado_pago, activo
       ]
     );
-
     res.status(200).send('Alumno guardado correctamente');
   } catch (err) {
     console.error('Error al guardar alumno:', err);
@@ -110,6 +109,19 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Cambiar solo el estado activo
+router.put('/:id/activo', async (req, res) => {
+  const { id } = req.params;
+  const { activo } = req.body;
+  try {
+    await pool.query('UPDATE alumnos SET activo = $1 WHERE id = $2', [activo, id]);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al actualizar estado activo:', err);
+    res.status(500).send('Error al actualizar estado activo');
+  }
+});
 
 module.exports = router;
+
 
