@@ -183,7 +183,8 @@
   <a href="index.html">📋 Alumnos</a>
   <a href="#">💳 Pagos</a>
   <a href="#">📅 Agenda</a>
-  <a href="#">⚙️ Configuración</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+
 </div>
 
 <main>
@@ -195,7 +196,7 @@
   <h1>Alumnos Etnya</h1>
 
   <div class="search-filter">
-    <input type="text" id="buscar" placeholder="Buscar por DNI, Nombre o Apellido" style="flex:1;">
+    <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
     <select id="filtroClase" onchange="cargarAlumnos()">
       <option value="">Todas las clases</option>
       <option value="Teatro">Teatro</option>
@@ -214,7 +215,6 @@
       <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
       <input type="text" placeholder="Nombre" name="nombre" required>
       <input type="text" placeholder="Apellido" name="apellido" required>
-      <input type="text" placeholder="DNI" name="dni">
       <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
       <input type="number" placeholder="Edad" name="edad" readonly>
       <input type="text" placeholder="Teléfono" name="telefono">
@@ -242,7 +242,7 @@
         <th onclick="ordenarPor('numero')">N° Alumno</th>
         <th onclick="ordenarPor('apellido')">Apellido</th>
         <th>Nombre</th>
-        <th>DNI</th>
+        
         <th>Edad</th>
         <th>Teléfono</th>
         <th>Contacto</th>
@@ -304,7 +304,7 @@
     tbody.innerHTML = '';
 
     alumnosGlobal.forEach(alumno => {
-      const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido} ${alumno.dni}`.toLowerCase();
+      const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
 
       if (!mostrarInactivos && !alumno.activo) return;
       if (filtroClase && alumno.tipo_clase !== filtroClase) return;
@@ -315,7 +315,7 @@
         <td>${alumno.numero_alumno}</td>
         <td>${alumno.apellido}</td>
         <td>${alumno.nombre}</td>
-        <td>${alumno.dni || ''}</td>
+        
         <td>${alumno.edad || ''}</td>
         <td>${alumno.telefono || ''}</td>
         <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
@@ -374,7 +374,7 @@
       form.numero_alumno.value = alumno.numero_alumno;
       form.nombre.value = alumno.nombre;
       form.apellido.value = alumno.apellido;
-      form.dni.value = alumno.dni || '';
+      
       form.fecha_nacimiento.value = alumno.fecha_nacimiento?.slice(0, 10);
       form.edad.value = alumno.edad;
       form.telefono.value = alumno.telefono;
@@ -411,7 +411,7 @@
       numero_alumno: form.numero_alumno.value,
       nombre: form.nombre.value,
       apellido: form.apellido.value,
-      dni: form.dni.value,
+      
       fecha_nacimiento: form.fecha_nacimiento.value,
       edad: form.edad.value,
       telefono: form.telefono.value,
