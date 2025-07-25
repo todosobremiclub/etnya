@@ -119,11 +119,15 @@
 
   <div class="search-filter">
     <input type="text" id="buscar" placeholder="Buscar por DNI, Nombre o Apellido" style="flex:1;">
-    <select id="filtroClase">
+    <select id="filtroClase" onchange="cargarAlumnos()">
       <option value="">Todas las clases</option>
       <option value="Teatro">Teatro</option>
       <option value="Danza">Danza</option>
     </select>
+    <label style="display: flex; align-items: center; gap: 6px;">
+      <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
+      Mostrar inactivos
+    </label>
   </div>
 
   <button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar nuevo alumno</button>
@@ -177,6 +181,8 @@
     </tbody>
   </table>
 <script>
+  let alumnosGlobal = [];
+
   function calcularEdad(input) {
     const fecha = new Date(input.value);
     const hoy = new Date();
@@ -205,35 +211,63 @@
   async function cargarAlumnos() {
     try {
       const res = await fetch('/alumnos');
-      const alumnos = await res.json();
-      const tbody = document.getElementById('tablaAlumnos');
-      tbody.innerHTML = '';
-
-      alumnos.forEach(alumno => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${alumno.numero_alumno}</td>
-          <td>${alumno.apellido}</td>
-          <td>${alumno.nombre}</td>
-          <td>${alumno.dni || ''}</td>
-          <td>${alumno.edad || ''}</td>
-          <td>${alumno.telefono || ''}</td>
-          <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
-          <td>${alumno.fecha_inicio ? alumno.fecha_inicio.slice(0, 10) : ''}</td>
-          <td>${alumno.tipo_clase || ''}</td>
-          <td>${alumno.estado_pago || ''}</td>
-          <td>
-            <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
-          </td>
-          <td class="acciones">
-            <button onclick="editarAlumno(${alumno.id})">🖉</button>
-            <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      alumnosGlobal = await res.json();
+      renderizarAlumnos();
     } catch (err) {
       console.error('Error al cargar alumnos:', err);
+    }
+  }
+
+  function renderizarAlumnos() {
+    const filtroTexto = document.getElementById('buscar').value.toLowerCase();
+    const filtroClase = document.getElementById('filtroClase').value;
+    const mostrarInactivos = document.getElementById('mostrarInactivos')?.checked || false;
+
+    const tbody = document.getElementById('tablaAlumnos');
+    tbody.innerHTML = '';
+
+    alumnosGlobal.forEach(alumno => {
+      const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido} ${alumno.dni}`.toLowerCase();
+
+      if (!mostrarInactivos && !alumno.activo) return;
+      if (filtroClase && alumno.tipo_clase !== filtroClase) return;
+      if (!textoCompleto.includes(filtroTexto)) return;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${alumno.numero_alumno}</td>
+        <td>${alumno.apellido}</td>
+        <td>${alumno.nombre}</td>
+        <td>${alumno.dni || ''}</td>
+        <td>${alumno.edad || ''}</td>
+        <td>${alumno.telefono || ''}</td>
+        <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
+        <td>${alumno.fecha_inicio ? alumno.fecha_inicio.slice(0, 10) : ''}</td>
+        <td>${alumno.tipo_clase || ''}</td>
+        <td>${alumno.estado_pago || ''}</td>
+        <td>
+          <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
+        </td>
+        <td class="acciones">
+          <button onclick="editarAlumno(${alumno.id})">🖉</button>
+          <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function toggleActivo(id, nuevoEstado) {
+    try {
+      const res = await fetch(`/alumnos/${id}/activo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activo: nuevoEstado })
+      });
+      if (!res.ok) throw new Error();
+      await cargarAlumnos();
+    } catch {
+      alert('Error al cambiar estado');
     }
   }
 
@@ -289,29 +323,9 @@
     return res.ok;
   }
 
-  async function toggleActivo(id, nuevoEstado) {
-    try {
-      const res = await fetch(`/alumnos/${id}/activo`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activo: nuevoEstado })
-      });
-      if (!res.ok) throw new Error();
-      await cargarAlumnos();
-    } catch {
-      alert('Error al cambiar estado');
-    }
-  }
-
-  document.getElementById('buscar').addEventListener('input', function () {
-    const filtro = this.value.toLowerCase();
-    const filas = document.querySelectorAll('#tablaAlumnos tr');
-
-    filas.forEach(fila => {
-      const texto = fila.textContent.toLowerCase();
-      fila.style.display = texto.includes(filtro) ? '' : 'none';
-    });
-  });
+  document.getElementById('buscar').addEventListener('input', renderizarAlumnos);
+  document.getElementById('filtroClase').addEventListener('change', renderizarAlumnos);
+  document.getElementById('mostrarInactivos')?.addEventListener('change', renderizarAlumnos);
 
   document.getElementById('formAlumno').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -349,6 +363,7 @@
         if (!res.ok) return alert('Error al guardar');
         alert('Alumno guardado');
       }
+
       form.reset();
       document.getElementById('contenedorFormulario').style.display = 'none';
       document.getElementById('toggleFormulario').textContent = '➕ Cargar nuevo alumno';
