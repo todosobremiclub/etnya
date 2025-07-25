@@ -6,114 +6,112 @@
   <title>Gestión de Alumnos</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-  body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background-color: #cce1d6; /* fondo verde suave */
-  padding: 20px;
-  color: #6d6d6d;
-}
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #cce1d6;
+      padding: 20px;
+      color: #6d6d6d;
+    }
 
-h1 {
-  text-align: center;
-  color: #91586d; /* rosa más oscuro del logo */
-  margin-bottom: 30px;
-}
+    h1 {
+      text-align: center;
+      color: #91586d;
+      margin-bottom: 30px;
+    }
 
-form, table {
-  max-width: 1200px;
-  margin: auto;
-}
+    form, table {
+      max-width: 1200px;
+      margin: auto;
+    }
 
-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 30px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-}
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
 
-input, select {
-  padding: 10px;
-  border: 1px solid #94b8a3;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: #f9f9f9;
-}
+    input, select {
+      padding: 10px;
+      border: 1px solid #94b8a3;
+      border-radius: 6px;
+      font-size: 14px;
+      background-color: #f9f9f9;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e0e0e0;
-  text-align: left;
-  font-size: 14px;
-}
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+      font-size: 14px;
+    }
 
-th {
-  background-color: #b48a99; /* rosa del logo */
-  color: white;
-  cursor: pointer;
-}
+    th {
+      background-color: #b48a99;
+      color: white;
+      cursor: pointer;
+    }
 
-.acciones button {
-  margin-right: 5px;
-  padding: 6px 12px;
-  background-color: #b48a99;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
+    .acciones button {
+      margin-right: 5px;
+      padding: 6px 12px;
+      background-color: #b48a99;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-.acciones button:hover {
-  background-color: #91586d;
-}
+    .acciones button:hover {
+      background-color: #91586d;
+    }
 
-.search-filter {
-  max-width: 1200px;
-  margin: auto;
-  margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: space-between;
-}
+    .search-filter {
+      max-width: 1200px;
+      margin: auto;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
 
-#toggleFormulario {
-  display: block;
-  margin: 10px auto 20px;
-  padding: 12px 20px;
-  font-size: 14px;
-  background-color: #b48a99;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
+    #toggleFormulario {
+      display: block;
+      margin: 10px auto 20px;
+      padding: 12px 20px;
+      font-size: 14px;
+      background-color: #b48a99;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
-#toggleFormulario:hover {
-  background-color: #91586d;
-}
+    #toggleFormulario:hover {
+      background-color: #91586d;
+    }
 
-@media (max-width: 768px) {
-  form {
-    grid-template-columns: 1fr;
-  }
-}
-
-</style>
-
+    @media (max-width: 768px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -204,52 +202,47 @@ th {
       }
     }
 
-    <script>
-  document.getElementById('formAlumno').addEventListener('submit', async function(e) {
-    e.preventDefault();
+    document.getElementById('formAlumno').addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-    const form = e.target;
-    const datos = {
-      numero_alumno: form.numero_alumno.value,
-      nombre: form.nombre.value,
-      apellido: form.apellido.value,
-      fecha_nacimiento: form.fecha_nacimiento.value,
-      edad: form.edad.value,
-      telefono: form.telefono.value,
-      contacto_nombre: form.contacto_nombre.value,
-      contacto_telefono: form.contacto_telefono.value,
-      fecha_inicio: form.fecha_inicio.value,
-      tipo_clase: form.tipo_clase.value,
-      estado_pago: form.estado_pago.value,
-      activo: form.activo.checked
-    };
+      const form = e.target;
+      const datos = {
+        numero_alumno: form.numero_alumno.value,
+        nombre: form.nombre.value,
+        apellido: form.apellido.value,
+        fecha_nacimiento: form.fecha_nacimiento.value,
+        edad: form.edad.value,
+        telefono: form.telefono.value,
+        contacto_nombre: form.contacto_nombre.value,
+        contacto_telefono: form.contacto_telefono.value,
+        fecha_inicio: form.fecha_inicio.value,
+        tipo_clase: form.tipo_clase.value,
+        estado_pago: form.estado_pago.value,
+        activo: form.activo.checked
+      };
 
-    try {
-      const res = await fetch('/alumnos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(datos)
-      });
+      try {
+        const res = await fetch('/alumnos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos)
+        });
 
-      if (res.ok) {
-        alert('Alumno guardado correctamente');
-        form.reset();
-        document.getElementById('contenedorFormulario').style.display = 'none';
-        document.getElementById('toggleFormulario').textContent = '➕ Cargar nuevo alumno';
-        // opcional: recargar la tabla de alumnos
-      } else {
-        const error = await res.text();
-        alert('Error al guardar: ' + error);
+        if (res.ok) {
+          alert('Alumno guardado correctamente');
+          form.reset();
+          document.getElementById('contenedorFormulario').style.display = 'none';
+          document.getElementById('toggleFormulario').textContent = '➕ Cargar nuevo alumno';
+        } else {
+          const error = await res.text();
+          alert('Error al guardar: ' + error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión con el servidor');
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error de conexión con el servidor');
-    }
-  });
-</script>
-
+    });
+  </script>
 
 </body>
 </html>
