@@ -224,22 +224,23 @@ td.clase {
       <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
       <input type="text" placeholder="Nombre" name="nombre" required>
       <input type="text" placeholder="Apellido" name="apellido" required>
-      <input type="date" placeholder="Nacimiento" name="fecha_nacimiento" required onchange="calcularEdad(this)">
+      <label>
+  Fecha de nacimiento:
+  <input type="date" name="fecha_nacimiento" required onchange="calcularEdad(this)">
+</label>
       <input type="number" placeholder="Edad" name="edad" readonly>
       <input type="text" placeholder="Teléfono" name="telefono">
       <input type="text" placeholder="Nombre contacto emergencia" name="contacto_nombre">
       <input type="text" placeholder="Tel. contacto emergencia" name="contacto_telefono">
-      <input type="date" placeholder="Inicio actividad" name="fecha_inicio">
+      <label>
+  Fecha de ingreso:
+  <input type="date" name="fecha_inicio">
+</label>
       <select name="tipo_clase" id="tipoClaseSelect" required>
   <option value="">Tipo de clase</option>
 </select>
 
-      <select name="estado_pago" required>
-        <option value="Al día">Al día</option>
-        <option value="En mora">En mora</option>
-        <option value="Becado">Becado</option>
-      </select>
-      <label><input type="checkbox" name="activo" checked> Activo</label>
+            <label><input type="checkbox" name="activo" checked> Activo</label>
       <button type="submit">Guardar</button>
     </form>
   </div>
