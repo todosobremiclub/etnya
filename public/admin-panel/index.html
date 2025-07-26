@@ -464,7 +464,7 @@ async function cargarOpcionesTipoClase() {
     const res = await fetch('/tipos-clase');
     const tipos = await res.json();
     const select = document.getElementById('tipoClaseSelect');
-    select.innerHTML = '<option value="">Tipo de clase</option>';
+    select.innerHTML = '<option value="" disabled selected hidden>Tipo de clase</option>';
     tipos.forEach(t => {
       const option = document.createElement('option');
       option.value = t.modalidad;
