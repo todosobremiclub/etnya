@@ -64,6 +64,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Actualizar alumno por ID
+// Actualizar alumno por ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const {
@@ -106,9 +107,9 @@ router.put('/:id', async (req, res) => {
         tipo_clase = $10,
         estado_pago = $11,
         activo = $12
-      WHERE id = $13,
+      WHERE id = $13`,
       [
-        numero_alumno, nombre, apellido,fecha_nacimiento, edad,
+        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
         telefono, contacto_nombre, contacto_telefono,
         fecha_inicio, tipo_clase, estado_pago, activo, id
       ]
