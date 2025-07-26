@@ -65,18 +65,19 @@
 
   /* Formulario */
   form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
-    background-color: white;
-    padding: 16px;
-    border-radius: 10px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  background-color: white;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+}
 
   form input,
   form select {
@@ -88,16 +89,25 @@
   }
 
   form button[type="submit"] {
-    padding: 6px 14px;
-    font-size: 13px;
-  }
+  padding: 6px 14px;
+  font-size: 13px;
+  background-color: #b48a99;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+form button[type="submit"]:hover {
+  background-color: #91586d;
+}
+
 
   form label {
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+  font-size: 13px;
+  color: #555;
+  margin-bottom: -6px;
+}
 
   /* Tabla */
   table {
@@ -219,9 +229,7 @@
   <div class="search-filter">
     <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
     <select id="filtroClase" onchange="cargarAlumnos()">
-      <option value="">Todas las clases</option>
-      <option value="Teatro">Teatro</option>
-      <option value="Danza">Danza</option>
+     
     </select>
     <label style="display: flex; align-items: center; gap: 6px;">
       <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
@@ -236,9 +244,8 @@
       <input type="number" placeholder="N° Alumno" name="numero_alumno" required>
       <input type="text" placeholder="Nombre" name="nombre" required>
       <input type="text" placeholder="Apellido" name="apellido" required>
-      <label>
-  Fecha de nacimiento:
-  <input type="date" name="fecha_nacimiento" required onchange="calcularEdad(this)">
+      <label>Fecha de nacimiento:
+  <input type="date" name="fecha_nacimiento" onchange="calcularEdad(this)">
 </label>
       <input type="number" placeholder="Edad" name="edad" readonly>
       <input type="text" placeholder="Teléfono" name="telefono">
