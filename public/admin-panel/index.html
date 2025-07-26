@@ -476,11 +476,30 @@ async function cargarOpcionesTipoClase() {
   }
 }
 
+async function cargarOpcionesFiltroClase() {
+  try {
+    const res = await fetch('/tipos-clase');
+    const tipos = await res.json();
+    const select = document.getElementById('filtroClase');
+    select.innerHTML = '<option value="">Todas las clases</option>';
+    tipos.forEach(t => {
+      const option = document.createElement('option');
+      option.value = t.modalidad;
+      option.textContent = t.modalidad;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error al cargar filtro de clases:', err);
+  }
+}
+
 
   window.onload = function () {
   cargarAlumnos();
   cargarOpcionesTipoClase();
+  cargarOpcionesFiltroClase();
 };
+
 
 </script>
 
