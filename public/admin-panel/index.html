@@ -395,35 +395,37 @@ function formatearFecha(fechaISO) {
   }
 
   async function editarAlumno(id) {
-    try {
-      const res = await fetch('/alumnos');
-      const alumnos = await res.json();
-      const alumno = alumnos.find(a => a.id === id);
-      if (!alumno) return alert('No encontrado');
+  try {
+    const res = await fetch('/alumnos');
+    const alumnos = await res.json();
+    const alumno = alumnos.find(a => a.id === id);
+    if (!alumno) return alert('No encontrado');
 
-      const form = document.getElementById('formAlumno');
-      document.getElementById('contenedorFormulario').style.display = 'block';
-      document.getElementById('toggleFormulario').textContent = '✖ Cancelar carga';
+    const form = document.getElementById('formAlumno');
+    document.getElementById('contenedorFormulario').style.display = 'block';
+    document.getElementById('toggleFormulario').textContent = '✖ Cancelar carga';
 
-      form.numero_alumno.value = alumno.numero_alumno;
-      form.nombre.value = alumno.nombre;
-      form.apellido.value = alumno.apellido;
-      
-      form.fecha_nacimiento.value = alumno.fecha_nacimiento?.slice(0, 10);
-      form.edad.value = alumno.edad;
-      form.telefono.value = alumno.telefono;
-      form.contacto_nombre.value = alumno.contacto_nombre;
-      form.contacto_telefono.value = alumno.contacto_telefono;
-      form.fecha_inicio.value = alumno.fecha_inicio?.slice(0, 10);
-      form.tipo_clase.value = alumno.tipo_clase;
-      form.estado_pago.value = alumno.estado_pago;
-      form.activo.checked = alumno.activo;
-      form.dataset.editandoId = id;
-    } catch (err) {
-      console.error(err);
-      alert('Error al editar');
-    }
+    form.numero_alumno.value = alumno.numero_alumno;
+    form.nombre.value = alumno.nombre;
+    form.apellido.value = alumno.apellido;
+
+    form.querySelector('[name="fecha_nacimiento"]').value = alumno.fecha_nacimiento?.slice(0, 10);
+    form.edad.value = alumno.edad;
+    form.telefono.value = alumno.telefono;
+    form.contacto_nombre.value = alumno.contacto_nombre;
+    form.contacto_telefono.value = alumno.contacto_telefono;
+    form.querySelector('[name="fecha_inicio"]').value = alumno.fecha_inicio?.slice(0, 10);
+
+    form.tipo_clase.value = alumno.tipo_clase;
+    form.estado_pago.value = alumno.estado_pago;
+    form.activo.checked = alumno.activo;
+    form.dataset.editandoId = id;
+  } catch (err) {
+    console.error(err);
+    alert('Error al editar');
   }
+}
+
 
   async function actualizarAlumno(id, datos) {
     const res = await fetch(`/alumnos/${id}`, {
