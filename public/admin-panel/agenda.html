@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda - Etnya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #cce1d6;
+      color: #6d6d6d;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background-color: #91586d;
+      padding-top: 60px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar a:hover {
+      background-color: #6d3e4e;
+    }
+
+    main {
+      margin-left: 200px;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #91586d;
+    }
+
+    select {
+      display: block;
+      margin: 20px auto;
+      padding: 8px 16px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #94b8a3;
+    }
+
+    .calendario {
+      display: none;
+      max-width: 1100px;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .calendario.active {
+      display: table;
+    }
+
+    .calendario th, .calendario td {
+      border: 1px solid #bbb;
+      padding: 6px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+      height: 80px;
+      width: 160px;
+    }
+
+    .calendario th {
+      background-color: #b48a99;
+      color: white;
+      text-align: center;
+    }
+
+    .hora {
+      background-color: #e9e9e9;
+      font-weight: bold;
+      text-align: center;
+      width: 60px;
+    }
+
+    .recupera {
+      color: red;
+      font-weight: bold;
+    }
+
+    .navegacion {
+      text-align: center;
+      margin-bottom: 10px;
+      background-color: #e0d0d5;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #444;
+      position: relative;
+    }
+
+    .navegacion button {
+      position: absolute;
+      top: 10px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .navegacion button:hover {
+      color: #000;
+    }
+
+    .navegacion .prev {
+      left: 10px;
+    }
+
+    .navegacion .next {
+      right: 10px;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        margin-left: 0;
+        padding: 10px;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+
+      .calendario th, .calendario td {
+        font-size: 11px;
+        padding: 4px;
+      }
+    }
+
+/* Ajustes para hacer más delgado el encabezado del mes y los días */
+.calendario thead tr:first-child th {
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 16px;
+}
+
+.calendario thead tr:nth-child(2) th {
+  height: 28px;
+  padding: 4px;
+  font-size: 14px;
+}
+
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <a href="index.html">📋 Alumnos</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="agenda.html">🗕 Agenda</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+</div>
+
+<main>
+  <h1>Agenda Semanal</h1>
+
+  <select id="selectorSede">
+    <option value="craig">Craig</option>
+    <option value="goyena">Goyena</option>
+  </select>
+
+  <div class="navegacion">
+    <button class="prev" onclick="cambiarSemana(-1)">◄</button>
+    <span id="tituloSemana">Semana</span>
+    <button class="next" onclick="cambiarSemana(1)">►</button>
+  </div>
+
+  <table class="calendario" id="calendarioCraig">
+    <thead id="theadCraig"></thead>
+    <tbody id="cuerpoCraig"></tbody>
+  </table>
+
+  <table class="calendario" id="calendarioGoyena">
+    <thead id="theadGoyena"></thead>
+    <tbody id="cuerpoGoyena"></tbody>
+  </table>
+</main>
+
+<script>
+  const horas = Array.from({ length: 12 }, (_, i) => `${9 + i}:00`);
+  let offsetSemanas = 0;
+
+  function getSemanaYFechas(offset = 0) {
+    const hoy = new Date();
+    hoy.setDate(hoy.getDate() + offset * 7);
+    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const diaSemanaPrimerMes = primerDiaMes.getDay() || 7;
+    const semanaDelMes = Math.ceil((hoy.getDate() + diaSemanaPrimerMes - 1) / 7);
+
+    const lunes = new Date(hoy);
+    const dia = hoy.getDay() || 7;
+    lunes.setDate(hoy.getDate() - dia + 1);
+
+    const dias = [];
+    for (let i = 0; i < 5; i++) {
+      const fecha = new Date(lunes);
+      fecha.setDate(lunes.getDate() + i);
+      dias.push({
+        nombre: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'][i],
+        numero: fecha.getDate()
+      });
+    }
+
+    const mesNombre = lunes.toLocaleDateString('es-AR', { month: 'long' });
+    return { semanaDelMes, mesNombre, dias, anio: lunes.getFullYear() };
+  }
+
+  function actualizarEncabezadoTabla(theadId) {
+  const { semanaDelMes, mesNombre, dias, anio } = getSemanaYFechas(offsetSemanas);
+  const thead = document.getElementById(theadId);
+  thead.innerHTML = `
+    <tr>
+      <th colspan="6" style="text-align:center; background:#e0d0d5; color:#444; font-weight:600;">
+        ${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} ${anio}
+      </th>
+    </tr>
+    <tr>
+      <th class="hora">Hora</th>
+      ${dias.map(d => `<th>${d.nombre} ${d.numero}</th>`).join('')}
+    </tr>
+  `;
+}
+
+
+  function cambiarSemana(delta) {
+    offsetSemanas += delta;
+    actualizarEncabezadoTabla("theadCraig");
+    actualizarEncabezadoTabla("theadGoyena");
+  }
+
+  function generarTabla(cuerpoId) {
+    const cuerpo = document.getElementById(cuerpoId);
+    cuerpo.innerHTML = "";
+    horas.forEach(hora => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="hora">${hora}</td>` + '<td></td><td></td><td></td><td></td><td></td>';
+      cuerpo.appendChild(tr);
+    });
+  }
+
+  generarTabla("cuerpoCraig");
+  generarTabla("cuerpoGoyena");
+  actualizarEncabezadoTabla("theadCraig");
+  actualizarEncabezadoTabla("theadGoyena");
+
+  const selector = document.getElementById('selectorSede');
+  const calendarioCraig = document.getElementById('calendarioCraig');
+  const calendarioGoyena = document.getElementById('calendarioGoyena');
+
+  selector.addEventListener('change', () => {
+    const sede = selector.value;
+    calendarioCraig.classList.toggle('active', sede === 'craig');
+    calendarioGoyena.classList.toggle('active', sede === 'goyena');
+  });
+
+  selector.value = "craig";
+  calendarioCraig.classList.add("active");
+</script>
+
+</body>
+</html>
