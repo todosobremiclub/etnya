@@ -72,21 +72,6 @@
       margin: 0 auto 20px;
     }
 
-    #toggleDetallesBtn {
-      display: block;
-      margin: 0 auto 20px;
-      padding: 8px 16px;
-      background-color: #b48a99;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #toggleDetallesBtn:hover {
-      background-color: #91586d;
-    }
-
     input {
       padding: 10px;
       border: 1px solid #94b8a3;
@@ -124,6 +109,7 @@
       border-bottom: 1px solid #e0e0e0;
       text-align: left;
       font-size: 14px;
+      vertical-align: top;
     }
 
     th {
@@ -135,19 +121,21 @@
       margin-right: 5px;
     }
 
-    .fila-principal {
-      cursor: default;
-    }
-
-    .fila-detalle td {
-      background-color: #f9f9f9;
-      padding: 10px 20px;
+    .detalle-modalidad {
+      display: none;
       font-size: 13px;
       color: #555;
+      margin-top: 6px;
     }
 
-    .detalle-contenido {
-      white-space: pre-line;
+    .expandida .detalle-modalidad {
+      display: block;
+    }
+
+    .toggle-icon {
+      cursor: pointer;
+      margin-right: 6px;
+      font-weight: bold;
     }
 
     @media (max-width: 768px) {
@@ -193,12 +181,13 @@
     <button type="submit">Guardar</button>
   </form>
 
-  <button id="toggleDetallesBtn" onclick="toggleTodasLasFilas()">Mostrar detalles</button>
-
   <table>
     <thead>
       <tr>
-        <th>Modalidad</th>
+        <th>
+          <span id="flechaToggle" class="toggle-icon" onclick="toggleDetalles()">▶</span>
+          Modalidad
+        </th>
         <th>Precio</th>
         <th>Acciones</th>
       </tr>
@@ -211,6 +200,7 @@
 
 <script>
   let editandoId = null;
+  let detallesVisibles = false;
 
   async function cargarTiposClase() {
     const res = await fetch('/tipos-clase');
@@ -219,11 +209,14 @@
     tbody.innerHTML = '';
 
     tipos.forEach(t => {
-      const filaPrincipal = document.createElement('tr');
-      filaPrincipal.className = 'fila-principal';
+      const tr = document.createElement('tr');
+      tr.className = 'fila-principal';
 
-      filaPrincipal.innerHTML = `
-        <td>${t.modalidad}</td>
+      tr.innerHTML = `
+        <td>
+          ${t.modalidad}
+          <div class="detalle-modalidad">Detalles adicionales de la modalidad "${t.modalidad}".</div>
+        </td>
         <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
         <td class="acciones">
           <button onclick="event.stopPropagation(); editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">✏️</button>
@@ -231,29 +224,28 @@
         </td>
       `;
 
-      const filaDetalle = document.createElement('tr');
-      filaDetalle.className = 'fila-detalle';
-      filaDetalle.style.display = 'none';
-      filaDetalle.innerHTML = `
-        <td colspan="3">
-          <div class="detalle-contenido">
-            Detalles adicionales de la modalidad "${t.modalidad}".
-          </div>
-        </td>
-      `;
-
-      tbody.appendChild(filaPrincipal);
-      tbody.appendChild(filaDetalle);
+      tbody.appendChild(tr);
     });
+
+    aplicarEstadoDetalles();
   }
 
-  function toggleTodasLasFilas() {
-    const filas = document.querySelectorAll('.fila-detalle');
-    const mostrar = [...filas].some(f => f.style.display === 'none');
-    filas.forEach(f => f.style.display = mostrar ? 'table-row' : 'none');
+  function toggleDetalles() {
+    detallesVisibles = !detallesVisibles;
+    const icono = document.getElementById('flechaToggle');
+    icono.textContent = detallesVisibles ? '▼' : '▶';
+    aplicarEstadoDetalles();
+  }
 
-    const btn = document.getElementById('toggleDetallesBtn');
-    btn.textContent = mostrar ? 'Ocultar detalles' : 'Mostrar detalles';
+  function aplicarEstadoDetalles() {
+    const filas = document.querySelectorAll('#tablaTipos .fila-principal');
+    filas.forEach(f => {
+      if (detallesVisibles) {
+        f.classList.add('expandida');
+      } else {
+        f.classList.remove('expandida');
+      }
+    });
   }
 
   function editarTipo(id, modalidad, precio) {
