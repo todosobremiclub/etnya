@@ -194,7 +194,7 @@
   <table>
     <thead>
       <tr>
-        <th>Fecha</th>
+        <th><span id="flechaFeriados" class="toggle-icon" onclick="toggleFeriados()">▶</span> Fecha</th>
         <th>Descripción</th>
         <th>Acciones</th>
       </tr>
@@ -202,6 +202,7 @@
     <tbody id="tablaFeriados"></tbody>
   </table>
 </main>
+
 <script>
   // MODALIDADES
   let editandoId = null;
@@ -214,7 +215,8 @@
     tbody.innerHTML = '';
     tipos.forEach(t => {
       const tr = document.createElement('tr');
-      tr.classList.add('fila-tipo', 'fila-oculta');
+      tr.classList.add('fila-tipo');
+      if (!filasVisibles) tr.classList.add('fila-oculta');
       tr.innerHTML = `
         <td>${t.modalidad}</td>
         <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
@@ -271,6 +273,8 @@
 
   // FERIADOS
   let editandoFeriadoId = null;
+  let feriadosVisibles = false;
+
   async function cargarFeriados() {
     const res = await fetch('/feriados');
     const feriados = await res.json();
@@ -278,16 +282,26 @@
     tbody.innerHTML = '';
     feriados.forEach(f => {
       const tr = document.createElement('tr');
+      tr.classList.add('fila-feriado');
+      if (!feriadosVisibles) tr.classList.add('fila-oculta');
       tr.innerHTML = `
-        <td>${new Date(f.fecha).toLocaleDateString('es-AR')}</td>
+        <td>${new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-AR')}</td>
         <td>${f.descripcion}</td>
         <td class="acciones">
-          <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
+          <button onclick="editarFeriado(${f.id}, '${f.fecha}', \\`${f.descripcion}\\`)">✏️</button>
           <button onclick="eliminarFeriado(${f.id})">🗑️</button>
         </td>
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  function toggleFeriados() {
+    feriadosVisibles = !feriadosVisibles;
+    const icono = document.getElementById('flechaFeriados');
+    icono.textContent = feriadosVisibles ? '▼' : '▶';
+    const filas = document.querySelectorAll('.fila-feriado');
+    filas.forEach(f => f.classList.toggle('fila-oculta', !feriadosVisibles));
   }
 
   function editarFeriado(id, fecha, descripcion) {
@@ -301,11 +315,7 @@
   document.getElementById('formFeriado').addEventListener('submit', async function(e) {
     e.preventDefault();
     const form = e.target;
-    const datos = {
-  fecha: form.fecha.value, // ya viene como YYYY-MM-DD sin desfase
-  descripcion: form.descripcion.value
-};
-
+    const datos = { fecha: form.fecha.value, descripcion: form.descripcion.value };
     const res = await fetch(`/feriados${editandoFeriadoId ? '/' + editandoFeriadoId : ''}`, {
       method: editandoFeriadoId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
