@@ -209,6 +209,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
 </style>
 
 
@@ -265,7 +274,11 @@
   <option value="">Tipo de clase</option>
 </select>
 
-            <label><input type="checkbox" name="activo" checked> Activo</label>
+            <label class="checkbox-label">
+  <input type="checkbox" name="activo" checked>
+  Activo
+</label>
+
       <button type="submit">Guardar</button>
     </form>
   </div>
