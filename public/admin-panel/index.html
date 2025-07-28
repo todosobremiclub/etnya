@@ -409,14 +409,13 @@ function formatearFecha(fechaISO) {
     form.nombre.value = alumno.nombre;
     form.apellido.value = alumno.apellido;
 
-    form.querySelector('[name="fecha_nacimiento"]').value = alumno.fecha_nacimiento?.slice(0, 10);
-    form.edad.value = alumno.edad;
-    form.telefono.value = alumno.telefono;
-    form.contacto_nombre.value = alumno.contacto_nombre;
-    form.contacto_telefono.value = alumno.contacto_telefono;
-    form.querySelector('[name="fecha_inicio"]').value = alumno.fecha_inicio?.slice(0, 10);
-
-    form.tipo_clase.value = alumno.tipo_clase;
+    form.querySelector('[name="fecha_nacimiento"]').value = alumno.fecha_nacimiento?.slice(0, 10) || '';
+form.edad.value = alumno.edad;
+form.telefono.value = alumno.telefono;
+form.contacto_nombre.value = alumno.contacto_nombre;
+form.contacto_telefono.value = alumno.contacto_telefono;
+form.querySelector('[name="fecha_inicio"]').value = alumno.fecha_inicio?.slice(0, 10) || '';
+form.tipo_clase.value = alumno.tipo_clase;
     form.estado_pago.value = alumno.estado_pago;
     form.activo.checked = alumno.activo;
     form.dataset.editandoId = id;
