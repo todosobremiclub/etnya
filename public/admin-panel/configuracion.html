@@ -288,7 +288,7 @@
         <td>${new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-AR')}</td>
         <td>${f.descripcion}</td>
         <td class="acciones">
-          <button onclick="editarFeriado(${f.id}, '${f.fecha}', \\`${f.descripcion}\\`)">✏️</button>
+          <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
           <button onclick="eliminarFeriado(${f.id})">🗑️</button>
         </td>
       `;
