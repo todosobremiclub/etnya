@@ -122,6 +122,16 @@
       margin-right: 5px;
     }
 
+    .toggle-icon {
+      cursor: pointer;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
+    .fila-oculta {
+      display: none;
+    }
+
     @media (max-width: 768px) {
       form {
         grid-template-columns: 1fr;
@@ -166,7 +176,7 @@
   <table>
     <thead>
       <tr>
-        <th>Modalidad</th>
+        <th><span id="flechaToggle" class="toggle-icon" onclick="toggleFilas()">▶</span> Modalidad</th>
         <th>Precio</th>
         <th>Acciones</th>
       </tr>
@@ -195,6 +205,8 @@
 <script>
   // MODALIDADES
   let editandoId = null;
+  let filasVisibles = false;
+
   async function cargarTiposClase() {
     const res = await fetch('/tipos-clase');
     const tipos = await res.json();
@@ -202,6 +214,7 @@
     tbody.innerHTML = '';
     tipos.forEach(t => {
       const tr = document.createElement('tr');
+      tr.classList.add('fila-tipo', 'fila-oculta');
       tr.innerHTML = `
         <td>${t.modalidad}</td>
         <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
@@ -213,6 +226,15 @@
       tbody.appendChild(tr);
     });
   }
+
+  function toggleFilas() {
+    filasVisibles = !filasVisibles;
+    const icono = document.getElementById('flechaToggle');
+    icono.textContent = filasVisibles ? '▼' : '▶';
+    const filas = document.querySelectorAll('.fila-tipo');
+    filas.forEach(f => f.classList.toggle('fila-oculta', !filasVisibles));
+  }
+
   function editarTipo(id, modalidad, precio) {
     const form = document.getElementById('formTipoClase');
     form.modalidad.value = modalidad;
@@ -220,6 +242,7 @@
     editandoId = id;
     form.querySelector('button[type="submit"]').textContent = "Actualizar";
   }
+
   document.getElementById('formTipoClase').addEventListener('submit', async function(e) {
     e.preventDefault();
     const form = e.target;
@@ -238,6 +261,7 @@
       alert('Error al guardar tipo de clase');
     }
   });
+
   async function eliminarTipo(id) {
     if (!confirm('¿Eliminar este tipo?')) return;
     const res = await fetch(`/tipos-clase/${id}`, { method: 'DELETE' });
@@ -265,6 +289,7 @@
       tbody.appendChild(tr);
     });
   }
+
   function editarFeriado(id, fecha, descripcion) {
     const form = document.getElementById('formFeriado');
     form.fecha.value = fecha;
@@ -272,6 +297,7 @@
     editandoFeriadoId = id;
     form.querySelector('button[type="submit"]').textContent = "Actualizar";
   }
+
   document.getElementById('formFeriado').addEventListener('submit', async function(e) {
     e.preventDefault();
     const form = e.target;
@@ -290,6 +316,7 @@
       alert('Error al guardar feriado');
     }
   });
+
   async function eliminarFeriado(id) {
     if (!confirm('¿Eliminar este feriado?')) return;
     const res = await fetch(`/feriados/${id}`, { method: 'DELETE' });
@@ -304,3 +331,4 @@
 </script>
 </body>
 </html>
+
