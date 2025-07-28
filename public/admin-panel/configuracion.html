@@ -1,3 +1,4 @@
+<!-- Reemplaza tu archivo configuracion.html por este -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,7 +7,6 @@
   <title>Configuración</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* Copiado y adaptado desde index.html */
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
@@ -121,6 +121,26 @@
       margin-right: 5px;
     }
 
+    .fila-principal {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .fila-principal:hover {
+      background-color: #f0e7e9;
+    }
+
+    .fila-detalle td {
+      background-color: #f9f9f9;
+      padding: 10px 20px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .detalle-contenido {
+      white-space: pre-line;
+    }
+
     @media (max-width: 768px) {
       form {
         grid-template-columns: 1fr;
@@ -150,7 +170,6 @@
   <a href="#">💳 Pagos</a>
   <a href="#">📅 Agenda</a>
   <a href="configuracion.html">⚙️ Configuración</a>
-
 </div>
 
 <main>
@@ -188,17 +207,40 @@
     const tbody = document.getElementById('tablaTipos');
     tbody.innerHTML = '';
     tipos.forEach(t => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
+      const filaPrincipal = document.createElement('tr');
+      filaPrincipal.className = 'fila-principal';
+      filaPrincipal.onclick = () => toggleDetalle(filaPrincipal);
+
+      filaPrincipal.innerHTML = `
         <td>${t.modalidad}</td>
         <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
         <td class="acciones">
-          <button onclick="editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
-          <button onclick="eliminarTipo(${t.id})">🗑</button>
+          <button onclick="event.stopPropagation(); editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
+          <button onclick="event.stopPropagation(); eliminarTipo(${t.id})">🗑</button>
         </td>
       `;
-      tbody.appendChild(tr);
+
+      const filaDetalle = document.createElement('tr');
+      filaDetalle.className = 'fila-detalle';
+      filaDetalle.style.display = 'none';
+      filaDetalle.innerHTML = `
+        <td colspan="3">
+          <div class="detalle-contenido">
+            Detalles adicionales de la modalidad "${t.modalidad}".
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(filaPrincipal);
+      tbody.appendChild(filaDetalle);
     });
+  }
+
+  function toggleDetalle(fila) {
+    const siguiente = fila.nextElementSibling;
+    if (siguiente && siguiente.classList.contains('fila-detalle')) {
+      siguiente.style.display = siguiente.style.display === 'none' ? 'table-row' : 'none';
+    }
   }
 
   function editarTipo(id, modalidad, precio) {
