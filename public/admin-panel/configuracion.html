@@ -121,21 +121,14 @@
       margin-right: 5px;
     }
 
-    .detalle-modalidad {
-      display: none;
-      font-size: 13px;
-      color: #555;
-      margin-top: 6px;
-    }
-
-    .expandida .detalle-modalidad {
-      display: block;
-    }
-
     .toggle-icon {
       cursor: pointer;
       margin-right: 6px;
       font-weight: bold;
+    }
+
+    .fila-oculta {
+      display: none;
     }
 
     @media (max-width: 768px) {
@@ -185,7 +178,7 @@
     <thead>
       <tr>
         <th>
-          <span id="flechaToggle" class="toggle-icon" onclick="toggleDetalles()">▶</span>
+          <span id="flechaToggle" class="toggle-icon" onclick="toggleFilas()">▶</span>
           Modalidad
         </th>
         <th>Precio</th>
@@ -200,7 +193,7 @@
 
 <script>
   let editandoId = null;
-  let detallesVisibles = false;
+  let filasVisibles = false;
 
   async function cargarTiposClase() {
     const res = await fetch('/tipos-clase');
@@ -210,13 +203,10 @@
 
     tipos.forEach(t => {
       const tr = document.createElement('tr');
-      tr.className = 'fila-principal';
+      tr.classList.add('fila-tipo', 'fila-oculta');
 
       tr.innerHTML = `
-        <td>
-          ${t.modalidad}
-          <div class="detalle-modalidad">Detalles adicionales de la modalidad "${t.modalidad}".</div>
-        </td>
+        <td>${t.modalidad}</td>
         <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
         <td class="acciones">
           <button onclick="event.stopPropagation(); editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">✏️</button>
@@ -226,25 +216,16 @@
 
       tbody.appendChild(tr);
     });
-
-    aplicarEstadoDetalles();
   }
 
-  function toggleDetalles() {
-    detallesVisibles = !detallesVisibles;
+  function toggleFilas() {
+    filasVisibles = !filasVisibles;
     const icono = document.getElementById('flechaToggle');
-    icono.textContent = detallesVisibles ? '▼' : '▶';
-    aplicarEstadoDetalles();
-  }
+    icono.textContent = filasVisibles ? '▼' : '▶';
 
-  function aplicarEstadoDetalles() {
-    const filas = document.querySelectorAll('#tablaTipos .fila-principal');
+    const filas = document.querySelectorAll('.fila-tipo');
     filas.forEach(f => {
-      if (detallesVisibles) {
-        f.classList.add('expandida');
-      } else {
-        f.classList.remove('expandida');
-      }
+      f.classList.toggle('fila-oculta', !filasVisibles);
     });
   }
 
