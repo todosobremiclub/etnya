@@ -201,40 +201,43 @@
 <script>
   let editandoId = null;
 
-  async function cargarTiposClase() {
-    const res = await fetch('/tipos-clase');
-    const tipos = await res.json();
-    const tbody = document.getElementById('tablaTipos');
-    tbody.innerHTML = '';
-    tipos.forEach(t => {
-      const filaPrincipal = document.createElement('tr');
-      filaPrincipal.className = 'fila-principal';
-      filaPrincipal.onclick = () => toggleDetalle(filaPrincipal);
+ async function cargarTiposClase() {
+  const res = await fetch('/tipos-clase');
+  const tipos = await res.json();
+  const tbody = document.getElementById('tablaTipos');
+  tbody.innerHTML = '';
+  tipos.forEach(t => {
+    // Fila principal (clickeable)
+    const filaPrincipal = document.createElement('tr');
+    filaPrincipal.className = 'fila-principal';
+    filaPrincipal.onclick = () => toggleDetalle(filaPrincipal);
 
-      filaPrincipal.innerHTML = `
-        <td>${t.modalidad}</td>
-        <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
-        <td class="acciones">
-          <button onclick="event.stopPropagation(); editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">🖉</button>
-          <button onclick="event.stopPropagation(); eliminarTipo(${t.id})">🗑</button>
-        </td>
-      `;
+    filaPrincipal.innerHTML = `
+      <td>${t.modalidad}</td>
+      <td>$${Number(t.precio).toLocaleString('es-AR')}</td>
+      <td class="acciones">
+        <button onclick="event.stopPropagation(); editarTipo(${t.id}, \`${t.modalidad}\`, ${t.precio})">✏️</button>
+        <button onclick="event.stopPropagation(); eliminarTipo(${t.id})">🗑️</button>
+      </td>
+    `;
 
-      const filaDetalle = document.createElement('tr');
-      filaDetalle.className = 'fila-detalle';
-      filaDetalle.style.display = 'none';
-      filaDetalle.innerHTML = `
-        <td colspan="3">
-          <div class="detalle-contenido">
-            Detalles adicionales de la modalidad "${t.modalidad}".
-          </div>
-        </td>
-      `;
+    // Fila detalle (oculta por defecto)
+    const filaDetalle = document.createElement('tr');
+    filaDetalle.className = 'fila-detalle';
+    filaDetalle.style.display = 'none';
+    filaDetalle.innerHTML = `
+      <td colspan="3">
+        <div class="detalle-contenido">
+          Detalles adicionales de la modalidad "${t.modalidad}".
+        </div>
+      </td>
+    `;
 
-      tbody.appendChild(filaPrincipal);
-      tbody.appendChild(filaDetalle);
-    });
-  }
+    tbody.appendChild(filaPrincipal);
+    tbody.appendChild(filaDetalle);
+  });
+}
+
 
   function toggleDetalle(fila) {
     const siguiente = fila.nextElementSibling;
