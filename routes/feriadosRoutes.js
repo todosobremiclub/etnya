@@ -16,8 +16,12 @@ router.get('/', async (req, res) => {
 // Crear un nuevo feriado
 router.post('/', async (req, res) => {
   const { fecha, descripcion } = req.body;
+
   try {
-    await pool.query('INSERT INTO feriados (fecha, descripcion) VALUES ($1, $2)', [fecha, descripcion]);
+    await pool.query(
+      'INSERT INTO feriados (fecha, descripcion) VALUES ($1, $2)',
+      [fecha, descripcion]
+    );
     res.sendStatus(201);
   } catch (error) {
     console.error('Error al crear feriado:', error);

@@ -301,7 +301,11 @@
   document.getElementById('formFeriado').addEventListener('submit', async function(e) {
     e.preventDefault();
     const form = e.target;
-    const datos = { fecha: form.fecha.value, descripcion: form.descripcion.value };
+    const datos = {
+  fecha: form.fecha.value, // ya viene como YYYY-MM-DD sin desfase
+  descripcion: form.descripcion.value
+};
+
     const res = await fetch(`/feriados${editandoFeriadoId ? '/' + editandoFeriadoId : ''}`, {
       method: editandoFeriadoId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
