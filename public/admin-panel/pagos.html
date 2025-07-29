@@ -196,14 +196,15 @@ alumnos.forEach(a => {
 $('#alumno-select').trigger('change.select2');
 
 
+  
   // Inicializar Select2 después de que DOM esté listo
-  $(document).ready(() => {
-    $('#alumno-select').select2({
-
-      placeholder: "Seleccionar alumno",
-      width: '100%'
-    });
+$(document).ready(() => {
+  $('#alumno-select').select2({
+    placeholder: "Seleccionar alumno",
+    width: '100%'
   });
+});
+
 
   
     // Refrescar Select2
@@ -232,7 +233,8 @@ $('#alumno-select').trigger('change.select2');
     const mes = document.getElementById("mesPago").value;
     const monto = document.getElementById("parcial").checked
       ? document.getElementById("montoParcial").value
-      : document.getElementById("monto").value;
+      : document.getElementById("montoParcial").value;
+
 
     if (!alumnoId || !mes || !monto) {
       alert("Faltan datos obligatorios.");
