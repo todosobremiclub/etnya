@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagos - Etnya</title>
+
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Select2 -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -80,49 +88,47 @@
       color: white;
     }
 
- /* Sidebar lateral */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 200px;
-    height: 100vh;
-    background-color: #91586d;
-    padding-top: 60px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    z-index: 1000;
-  }
+    /* Sidebar lateral */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background-color: #91586d;
+      padding-top: 60px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
 
-.sidebar a {
-    display: block;
-    padding: 10px 16px;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-size: 13px;
-  }
+    .sidebar a {
+      display: block;
+      padding: 10px 16px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 13px;
+    }
 
-.sidebar a:hover {
-  background-color: #6d3e4e;
-}
+    .sidebar a:hover {
+      background-color: #6d3e4e;
+    }
 
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-  }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
 
-  main {
-  margin-left: 200px;
-  padding: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-}
-
+      main {
+        margin-left: 200px;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -138,11 +144,8 @@
   <main>
     <h1>Registrar Pago</h1>
     <div class="formulario">
-      <label for="busqueda">Buscar alumno (Apellido o N°):</label>
-      <input type="text" id="busqueda" placeholder="Ej: Pérez o 123">
-
-      <label for="alumno">Seleccionar alumno:</label>
-      <select id="alumno"></select>
+            <label for="alumno-select">Buscar y seleccionar alumno:</label>
+<select id="alumno-select" style="width: 100%"></select>
 
       <label for="mesPago">Mes a pagar:</label>
       <input type="month" id="mesPago">
@@ -178,102 +181,116 @@
   </main>
 
   <script>
-    const alumnos = [];
-    let tiposClase = [];
+  const alumnos = [];
+  let tiposClase = [];
 
-    const busquedaInput = document.getElementById("busqueda");
-    const alumnoSelect = document.getElementById("alumno");
+  const busquedaInput = document.getElementById("busqueda");
+  const alumnoSelect = document.getElementById("alumno");
 
-    busquedaInput.addEventListener("input", () => {
-      const filtro = busquedaInput.value.toLowerCase();
-      alumnoSelect.innerHTML = '';
-      alumnos.filter(a =>
+  // Inicializar Select2 después de que DOM esté listo
+  $(document).ready(() => {
+    $('#alumno').select2({
+      placeholder: "Seleccionar alumno",
+      width: '100%'
+    });
+  });
+
+  busquedaInput.addEventListener("input", () => {
+    const filtro = busquedaInput.value.toLowerCase();
+    alumnoSelect.innerHTML = '';
+    alumnos
+      .filter(a =>
         a.apellido.toLowerCase().includes(filtro) ||
         a.numero_alumno.toString().includes(filtro)
-      ).forEach(a => {
+      )
+      .forEach(a => {
         const option = document.createElement("option");
         option.value = a.id;
         option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
         alumnoSelect.appendChild(option);
       });
-    });
 
-    alumnoSelect.addEventListener("change", () => {
-      const id = alumnoSelect.value;
-      const alumno = alumnos.find(a => a.id == id);
-      if (!alumno) return;
+    // Refrescar Select2
+    $('#alumno').trigger('change.select2');
+  });
 
-      const tipo = tiposClase.find(t => t.modalidad === alumno.tipo_clase);
-      document.getElementById("modalidad").value = tipo?.modalidad || '';
-      document.getElementById("monto").value = tipo?.precio || '';
-    });
+  alumnoSelect.addEventListener("change", () => {
+    const id = alumnoSelect.value;
+    const alumno = alumnos.find(a => a.id == id);
+    if (!alumno) return;
 
-    document.getElementById("parcial").addEventListener("change", (e) => {
-      document.getElementById("montoParcial").disabled = !e.target.checked;
-    });
+    const tipo = tiposClase.find(t => t.modalidad === alumno.tipo_clase);
+    document.getElementById("modalidad").value = tipo?.modalidad || '';
+    document.getElementById("monto").value = tipo?.precio || '';
+  });
 
-    async function guardarPago() {
-      const alumnoId = alumnoSelect.value;
-      const mes = document.getElementById("mesPago").value;
-      const monto = document.getElementById("parcial").checked
-        ? document.getElementById("montoParcial").value
-        : document.getElementById("monto").value;
+  document.getElementById("parcial").addEventListener("change", (e) => {
+    document.getElementById("montoParcial").disabled = !e.target.checked;
+  });
 
-      if (!alumnoId || !mes || !monto) {
-        alert("Faltan datos obligatorios.");
-        return;
-      }
+  async function guardarPago() {
+    const alumnoId = $('#alumno').val();
+    const mes = document.getElementById("mesPago").value;
+    const monto = document.getElementById("parcial").checked
+      ? document.getElementById("montoParcial").value
+      : document.getElementById("monto").value;
 
-      const res = await fetch('/pagos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          alumno_id: alumnoId,
-          mes_pagado: mes,
-          monto: parseFloat(monto)
-        })
-      });
-
-      if (res.ok) {
-        alert("Pago registrado con éxito.");
-        await cargarPagos();
-      } else {
-        alert("Error al registrar el pago.");
-      }
+    if (!alumnoId || !mes || !monto) {
+      alert("Faltan datos obligatorios.");
+      return;
     }
 
-    async function cargarPagos() {
-      const res = await fetch('/pagos');
-      const pagos = await res.json();
-      const tbody = document.getElementById("tbodyPagos");
-      tbody.innerHTML = '';
+    const res = await fetch('/pagos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        alumno_id: alumnoId,
+        mes_pagado: mes,
+        monto: parseFloat(monto)
+      })
+    });
 
-      pagos.forEach(p => {
-        const alumno = alumnos.find(a => a.id === p.alumno_id);
-        const tipo = tiposClase.find(t => t.modalidad === alumno?.tipo_clase);
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${alumno?.numero_alumno || '-'}</td>
-          <td>${alumno ? alumno.nombre + ' ' + alumno.apellido : '-'}</td>
-          <td>${tipo?.modalidad || '-'}</td>
-          <td>${p.mes_pagado}</td>
-          <td>$${parseFloat(p.monto).toFixed(2)}</td>
-          <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    window.onload = async () => {
-      const resAlumnos = await fetch('/alumnos');
-      const dataAlumnos = await resAlumnos.json();
-      alumnos.push(...dataAlumnos);
-
-      const resTipos = await fetch('/tipos-clase');
-      tiposClase = await resTipos.json();
-
+    if (res.ok) {
+      alert("Pago registrado con éxito.");
       await cargarPagos();
-    };
-  </script>
+    } else {
+      alert("Error al registrar el pago.");
+    }
+  }
+
+  async function cargarPagos() {
+    const res = await fetch('/pagos');
+    const pagos = await res.json();
+    const tbody = document.getElementById("tbodyPagos");
+    tbody.innerHTML = '';
+
+    pagos.forEach(p => {
+      const alumno = alumnos.find(a => a.id === p.alumno_id);
+      const tipo = tiposClase.find(t => t.modalidad === alumno?.tipo_clase);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${alumno?.numero_alumno || '-'}</td>
+        <td>${alumno ? alumno.nombre + ' ' + alumno.apellido : '-'}</td>
+        <td>${tipo?.modalidad || '-'}</td>
+        <td>${p.mes_pagado}</td>
+        <td>$${parseFloat(p.monto).toFixed(2)}</td>
+        <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  window.onload = async () => {
+    const resAlumnos = await fetch('/alumnos');
+    const dataAlumnos = await resAlumnos.json();
+    alumnos.push(...dataAlumnos);
+
+    const resTipos = await fetch('/tipos-clase');
+    tiposClase = await resTipos.json();
+
+    await cargarPagos();
+  };
+</script>
+
 </body>
 </html>
