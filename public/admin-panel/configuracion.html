@@ -275,26 +275,32 @@
   let editandoFeriadoId = null;
   let feriadosVisibles = false;
 
-  async function cargarFeriados() {
-    const res = await fetch('/feriados');
-    const feriados = await res.json();
-    const tbody = document.getElementById('tablaFeriados');
-    tbody.innerHTML = '';
-    feriados.forEach(f => {
-      const tr = document.createElement('tr');
-      tr.classList.add('fila-feriado');
-      if (!feriadosVisibles) tr.classList.add('fila-oculta');
-      tr.innerHTML = `
-        <td>${new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-AR')}</td>
-        <td>${f.descripcion}</td>
-        <td class="acciones">
-          <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
-          <button onclick="eliminarFeriado(${f.id})">🗑️</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+  function parseFecha(fechaStr) {
+  const [year, month, day] = fechaStr.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+async function cargarFeriados() {
+  const res = await fetch('/feriados');
+  const feriados = await res.json();
+  const tbody = document.getElementById('tablaFeriados');
+  tbody.innerHTML = '';
+  feriados.forEach(f => {
+    const tr = document.createElement('tr');
+    tr.classList.add('fila-feriado');
+    if (!feriadosVisibles) tr.classList.add('fila-oculta');
+    tr.innerHTML = `
+      <td>${parseFecha(f.fecha)}</td>
+      <td>${f.descripcion}</td>
+      <td class="acciones">
+        <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
+        <button onclick="eliminarFeriado(${f.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 
   function toggleFeriados() {
     feriadosVisibles = !feriadosVisibles;
