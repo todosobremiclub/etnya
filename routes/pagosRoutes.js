@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Guardar pago
+// Registrar un nuevo pago
 router.post('/', async (req, res) => {
   const { alumno_id, mes_pagado, monto } = req.body;
   const fecha_pago = new Date(); // Fecha actual
@@ -21,6 +21,19 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error al guardar pago:', error);
     res.status(500).json({ error: 'Error al guardar el pago.' });
+  }
+});
+
+// Obtener todos los pagos
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM pagos ORDER BY fecha_pago DESC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener pagos:', error);
+    res.status(500).json({ error: 'Error al obtener pagos' });
   }
 });
 
