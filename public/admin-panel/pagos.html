@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pagos - Etnya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #cce1d6;
+      color: #6d6d6d;
+    }
+
+    main {
+      margin-left: 200px;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #91586d;
+    }
+
+    .formulario {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+
+    .formulario input, .formulario select {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .formulario label {
+      font-weight: bold;
+    }
+
+    .formulario button {
+      background-color: #91586d;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .formulario button:hover {
+      background-color: #6d3e4e;
+    }
+
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      border-collapse: collapse;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background-color: #b48a99;
+      color: white;
+    }
+
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Registrar Pago</h1>
+    <div class="formulario">
+      <label for="busqueda">Buscar alumno (Apellido o N°):</label>
+      <input type="text" id="busqueda" placeholder="Ej: Pérez o 123">
+
+      <label for="alumno">Seleccionar alumno:</label>
+      <select id="alumno"></select>
+
+      <label for="mesPago">Mes a pagar:</label>
+      <input type="month" id="mesPago">
+
+      <label for="modalidad">Modalidad:</label>
+      <input type="text" id="modalidad" disabled>
+
+      <label for="monto">Monto:</label>
+      <input type="number" id="monto" disabled>
+
+      <label><input type="checkbox" id="parcial"> Pago parcial</label>
+
+      <label for="montoParcial">Monto manual:</label>
+      <input type="number" id="montoParcial" disabled>
+
+      <button onclick="guardarPago()">Guardar Pago</button>
+    </div>
+
+    <h2>Pagos Registrados</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>N° Alumno</th>
+          <th>Nombre</th>
+          <th>Modalidad</th>
+          <th>Mes Pagado</th>
+          <th>Monto</th>
+          <th>Fecha de Pago</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyPagos"></tbody>
+    </table>
+  </main>
+
+  <script>
+    const alumnos = [];
+    let tiposClase = [];
+
+    const busquedaInput = document.getElementById("busqueda");
+    const alumnoSelect = document.getElementById("alumno");
+
+    busquedaInput.addEventListener("input", () => {
+      const filtro = busquedaInput.value.toLowerCase();
+      alumnoSelect.innerHTML = '';
+      alumnos.filter(a =>
+        a.apellido.toLowerCase().includes(filtro) ||
+        a.numero_alumno.toString().includes(filtro)
+      ).forEach(a => {
+        const option = document.createElement("option");
+        option.value = a.id;
+        option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+        alumnoSelect.appendChild(option);
+      });
+    });
+
+    alumnoSelect.addEventListener("change", () => {
+      const id = alumnoSelect.value;
+      const alumno = alumnos.find(a => a.id == id);
+      if (!alumno) return;
+
+      const tipo = tiposClase.find(t => t.modalidad === alumno.tipo_clase);
+      document.getElementById("modalidad").value = tipo?.modalidad || '';
+      document.getElementById("monto").value = tipo?.precio || '';
+    });
+
+    document.getElementById("parcial").addEventListener("change", (e) => {
+      document.getElementById("montoParcial").disabled = !e.target.checked;
+    });
+
+    async function guardarPago() {
+      const alumnoId = alumnoSelect.value;
+      const mes = document.getElementById("mesPago").value;
+      const monto = document.getElementById("parcial").checked
+        ? document.getElementById("montoParcial").value
+        : document.getElementById("monto").value;
+
+      if (!alumnoId || !mes || !monto) {
+        alert("Faltan datos obligatorios.");
+        return;
+      }
+
+      const res = await fetch('/pagos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alumno_id: alumnoId,
+          mes_pagado: mes,
+          monto: parseFloat(monto)
+        })
+      });
+
+      if (res.ok) {
+        alert("Pago registrado con éxito.");
+        await cargarPagos();
+      } else {
+        alert("Error al registrar el pago.");
+      }
+    }
+
+    async function cargarPagos() {
+      const res = await fetch('/pagos');
+      const pagos = await res.json();
+      const tbody = document.getElementById("tbodyPagos");
+      tbody.innerHTML = '';
+
+      pagos.forEach(p => {
+        const alumno = alumnos.find(a => a.id === p.alumno_id);
+        const tipo = tiposClase.find(t => t.modalidad === alumno?.tipo_clase);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${alumno?.numero_alumno || '-'}</td>
+          <td>${alumno ? alumno.nombre + ' ' + alumno.apellido : '-'}</td>
+          <td>${tipo?.modalidad || '-'}</td>
+          <td>${p.mes_pagado}</td>
+          <td>$${parseFloat(p.monto).toFixed(2)}</td>
+          <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    window.onload = async () => {
+      const resAlumnos = await fetch('/alumnos');
+      const dataAlumnos = await resAlumnos.json();
+      alumnos.push(...dataAlumnos);
+
+      const resTipos = await fetch('/tipos-clase');
+      tiposClase = await resTipos.json();
+
+      await cargarPagos();
+    };
+  </script>
+</body>
+</html>

@@ -11,11 +11,13 @@ app.use(express.json());
 // Rutas
 const alumnosRoutes = require('./routes/alumnosRoutes');
 const tiposClaseRoutes = require('./routes/tiposClase');
-const feriadosRoutes = require('./routes/feriadosRoutes'); // ✅ nueva línea
+const feriadosRoutes = require('./routes/feriadosRoutes');
+const pagosRoutes = require('./routes/pagosRoutes'); // ✅ nueva línea
 
 app.use('/alumnos', alumnosRoutes);
 app.use('/tipos-clase', tiposClaseRoutes);
-app.use('/feriados', feriadosRoutes); // ✅ endpoint para feriados
+app.use('/feriados', feriadosRoutes);
+app.use('/pagos', pagosRoutes); // ✅ endpoint para registrar pagos
 
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, 'public/admin-panel')));
