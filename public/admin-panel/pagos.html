@@ -185,7 +185,7 @@
   const alumnos = [];
   let tiposClase = [];
 
-  const alumnoSelect = document.getElementById("alumno-select");
+
 
   
   // Inicializar Select2 después de que DOM esté listo
@@ -209,6 +209,7 @@ $(document).ready(() => {
   document.getElementById("modalidad").value = tipo?.modalidad || alumno.tipo_clase || '';
   document.getElementById("monto").value = tipo?.precio || '';
 });
+
 
   document.getElementById("parcial").addEventListener("change", (e) => {
   const montoParcial = document.getElementById("montoParcial");
@@ -278,19 +279,23 @@ $(document).ready(() => {
   const resTipos = await fetch('/tipos-clase');
   tiposClase = await resTipos.json();
 
-  // Llenar el select con los datos ya cargados
-  const alumnoSelect = document.getElementById("alumno-select");
-  alumnoSelect.innerHTML = '';
+  
+  // Listener de cambio correctamente vinculado
+  alumnoSelect.addEventListener("change", () => {
+    const id = alumnoSelect.value;
+    const alumno = alumnos.find(a => a.id == id);
+    if (!alumno) return;
 
-  alumnos.forEach(a => {
-    const option = document.createElement("option");
-    option.value = a.id;
-    option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
-    alumnoSelect.appendChild(option);
+    const tipo = tiposClase.find(t =>
+      t.modalidad.toLowerCase().trim() === alumno.tipo_clase.toLowerCase().trim()
+    );
+
+    document.getElementById("modalidad").value = tipo?.modalidad || alumno.tipo_clase || '';
+    document.getElementById("monto").value = tipo?.precio || '';
   });
 
-  // Refrescar Select2 con datos nuevos
   $('#alumno-select').trigger('change.select2');
+
 
   await cargarPagos();
 };
