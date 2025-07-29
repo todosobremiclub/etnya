@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+// 🔧 Función para normalizar fecha a GMT-3 y evitar desfase al guardar
+function normalizarFecha(fechaStr) {
+  const [year, month, day] = fechaStr.split('-');
+  return `${year}-${month}-${day}T03:00:00.000Z`; // fuerza hora GMT-3
+}
+
 // Obtener todos los feriados
 router.get('/', async (req, res) => {
   try {
@@ -18,9 +24,10 @@ router.post('/', async (req, res) => {
   const { fecha, descripcion } = req.body;
 
   try {
+    const fechaNormalizada = normalizarFecha(fecha);
     await pool.query(
       'INSERT INTO feriados (fecha, descripcion) VALUES ($1, $2)',
-      [fecha, descripcion]
+      [fechaNormalizada, descripcion]
     );
     res.sendStatus(201);
   } catch (error) {
@@ -33,8 +40,13 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { fecha, descripcion } = req.body;
+
   try {
-    await pool.query('UPDATE feriados SET fecha = $1, descripcion = $2 WHERE id = $3', [fecha, descripcion, id]);
+    const fechaNormalizada = normalizarFecha(fecha);
+    await pool.query(
+      'UPDATE feriados SET fecha = $1, descripcion = $2 WHERE id = $3',
+      [fechaNormalizada, descripcion, id]
+    );
     res.sendStatus(200);
   } catch (error) {
     console.error('Error al actualizar feriado:', error);
