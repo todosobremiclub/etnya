@@ -154,7 +154,8 @@
       <input type="text" id="modalidad" disabled>
 
       <label for="monto">Monto:</label>
-      <input type="number" id="monto" disabled>
+      <input type="number" id="montoParcial" disabled style="display: none;">
+
 
       <label><input type="checkbox" id="parcial"> Pago parcial</label>
 
@@ -184,32 +185,27 @@
   const alumnos = [];
   let tiposClase = [];
 
-  const busquedaInput = document.getElementById("busqueda");
-  const alumnoSelect = document.getElementById("alumno");
+  const alumnoSelect = document.getElementById("alumno-select");
+alumnos.forEach(a => {
+  const option = document.createElement("option");
+  option.value = a.id;
+  option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+  alumnoSelect.appendChild(option);
+});
+
+$('#alumno-select').trigger('change.select2');
+
 
   // Inicializar Select2 después de que DOM esté listo
   $(document).ready(() => {
-    $('#alumno').select2({
+    $('#alumno-select').select2({
+
       placeholder: "Seleccionar alumno",
       width: '100%'
     });
   });
 
-  busquedaInput.addEventListener("input", () => {
-    const filtro = busquedaInput.value.toLowerCase();
-    alumnoSelect.innerHTML = '';
-    alumnos
-      .filter(a =>
-        a.apellido.toLowerCase().includes(filtro) ||
-        a.numero_alumno.toString().includes(filtro)
-      )
-      .forEach(a => {
-        const option = document.createElement("option");
-        option.value = a.id;
-        option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
-        alumnoSelect.appendChild(option);
-      });
-
+  
     // Refrescar Select2
     $('#alumno').trigger('change.select2');
   });
@@ -225,11 +221,14 @@
   });
 
   document.getElementById("parcial").addEventListener("change", (e) => {
-    document.getElementById("montoParcial").disabled = !e.target.checked;
-  });
+  const montoParcial = document.getElementById("montoParcial");
+  montoParcial.disabled = !e.target.checked;
+  montoParcial.style.display = e.target.checked ? 'block' : 'none';
+});
+
 
   async function guardarPago() {
-    const alumnoId = $('#alumno').val();
+    const alumnoId = $('#alumno-select').val();
     const mes = document.getElementById("mesPago").value;
     const monto = document.getElementById("parcial").checked
       ? document.getElementById("montoParcial").value
@@ -281,15 +280,26 @@
   }
 
   window.onload = async () => {
-    const resAlumnos = await fetch('/alumnos');
-    const dataAlumnos = await resAlumnos.json();
-    alumnos.push(...dataAlumnos);
+  const resAlumnos = await fetch('/alumnos');
+  const dataAlumnos = await resAlumnos.json();
+  alumnos.push(...dataAlumnos);
 
-    const resTipos = await fetch('/tipos-clase');
-    tiposClase = await resTipos.json();
+  const resTipos = await fetch('/tipos-clase');
+  tiposClase = await resTipos.json();
 
-    await cargarPagos();
-  };
+  // Llenar el select con los datos ya cargados
+  alumnos.forEach(a => {
+    const option = document.createElement("option");
+    option.value = a.id;
+    option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+    alumnoSelect.appendChild(option);
+  });
+
+  $('#alumno-select').trigger('change.select2');
+
+  await cargarPagos();
+};
+
 </script>
 
 </body>
