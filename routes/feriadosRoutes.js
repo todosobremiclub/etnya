@@ -24,7 +24,9 @@ router.post('/', async (req, res) => {
   const { fecha, descripcion } = req.body;
 
   try {
-    const fechaNormalizada = normalizarFecha(fecha);
+    const fechaNormalizada = new Date(fecha + 'T00:00:00');
+const fechaISO = fechaNormalizada.toISOString().split('T')[0];
+
     await pool.query(
       'INSERT INTO feriados (fecha, descripcion) VALUES ($1, $2)',
       [fechaNormalizada, descripcion]
