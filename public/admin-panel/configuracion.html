@@ -321,7 +321,12 @@ async function cargarFeriados() {
   document.getElementById('formFeriado').addEventListener('submit', async function(e) {
     e.preventDefault();
     const form = e.target;
-    const datos = { fecha: form.fecha.value, descripcion: form.descripcion.value };
+    const selectedDate = new Date(form.fecha.value);
+const adjustedDate = new Date(selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000);
+const fechaISO = adjustedDate.toISOString().split('T')[0];
+
+const datos = { fecha: fechaISO, descripcion: form.descripcion.value };
+
     const res = await fetch(`/feriados${editandoFeriadoId ? '/' + editandoFeriadoId : ''}`, {
       method: editandoFeriadoId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
