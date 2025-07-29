@@ -318,29 +318,32 @@ async function cargarFeriados() {
     form.querySelector('button[type="submit"]').textContent = "Actualizar";
   }
 
-  document.getElementById('formFeriado').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = e.target;
-    const selectedDate = new Date(form.fecha.value);
-const adjustedDate = new Date(selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000);
-const fechaISO = adjustedDate.toISOString().split('T')[0];
+ document.getElementById('formFeriado').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
 
-const datos = { fecha: fechaISO, descripcion: form.descripcion.value };
+  // NO usar Date() para evitar desfases por zona horaria
+  const datos = {
+    fecha: form.fecha.value, // viene como '2025-08-01' sin desfase
+    descripcion: form.descripcion.value
+  };
 
-    const res = await fetch(`/feriados${editandoFeriadoId ? '/' + editandoFeriadoId : ''}`, {
-      method: editandoFeriadoId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos)
-    });
-    if (res.ok) {
-      form.reset();
-      editandoFeriadoId = null;
-      form.querySelector('button[type="submit"]').textContent = "Guardar";
-      cargarFeriados();
-    } else {
-      alert('Error al guardar feriado');
-    }
+  const res = await fetch(`/feriados${editandoFeriadoId ? '/' + editandoFeriadoId : ''}`, {
+    method: editandoFeriadoId ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos)
   });
+
+  if (res.ok) {
+    form.reset();
+    editandoFeriadoId = null;
+    form.querySelector('button[type="submit"]').textContent = "Guardar";
+    cargarFeriados();
+  } else {
+    alert('Error al guardar feriado');
+  }
+});
+
 
   async function eliminarFeriado(id) {
     if (!confirm('¿Eliminar este feriado?')) return;
