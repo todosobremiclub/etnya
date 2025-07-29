@@ -226,36 +226,36 @@ $(document).ready(() => {
 });
 
 
-  async function guardarPago() {
-    const alumnoId = $('#alumno-select').val();
-    const mes = document.getElementById("mesPago").value;
-    const monto = document.getElementById("parcial").checked
-      ? document.getElementById("montoParcial").value
-      : document.getElementById("montoParcial").value;
+ async function guardarPago() {
+  const alumnoId = $('#alumno-select').val();
+  const mes = document.getElementById("mesPago").value;
+  const monto = document.getElementById("parcial").checked
+    ? document.getElementById("montoParcial").value
+    : document.getElementById("monto").value;
 
-
-    if (!alumnoId || !mes || !monto) {
-      alert("Faltan datos obligatorios.");
-      return;
-    }
-
-    const res = await fetch('/pagos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        alumno_id: alumnoId,
-        mes_pagado: mes,
-        monto: parseFloat(monto)
-      })
-    });
-
-    if (res.ok) {
-      alert("Pago registrado con éxito.");
-      await cargarPagos();
-    } else {
-      alert("Error al registrar el pago.");
-    }
+  if (!alumnoId || !mes || !monto) {
+    alert("Faltan datos obligatorios.");
+    return;
   }
+
+  const res = await fetch('/pagos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      alumno_id: alumnoId,
+      mes_pagado: mes,
+      monto: parseFloat(monto)
+    })
+  });
+
+  if (res.ok) {
+    alert("Pago registrado con éxito.");
+    await cargarPagos();
+  } else {
+    alert("Error al registrar el pago.");
+  }
+}
+
 
   async function cargarPagos() {
     const res = await fetch('/pagos');
