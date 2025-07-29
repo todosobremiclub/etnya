@@ -186,15 +186,6 @@
   let tiposClase = [];
 
   const alumnoSelect = document.getElementById("alumno-select");
-alumnos.forEach(a => {
-  const option = document.createElement("option");
-  option.value = a.id;
-  option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
-  alumnoSelect.appendChild(option);
-});
-
-$('#alumno-select').trigger('change.select2');
-
 
   
   // Inicializar Select2 después de que DOM esté listo
@@ -279,7 +270,7 @@ $(document).ready(() => {
     });
   }
 
-  window.onload = async () => {
+ window.onload = async () => {
   const resAlumnos = await fetch('/alumnos');
   const dataAlumnos = await resAlumnos.json();
   alumnos.push(...dataAlumnos);
@@ -288,6 +279,9 @@ $(document).ready(() => {
   tiposClase = await resTipos.json();
 
   // Llenar el select con los datos ya cargados
+  const alumnoSelect = document.getElementById("alumno-select");
+  alumnoSelect.innerHTML = '';
+
   alumnos.forEach(a => {
     const option = document.createElement("option");
     option.value = a.id;
@@ -295,9 +289,12 @@ $(document).ready(() => {
     alumnoSelect.appendChild(option);
   });
 
+  // Refrescar Select2 con datos nuevos
+  $('#alumno-select').trigger('change.select2');
 
   await cargarPagos();
 };
+
 
 </script>
 
