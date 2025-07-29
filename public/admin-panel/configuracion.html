@@ -281,6 +281,13 @@
   return `${day}/${month}/${year}`;
 }
 
+function formatFecha(fechaStr) {
+  // Solo toma los primeros 10 caracteres (YYYY-MM-DD)
+  const clean = fechaStr.slice(0, 10); 
+  const [year, month, day] = clean.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 async function cargarFeriados() {
   const res = await fetch('/feriados');
   const feriados = await res.json();
@@ -291,7 +298,7 @@ async function cargarFeriados() {
   tr.classList.add('fila-feriado');
   if (!feriadosVisibles) tr.classList.add('fila-oculta');
   tr.innerHTML = `
-    <td>${f.fecha.split('-').reverse().join('/')}</td>
+    <td>${formatFecha(f.fecha)}</td>
     <td>${f.descripcion}</td>
     <td class="acciones">
       <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
