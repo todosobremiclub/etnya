@@ -276,7 +276,8 @@
   let feriadosVisibles = false;
 
   function parseFecha(fechaStr) {
-  const [year, month, day] = fechaStr.split('-');
+  const clean = fechaStr.slice(0, 10); // '2025-08-01'
+  const [year, month, day] = clean.split('-');
   return `${day}/${month}/${year}`;
 }
 
