@@ -237,27 +237,56 @@ $(document).ready(() => {
 }
 
 
-  async function cargarPagos() {
-    const res = await fetch('/pagos');
-    const pagos = await res.json();
-    const tbody = document.getElementById("tbodyPagos");
-    tbody.innerHTML = '';
+ async function cargarPagos() {
+  const res = await fetch('/pagos');
+  const pagos = await res.json();
+  const tbody = document.getElementById("tbodyPagos");
+  tbody.innerHTML = '';
 
-    pagos.forEach(p => {
-      const alumno = alumnos.find(a => a.id === p.alumno_id);
-      const tipo = tiposClase.find(t => t.modalidad === alumno?.tipo_clase);
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${alumno?.numero_alumno || '-'}</td>
-        <td>${alumno ? alumno.nombre + ' ' + alumno.apellido : '-'}</td>
-        <td>${tipo?.modalidad || '-'}</td>
+  const pagosAgrupados = {};
+
+  pagos.forEach(p => {
+    const alumno = alumnos.find(a => a.id === p.alumno_id);
+    if (!alumno) return;
+
+    const key = `${alumno.numero_alumno} - ${alumno.apellido}, ${alumno.nombre}`;
+    if (!pagosAgrupados[key]) pagosAgrupados[key] = [];
+    pagosAgrupados[key].push({ ...p, alumno });
+  });
+
+  let grupoIndex = 0;
+
+  for (const nombreAlumno in pagosAgrupados) {
+    const grupoId = `grupo-${grupoIndex++}`;
+
+    // Encabezado clickeable
+    const filaTitulo = document.createElement("tr");
+    filaTitulo.style.cursor = "pointer";
+    filaTitulo.style.backgroundColor = "#f3d6dd";
+    filaTitulo.style.fontWeight = "bold";
+    filaTitulo.innerHTML = `<td colspan="6" onclick="toggleGrupo('${grupoId}')">${nombreAlumno}</td>`;
+    tbody.appendChild(filaTitulo);
+
+    // Filas ocultables
+    pagosAgrupados[nombreAlumno].forEach(p => {
+      const tipo = tiposClase.find(t => t.modalidad === p.alumno.tipo_clase);
+      const tr = document.createElement("tr");
+      tr.classList.add(grupoId);
+      tr.style.display = 'none';
+      tr.innerHTML = `
+        <td>${p.alumno.numero_alumno}</td>
+        <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+        <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
         <td>${p.mes_pagado}</td>
         <td>$${parseFloat(p.monto).toFixed(2)}</td>
         <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
       `;
-      tbody.appendChild(row);
+      tbody.appendChild(tr);
     });
   }
+}
+
+
 
  window.onload = async () => {
   const resAlumnos = await fetch('/alumnos');
@@ -301,7 +330,12 @@ $(document).ready(() => {
   await cargarPagos();
 };
 
-
+function toggleGrupo(grupoId) {
+    const filas = document.querySelectorAll(`.${grupoId}`);
+    filas.forEach(f => {
+      f.style.display = (f.style.display === 'none') ? '' : 'none';
+    });
+  }
 
 </script>
 
