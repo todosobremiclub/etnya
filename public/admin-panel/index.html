@@ -411,7 +411,13 @@ function formatearFecha(fechaISO) {
       <td>${alumno.nombre}</td>
       <td>${alumno.fecha_nacimiento ? formatearFecha(alumno.fecha_nacimiento) : ''}</td>
       <td>${alumno.edad || ''}</td>
-      <td>${alumno.telefono || ''}</td>
+      <td>
+  ${alumno.telefono || ''}
+  ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp">
+    🟢
+  </a>` : ''}
+</td>
+
       <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
       <td class="clase" title="${alumno.tipo_clase || ''}">${alumno.tipo_clase || ''}</td>
