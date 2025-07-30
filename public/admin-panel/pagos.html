@@ -280,19 +280,18 @@ $(document).ready(() => {
   });
 
   // Listener para mostrar modalidad y monto
-  alumnoSelect.addEventListener("change", () => {
-    const id = alumnoSelect.value;
-    const alumno = alumnos.find(a => a.id == id);
-    if (!alumno) return;
+ alumnoSelect.addEventListener("change", () => {
+  const id = alumnoSelect.value;
+  const alumno = alumnos.find(a => a.id == id);
+  if (!alumno) return;
 
-    const tipo = tiposClase.find(t =>
-  t.modalidad.toLowerCase().trim().includes(alumno.tipo_clase.toLowerCase().trim())
-);
+  // Coincidencia por ID real de modalidad
+  const tipo = tiposClase.find(t => t.id === alumno.tipo_clase);
 
+  document.getElementById("modalidad").value = tipo?.modalidad || '';
+  document.getElementById("monto").value = tipo?.precio || '';
+});
 
-    document.getElementById("modalidad").value = tipo?.modalidad || alumno.tipo_clase || '';
-    document.getElementById("monto").value = tipo?.precio || '';
-  });
 
   // Activar Select2 y cargar pagos
   $('#alumno-select').trigger('change.select2');
