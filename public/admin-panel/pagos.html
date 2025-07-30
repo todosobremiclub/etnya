@@ -197,19 +197,7 @@ $(document).ready(() => {
 });
  
 
-  alumnoSelect.addEventListener("change", () => {
-  const id = alumnoSelect.value;
-  const alumno = alumnos.find(a => a.id == id);
-  if (!alumno) return;
-
-  const tipo = tiposClase.find(t =>
-    t.modalidad.toLowerCase().trim() === alumno.tipo_clase.toLowerCase().trim()
-  );
-
-  document.getElementById("modalidad").value = tipo?.modalidad || alumno.tipo_clase || '';
-  document.getElementById("monto").value = tipo?.precio || '';
-});
-
+ 
 
   document.getElementById("parcial").addEventListener("change", (e) => {
   const montoParcial = document.getElementById("montoParcial");
