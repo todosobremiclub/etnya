@@ -182,6 +182,11 @@
   </main>
 
   <script>
+
+function normalizarTexto(texto) {
+  return texto.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
   const alumnos = [];
   let tiposClase = [];
 
@@ -209,9 +214,18 @@ $(document).ready(() => {
  async function guardarPago() {
   const alumnoId = $('#alumno-select').val();
   const mes = document.getElementById("mesPago").value;
-  const monto = document.getElementById("parcial").checked
-    ? document.getElementById("montoParcial").value
-    : document.getElementById("monto").value;
+  let monto = '';
+
+if (document.getElementById("parcial").checked) {
+  monto = document.getElementById("montoParcial").value;
+  if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
+    alert("Ingresá un monto parcial válido.");
+    return;
+  }
+} else {
+  monto = document.getElementById("monto").value;
+}
+
 
   if (!alumnoId || !mes || !monto) {
     alert("Faltan datos obligatorios.");
@@ -267,22 +281,26 @@ $(document).ready(() => {
     filaTitulo.innerHTML = `<td colspan="6" onclick="toggleGrupo('${grupoId}')">${nombreAlumno}</td>`;
     tbody.appendChild(filaTitulo);
 
-    // Filas ocultables
-    pagosAgrupados[nombreAlumno].forEach(p => {
-      const tipo = tiposClase.find(t => t.modalidad === p.alumno.tipo_clase);
-      const tr = document.createElement("tr");
-      tr.classList.add(grupoId);
-      tr.style.display = 'none';
-      tr.innerHTML = `
-        <td>${p.alumno.numero_alumno}</td>
-        <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-        <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-        <td>${p.mes_pagado}</td>
-        <td>$${parseFloat(p.monto).toFixed(2)}</td>
-        <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    /// Filas ocultables
+pagosAgrupados[nombreAlumno].forEach(p => {
+  const tipo = tiposClase.find(t => t.modalidad === p.alumno.tipo_clase);
+  const [año, mes] = p.mes_pagado.split('-');
+  const mesFormateado = `${mes}/${año}`;
+
+  const tr = document.createElement("tr");
+  tr.classList.add(grupoId);
+  tr.style.display = 'none';
+  tr.innerHTML = `
+    <td>${p.alumno.numero_alumno}</td>
+    <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+    <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
+    <td>${mesFormateado}</td>
+    <td>$${parseFloat(p.monto).toFixed(2)}</td>
+    <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
   }
 }
 
@@ -314,10 +332,11 @@ $(document).ready(() => {
   const alumno = alumnos.find(a => a.id == id);
   if (!alumno) return;
 
-  // Comparar por texto de modalidad, como antes
-  const tipo = tiposClase.find(t =>
-    t.modalidad.toLowerCase().trim() === alumno.tipo_clase.toLowerCase().trim()
-  );
+  
+const tipo = tiposClase.find(t =>
+  normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
+);
+
 
   document.getElementById("modalidad").value = alumno.tipo_clase || '';
   document.getElementById("monto").value = tipo?.precio || '';
