@@ -285,12 +285,15 @@ $(document).ready(() => {
   const alumno = alumnos.find(a => a.id == id);
   if (!alumno) return;
 
-  // Coincidencia por ID real de modalidad
-  const tipo = tiposClase.find(t => t.id === alumno.tipo_clase);
+  // Comparar por texto de modalidad, como antes
+  const tipo = tiposClase.find(t =>
+    t.modalidad.toLowerCase().trim() === alumno.tipo_clase.toLowerCase().trim()
+  );
 
-  document.getElementById("modalidad").value = tipo?.modalidad || '';
+  document.getElementById("modalidad").value = alumno.tipo_clase || '';
   document.getElementById("monto").value = tipo?.precio || '';
 });
+
 
 
   // Activar Select2 y cargar pagos
