@@ -220,6 +220,24 @@
   color: #555;
 }
 
+#sedeSelector button {
+  background-color: #e1c6cd;
+  border: none;
+  padding: 10px 20px;
+  margin: 0 6px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #6d3e4e;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#sedeSelector .tile-seleccionada {
+  background-color: #91586d;
+  color: white;
+}
+
+
 </style>
 
 
@@ -244,19 +262,24 @@
  
 
   <div class="search-filter">
-    <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
-    <select id="filtroClase" onchange="cargarAlumnos()">
-     
-    </select>
-    <label style="display: flex; align-items: center; gap: 6px;">
-      <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
-      Mostrar inactivos
-    </label>
-  </div>
+  <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
+  <select id="filtroClase" onchange="cargarAlumnos()"></select>
+  <label style="display: flex; align-items: center; gap: 6px;">
+    <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
+    Mostrar inactivos
+  </label>
+</div>
 
-  <button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar nuevo alumna/o</button>
+<!-- 🔽 Tiles para seleccionar sede -->
+<div id="sedeSelector" style="text-align: center; margin: 20px 0;">
+  <button onclick="seleccionarSede('Todas')" class="tile-seleccionada">Todas</button>
+  <button onclick="seleccionarSede('Craig')">Craig</button>
+  <button onclick="seleccionarSede('Goyena')">Goyena</button>
+</div>
 
- <div id="contenedorFormulario" style="display: none;">
+<button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar nuevo alumna/o</button>
+
+<div id="contenedorFormulario" style="display: none;">
   <form id="formAlumno">
     <input type="number" placeholder="N° Alumna/o" name="numero_alumno" required>
     <input type="text" placeholder="Nombre" name="nombre" required>
@@ -265,6 +288,7 @@
     <label>Fecha de nacimiento:
       <input type="date" name="fecha_nacimiento" onchange="calcularEdad(this)">
     </label>
+
 
     <input type="number" placeholder="Edad" name="edad" readonly>
     <input type="text" placeholder="Teléfono" name="telefono">
@@ -347,6 +371,9 @@ function formatearFecha(fechaISO) {
   const [a, m, d] = fechaISO.slice(0, 10).split("-");
   return `${d}-${m}-${a}`;
 }
+
+let sedeSeleccionada = 'Todas';
+
 
   let alumnosGlobal = [];
 
@@ -431,11 +458,14 @@ function formatearFecha(fechaISO) {
       </td>
     `;
 
-    if (alumno.sede === 'Craig') {
-      tbodyCraig.appendChild(tr);
-    } else if (alumno.sede === 'Goyena') {
-      tbodyGoyena.appendChild(tr);
-    }
+    if (sedeSeleccionada === 'Todas' || alumno.sede === sedeSeleccionada) {
+  if (alumno.sede === 'Craig') {
+    tbodyCraig.appendChild(tr);
+  } else if (alumno.sede === 'Goyena') {
+    tbodyGoyena.appendChild(tr);
+  }
+}
+
   });
 }
 
@@ -599,6 +629,16 @@ async function cargarOpcionesFiltroClase() {
   cargarOpcionesTipoClase();
   cargarOpcionesFiltroClase();
 };
+function seleccionarSede(sede) {
+  sedeSeleccionada = sede;
+  document.querySelectorAll('#sedeSelector button').forEach(btn => {
+    btn.classList.remove('tile-seleccionada');
+    if (btn.textContent === sede) {
+      btn.classList.add('tile-seleccionada');
+    }
+  });
+  renderizarAlumnos();
+}
 
 
 </script>
