@@ -281,25 +281,32 @@ if (document.getElementById("parcial").checked) {
     filaTitulo.innerHTML = `<td colspan="6" onclick="toggleGrupo('${grupoId}')">${nombreAlumno}</td>`;
     tbody.appendChild(filaTitulo);
 
-    /// Filas ocultables
+   // Filas ocultables
 pagosAgrupados[nombreAlumno].forEach(p => {
-  const tipo = tiposClase.find(t => t.modalidad === p.alumno.tipo_clase);
-  const [año, mes] = p.mes_pagado.split('-');
-  const mesFormateado = `${mes}/${año}`;
-
   const tr = document.createElement("tr");
   tr.classList.add(grupoId);
   tr.style.display = 'none';
+
+  // Convertir aaa-mm a mm/aaaa
+  const [año, mes] = p.mes_pagado.split('-');
+  const mesFormateado = `${mes}/${año}`;
+
+  // Buscar la modalidad y el precio correspondiente
+  const tipo = tiposClase.find(t =>
+    t.modalidad.toLowerCase() === p.alumno.tipo_clase.toLowerCase()
+  );
+
   tr.innerHTML = `
     <td>${p.alumno.numero_alumno}</td>
     <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
     <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-    <td>${mesFormateado}</td>
     <td>$${parseFloat(p.monto).toFixed(2)}</td>
+    <td>${mesFormateado}</td>
     <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
   `;
   tbody.appendChild(tr);
 });
+
 
   }
 }
