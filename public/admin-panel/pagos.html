@@ -267,8 +267,19 @@ $(document).ready(() => {
   const resTipos = await fetch('/tipos-clase');
   tiposClase = await resTipos.json();
 
-  
-  // Listener de cambio correctamente vinculado
+  // 🔧 ESTA LÍNEA ES CLAVE
+  const alumnoSelect = document.getElementById("alumno-select");
+
+  // Cargar opciones en el select
+  alumnoSelect.innerHTML = '';
+  alumnos.forEach(a => {
+    const option = document.createElement("option");
+    option.value = a.id;
+    option.textContent = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+    alumnoSelect.appendChild(option);
+  });
+
+  // Listener para mostrar modalidad y monto
   alumnoSelect.addEventListener("change", () => {
     const id = alumnoSelect.value;
     const alumno = alumnos.find(a => a.id == id);
@@ -282,11 +293,11 @@ $(document).ready(() => {
     document.getElementById("monto").value = tipo?.precio || '';
   });
 
+  // Activar Select2 y cargar pagos
   $('#alumno-select').trigger('change.select2');
-
-
   await cargarPagos();
 };
+
 
 
 </script>
