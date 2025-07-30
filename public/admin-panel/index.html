@@ -482,6 +482,8 @@ form.contacto_nombre.value = alumno.contacto_nombre;
 form.contacto_telefono.value = alumno.contacto_telefono;
 form.querySelector('[name="fecha_inicio"]').value = alumno.fecha_inicio?.slice(0, 10) || '';
 form.tipo_clase.value = alumno.tipo_clase;
+form.sede.value = alumno.sede;
+
     form.activo.checked = alumno.activo;
     form.dataset.editandoId = id;
   } catch (err) {
@@ -508,19 +510,20 @@ form.tipo_clase.value = alumno.tipo_clase;
     e.preventDefault();
     const form = e.target;
     const datos = {
-      numero_alumno: form.numero_alumno.value,
-      nombre: form.nombre.value,
-      apellido: form.apellido.value,
-      
-      fecha_nacimiento: form.fecha_nacimiento.value,
-      edad: form.edad.value,
-      telefono: form.telefono.value,
-      contacto_nombre: form.contacto_nombre.value,
-      contacto_telefono: form.contacto_telefono.value,
-      fecha_inicio: form.fecha_inicio.value,
-      tipo_clase: form.tipo_clase.value,
-      activo: form.activo.checked
-    };
+  numero_alumno: form.numero_alumno.value,
+  nombre: form.nombre.value,
+  apellido: form.apellido.value,
+  fecha_nacimiento: form.fecha_nacimiento.value,
+  edad: form.edad.value,
+  telefono: form.telefono.value,
+  contacto_nombre: form.contacto_nombre.value,
+  contacto_telefono: form.contacto_telefono.value,
+  fecha_inicio: form.fecha_inicio.value,
+  tipo_clase: form.tipo_clase.value,
+  sede: form.sede.value,
+  activo: form.activo.checked
+};
+
 
     const editandoId = form.dataset.editandoId;
 
