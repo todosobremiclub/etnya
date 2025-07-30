@@ -89,9 +89,10 @@ router.put('/:id', async (req, res) => {
   try {
     // Validar si ese número de alumno ya existe en otro registro
     const existente = await pool.query(
-      'SELECT id FROM alumnos WHERE numero_alumno = $1 AND id != $2',
-      [numero_alumno, id]
-    );
+  'SELECT id FROM alumnos WHERE numero_alumno = $1 AND sede = $2 AND id != $3',
+  [numero_alumno, sede, id]
+);
+
 
     if (existente.rows.length > 0) {
       return res.status(400).send('El número de alumno ya está en uso por otro alumno.');
