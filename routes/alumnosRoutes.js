@@ -97,7 +97,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).send('El número de alumno ya está en uso por otro alumno.');
     }
 
-    await pool.query(
+   
    await pool.query(
   `UPDATE alumnos SET
     numero_alumno = $1,
