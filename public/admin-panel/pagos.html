@@ -286,8 +286,9 @@ $(document).ready(() => {
     if (!alumno) return;
 
     const tipo = tiposClase.find(t =>
-      t.modalidad.toLowerCase().trim() === alumno.tipo_clase.toLowerCase().trim()
-    );
+  t.modalidad.toLowerCase().trim().includes(alumno.tipo_clase.toLowerCase().trim())
+);
+
 
     document.getElementById("modalidad").value = tipo?.modalidad || alumno.tipo_clase || '';
     document.getElementById("monto").value = tipo?.precio || '';
