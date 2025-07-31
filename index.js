@@ -18,6 +18,8 @@ app.use('/alumnos', alumnosRoutes);
 app.use('/tipos-clase', tiposClaseRoutes);
 app.use('/feriados', feriadosRoutes);
 app.use('/pagos', pagosRoutes); // ✅ endpoint para registrar pagos
+app.use('/cuentas', require('./routes/cuentasRoutes'));
+
 
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, 'public/admin-panel')));
