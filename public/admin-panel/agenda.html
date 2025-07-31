@@ -202,6 +202,12 @@
 </main>
 
 <script>
+  if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+  }
+</script>
+
+
   const horas = Array.from({ length: 12 }, (_, i) => `${9 + i}:00`);
   let offsetSemanas = 0;
 
