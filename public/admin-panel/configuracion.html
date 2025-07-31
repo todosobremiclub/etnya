@@ -189,6 +189,10 @@
   <a href="pagos.html">💳 Pagos</a>
   <a href="agenda.html">📅 Agenda</a>
   <a href="configuracion.html">⚙️ Configuración</a>
+
+  <a href="#" onclick="cerrarSesion()" style="display: block; padding: 10px 16px; color: white; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px;">
+    🚪 Cerrar sesión
+  </a>
 </div>
 <main>
   <div class="header">
@@ -235,7 +239,9 @@
 <script>
 
 if (localStorage.getItem('etnya_login') !== 'ok') {
-    window.location.href = 'login.html';
+  window.location.href = 'login.html';
+}
+
 
   // MODALIDADES
   let editandoId = null;
@@ -398,6 +404,12 @@ async function cargarFeriados() {
     cargarTiposClase();
     cargarFeriados();
   };
+
+function cerrarSesion() {
+  localStorage.removeItem('etnya_login');
+  window.location.href = 'login.html';
+}
+
 </script>
 </body>
 </html>
