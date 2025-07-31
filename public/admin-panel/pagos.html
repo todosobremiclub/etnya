@@ -183,6 +183,9 @@
 
   <script>
 
+if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+
 function normalizarTexto(texto) {
   return texto.toLowerCase().trim().replace(/\s+/g, ' ');
 }

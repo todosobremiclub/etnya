@@ -233,6 +233,10 @@
 </main>
 
 <script>
+
+if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+
   // MODALIDADES
   let editandoId = null;
   let filasVisibles = false;
