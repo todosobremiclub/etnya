@@ -4,18 +4,18 @@ const pool = require('../db');
 
 // Registrar un nuevo pago
 router.post('/', async (req, res) => {
-  const { alumno_id, mes_pagado, monto } = req.body;
+  const { alumno_id, mes_pagado, monto, cuenta } = req.body;
   const fecha_pago = new Date(); // Fecha actual
 
-  if (!alumno_id || !mes_pagado || !monto) {
+  if (!alumno_id || !mes_pagado || !monto || !cuenta) {
     return res.status(400).json({ error: 'Faltan datos obligatorios.' });
   }
 
   try {
     await pool.query(
-      `INSERT INTO pagos (alumno_id, mes_pagado, monto, fecha_pago)
-       VALUES ($1, $2, $3, $4)`,
-      [alumno_id, mes_pagado, monto, fecha_pago]
+      `INSERT INTO pagos (alumno_id, mes_pagado, monto, cuenta, fecha_pago)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [alumno_id, mes_pagado, monto, cuenta, fecha_pago]
     );
     res.status(200).json({ message: 'Pago registrado correctamente.' });
   } catch (error) {
@@ -51,3 +51,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+

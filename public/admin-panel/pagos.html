@@ -173,6 +173,12 @@
     <label for="monto">Monto:</label>
     <input type="number" id="monto" disabled>
 
+<label for="cuenta">Cuenta:</label>
+<select id="cuenta" name="cuenta">
+  <option value="">Seleccionar cuenta</option>
+</select>
+
+
     <!-- Checkbox Pago parcial -->
     <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
       <label for="parcial" style="display: flex; align-items: center; font-size: 14px; gap: 6px; cursor: pointer;">
@@ -210,6 +216,8 @@
         <th>Mes Pagado</th>
         <th>Monto</th>
         <th>Fecha de Pago</th>
+<th>Cuenta</th>
+
       </tr>
     </thead>
     <tbody id="tbodyPagos"></tbody>
@@ -257,6 +265,8 @@ $(document).ready(() => {
   const alumnoId = $('#alumno-select').val();
   const mes = document.getElementById("mesPago").value;
   let monto = '';
+const cuenta = document.getElementById("cuenta").value;
+
 
 if (document.getElementById("parcial").checked) {
   monto = document.getElementById("montoParcial").value;
@@ -278,10 +288,12 @@ if (document.getElementById("parcial").checked) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      alumno_id: alumnoId,
-      mes_pagado: mes,
-      monto: parseFloat(monto)
-    })
+  alumno_id: alumnoId,
+  mes_pagado: mes,
+  monto: parseFloat(monto),
+  cuenta
+})
+
   });
 
   if (res.ok) {
@@ -369,7 +381,9 @@ document.getElementById("buscadorPagos").addEventListener("input", function () {
     ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
     <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
   </td>
+  <td>${p.cuenta || '-'}</td>
 `;
+
 tbody.appendChild(tr);
 
     });
@@ -383,6 +397,8 @@ tbody.appendChild(tr);
   const resAlumnos = await fetch('/alumnos');
   const dataAlumnos = await resAlumnos.json();
   alumnos.push(...dataAlumnos);
+await cargarCuentas();
+
 
   const resTipos = await fetch('/tipos-clase');
   tiposClase = await resTipos.json();
@@ -456,6 +472,25 @@ async function eliminarPago(id) {
     alert("Error al eliminar el pago.");
   }
 }
+
+async function cargarCuentas() {
+  try {
+    const res = await fetch('/cuentas');
+    const cuentas = await res.json();
+    const select = document.getElementById('cuenta');
+    select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+
+    cuentas.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.nombre;
+      option.textContent = c.nombre;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error al cargar cuentas:', err);
+  }
+}
+
 
 </script>
 
