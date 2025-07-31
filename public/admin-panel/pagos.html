@@ -393,7 +393,9 @@ tbody.appendChild(tr);
   alumnos.forEach(a => {
     const option = document.createElement("option");
     option.value = a.id;
-    option.textContent = `${a.numero_alumno}${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+    const numeroFormateado = String(a.numero_alumno).padStart(2, '0');
+option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+
     alumnoSelect.appendChild(option);
   });
 
