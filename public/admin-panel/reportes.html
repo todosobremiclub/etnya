@@ -53,6 +53,23 @@
       margin-bottom: 30px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+    }
   </style>
 </head>
 <body>
@@ -112,7 +129,56 @@
       window.location.href = 'login.html';
     }
 
-    // Acá se irán implementando los fetch a /reportes/*
+    // Generador de tabla básica
+    function renderTabla(idContenedor, columnas, datos) {
+      const contenedor = document.getElementById(idContenedor);
+      contenedor.innerHTML = '';
+
+      if (!datos.length) {
+        contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
+        return;
+      }
+
+      const tabla = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tbody = document.createElement('tbody');
+
+      const filaEncabezado = document.createElement('tr');
+      columnas.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        filaEncabezado.appendChild(th);
+      });
+      thead.appendChild(filaEncabezado);
+
+      datos.forEach(row => {
+        const tr = document.createElement('tr');
+        columnas.forEach(col => {
+          const td = document.createElement('td');
+          td.textContent = row[col.toLowerCase()] || '-';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      tabla.appendChild(thead);
+      tabla.appendChild(tbody);
+      contenedor.appendChild(tabla);
+    }
+
+    async function cargarReporteCuenta() {
+      try {
+        const res = await fetch('/reportes/por-cuenta');
+        const data = await res.json();
+        renderTabla('reporte-cuenta', ['Cuenta', 'Total'], data);
+      } catch (error) {
+        console.error('Error al cargar reporte de cuenta:', error);
+      }
+    }
+
+    window.onload = () => {
+      cargarReporteCuenta();
+    };
   </script>
 </body>
 </html>
