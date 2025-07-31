@@ -37,4 +37,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Eliminar un pago por ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query('DELETE FROM pagos WHERE id = $1', [id]);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error al eliminar pago:', error);
+    res.status(500).json({ error: 'Error al eliminar el pago.' });
+  }
+});
+
 module.exports = router;

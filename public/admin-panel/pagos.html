@@ -169,10 +169,15 @@
   <label for="monto">Monto:</label>
   <input type="number" id="monto" disabled>
 
-  <div style="margin: 10px 0; display: flex; justify-content: flex-end; align-items: center; font-size: 14px; gap: 6px;">
-  <label for="parcial">Pago parcial</label>
-  <input type="checkbox" id="parcial" style="margin: 0;">
+  <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+  <button onclick="guardarPago()" style="margin: 0;">Guardar Pago</button>
+  
+  <label for="parcial" style="display: flex; align-items: center; font-size: 14px; gap: 6px; cursor: pointer;">
+    <input type="checkbox" id="parcial" style="margin: 0;">
+    Pago parcial
+  </label>
 </div>
+
 
 
 <div id="grupoMontoManual" style="display: none;">
@@ -303,7 +308,18 @@ document.getElementById("buscadorPagos").addEventListener("input", function () {
 
   document.querySelectorAll("#tbodyPagos tr").forEach(tr => {
     const texto = tr.textContent.toLowerCase();
-    tr.style.display = texto.includes(filtro) ? "" : "none";
+    const visible = texto.includes(filtro);
+    tr.style.display = visible ? "" : "none";
+
+    // Si es título de grupo, mostrarlo si alguno de sus hijos matchea
+    if (tr.querySelector('td[colspan="6"]')) {
+      const grupoId = tr.querySelector('td').getAttribute('onclick')?.match(/'(.*?)'/)?.[1];
+      const hijos = document.querySelectorAll(`.${grupoId}`);
+      const algunoVisible = Array.from(hijos).some(h =>
+        h.textContent.toLowerCase().includes(filtro)
+      );
+      tr.style.display = algunoVisible ? "" : "none";
+    }
   });
 });
 
@@ -336,13 +352,18 @@ document.getElementById("buscadorPagos").addEventListener("input", function () {
         normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
       );
 
-      tr.innerHTML = `
-        <td>${p.alumno.numero_alumno}</td>
-        <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-        <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-        <td>${mesFormateado}</td>
-        <td>$${parseFloat(p.monto).toFixed(2)}</td>
-        <td>${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
+     tr.innerHTML = `
+  <td>${p.alumno.numero_alumno}</td>
+  <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+  <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
+  <td>${mesFormateado}</td>
+  <td>$${parseFloat(p.monto).toFixed(2)}</td>
+  <td>
+    ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+    <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
+  </td>
+`;
+
       `;
       tbody.appendChild(tr);
     });
@@ -407,6 +428,20 @@ function cerrarSesion() {
   window.location.href = 'login.html';
 }
 
+async function eliminarPago(id) {
+  if (!confirm("¿Estás seguro de que querés eliminar este pago?")) return;
+
+  const res = await fetch(`/pagos/${id}`, {
+    method: 'DELETE'
+  });
+
+  if (res.ok) {
+    alert("Pago eliminado correctamente.");
+    await cargarPagos();
+  } else {
+    alert("Error al eliminar el pago.");
+  }
+}
 
 </script>
 
