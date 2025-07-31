@@ -171,8 +171,11 @@
 
   <label><input type="checkbox" id="parcial"> Pago parcial</label>
 
+  <div id="grupoMontoManual" style="display: none;">
   <label for="montoParcial">Monto manual:</label>
-  <input type="number" id="montoParcial" disabled style="display: none;">
+  <input type="number" id="montoParcial" disabled>
+</div>
+
 
   <button onclick="guardarPago()">Guardar Pago</button>
 </div>
@@ -223,8 +226,10 @@ $(document).ready(() => {
 
   document.getElementById("parcial").addEventListener("change", (e) => {
   const montoParcial = document.getElementById("montoParcial");
-  montoParcial.disabled = !e.target.checked;
-  montoParcial.style.display = e.target.checked ? 'block' : 'none';
+  const grupo = document.getElementById("grupoMontoManual");
+grupo.style.display = e.target.checked ? 'block' : 'none';
+document.getElementById("montoParcial").disabled = !e.target.checked;
+
 });
 
 
@@ -369,7 +374,7 @@ const tipo = tiposClase.find(t =>
 
 
   // Activar Select2 y cargar pagos
-  $('#alumno-select').trigger('change.select2');
+  $('#alumno-select').trigger('change');
   await cargarPagos();
 };
 
