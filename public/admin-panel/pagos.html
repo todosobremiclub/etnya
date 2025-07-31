@@ -374,12 +374,6 @@ pagosAgrupados[nombreAlumno].forEach(p => {
 
 
 
-  document.getElementById("modalidad").value = alumno.tipo_clase || '';
-  document.getElementById("monto").value = tipo?.precio || '';
-});
-
-
-
   // Activar Select2 y cargar pagos
     alumnoSelect.dispatchEvent(new Event('change')); // <-- fuerza ejecución del cambio
   $('#alumno-select').trigger('change.select2');   // <-- activa Select2 visualmente
