@@ -405,8 +405,12 @@ tbody.appendChild(tr);
   const option = document.createElement("option");
   option.value = a.id;
 
-  const numeroFormateado = String(a.numero_alumno).padStart(2, '0');
-  option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+  let numeroFormateado = a.numero_alumno;
+if (a.numero_alumno < 100) {
+  numeroFormateado = String(a.numero_alumno).padStart(2, '0');
+}
+option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+
 
   alumnoSelect.appendChild(option);
 });
