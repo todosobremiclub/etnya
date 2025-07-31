@@ -129,6 +129,17 @@
         z-index: 1;
       }
     }
+
+.select2-container--default .select2-selection--single {
+  height: 36px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.select2-container .select2-dropdown {
+  font-size: 13px;
+}
+
   </style>
 </head>
 <body>
@@ -390,18 +401,16 @@ tbody.appendChild(tr);
 
   // Cargar opciones en el select
   alumnoSelect.innerHTML = '';
-  alumnos.forEach(a => {
-    const option = document.createElement("option");
-    option.value = a.id;
-    let numeroFormateado = a.numero_alumno;
-if (numeroFormateado < 100) {
-  numeroFormateado = String(a.numero_alumno).padStart(2, '0');
-}
-option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+ alumnos.forEach(a => {
+  const option = document.createElement("option");
+  option.value = a.id;
 
+  const numeroFormateado = String(a.numero_alumno).padStart(2, '0');
+  option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
 
-    alumnoSelect.appendChild(option);
-  });
+  alumnoSelect.appendChild(option);
+});
+
 
   // Listener para mostrar modalidad y monto
  $('#alumno-select').on('change', function () {
