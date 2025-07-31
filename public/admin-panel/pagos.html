@@ -179,8 +179,6 @@
   <input type="number" id="montoParcial" disabled>
 </div>
 
-</div>
-
 
   <button onclick="guardarPago()">Guardar Pago</button>
 </div>
@@ -361,15 +359,19 @@ pagosAgrupados[nombreAlumno].forEach(p => {
   });
 
   // Listener para mostrar modalidad y monto
- alumnoSelect.addEventListener("change", () => {
-  const id = alumnoSelect.value;
+ $('#alumno-select').on('change', function () {
+  const id = this.value;
   const alumno = alumnos.find(a => a.id == id);
   if (!alumno) return;
 
-  
-const tipo = tiposClase.find(t =>
-  normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
-);
+  const tipo = tiposClase.find(t =>
+    normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
+  );
+
+  document.getElementById("modalidad").value = alumno.tipo_clase || '';
+  document.getElementById("monto").value = tipo?.precio || '';
+});
+
 
 
   document.getElementById("modalidad").value = alumno.tipo_clase || '';
