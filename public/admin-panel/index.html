@@ -367,8 +367,11 @@
 
 <script>
 
+<script>
 if (localStorage.getItem('etnya_login') !== 'ok') {
     window.location.href = 'login.html';
+}
+
 
 function formatearFecha(fechaISO) {
   const [a, m, d] = fechaISO.slice(0, 10).split("-");
