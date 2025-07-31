@@ -169,11 +169,16 @@
   <label for="monto">Monto:</label>
   <input type="number" id="monto" disabled>
 
-  <label><input type="checkbox" id="parcial"> Pago parcial</label>
-
-  <div id="grupoMontoManual" style="display: none;">
+  <div style="margin-top: 10px;">
+  <label>
+    <input type="checkbox" id="parcial"> Pago parcial
+  </label>
+</div>
+<div id="grupoMontoManual" style="display: none;">
   <label for="montoParcial">Monto manual:</label>
   <input type="number" id="montoParcial" disabled>
+</div>
+
 </div>
 
 
@@ -225,12 +230,12 @@ $(document).ready(() => {
  
 
   document.getElementById("parcial").addEventListener("change", (e) => {
-  const montoParcial = document.getElementById("montoParcial");
   const grupo = document.getElementById("grupoMontoManual");
-grupo.style.display = e.target.checked ? 'block' : 'none';
-document.getElementById("montoParcial").disabled = !e.target.checked;
-
+  const montoParcial = document.getElementById("montoParcial");
+  grupo.style.display = e.target.checked ? 'block' : 'none';
+  montoParcial.disabled = !e.target.checked;
 });
+
 
 
  async function guardarPago() {
@@ -374,7 +379,9 @@ const tipo = tiposClase.find(t =>
 
 
   // Activar Select2 y cargar pagos
-  $('#alumno-select').trigger('change');
+    alumnoSelect.dispatchEvent(new Event('change')); // <-- fuerza ejecución del cambio
+  $('#alumno-select').trigger('change.select2');   // <-- activa Select2 visualmente
+
   await cargarPagos();
 };
 
