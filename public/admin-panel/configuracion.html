@@ -234,6 +234,23 @@
     </thead>
     <tbody id="tablaFeriados"></tbody>
   </table>
+
+<h2 class="titulo-feriados">Cuentas</h2>
+<form onsubmit="guardarCuenta(); return false;">
+  <input type="text" id="nuevaCuenta" placeholder="Nombre de la cuenta" required>
+  <button type="submit">Guardar</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cuenta</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tbodyCuentas"></tbody>
+</table>
+
 </main>
 
 <script>
