@@ -137,7 +137,22 @@
   <a href="index.html">📋 Alumnos</a>
   <a href="pagos.html">💳 Pagos</a>
   <a href="agenda.html">📅 Agenda</a>
-  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="configuracion.html"⚙️ Configuración</a>
+
+  <button onclick="cerrarSesion()" style="
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  ">
+    🚪 Cerrar sesión
+  </button>
 </div>
 
 
@@ -184,7 +199,8 @@
   <script>
 
 if (localStorage.getItem('etnya_login') !== 'ok') {
-    window.location.href = 'login.html';
+  window.location.href = 'login.html';
+}
 
 function normalizarTexto(texto) {
   return texto.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -365,6 +381,12 @@ function toggleGrupo(grupoId) {
       f.style.display = (f.style.display === 'none') ? '' : 'none';
     });
   }
+
+function cerrarSesion() {
+  localStorage.removeItem('etnya_login');
+  window.location.href = 'login.html';
+}
+
 
 </script>
 
