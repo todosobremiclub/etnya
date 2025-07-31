@@ -244,7 +244,7 @@
 <table>
   <thead>
     <tr>
-      <th>Cuenta</th>
+      <th><span id="flechaCuentas" class="toggle-icon" onclick="toggleCuentas()">▶</span> Cuenta</th>
       <th>Acciones</th>
     </tr>
   </thead>
@@ -403,6 +403,16 @@ async function eliminarFeriado(id) {
   else alert('Error al eliminar');
 }
 
+let cuentasVisibles = false;
+
+function toggleCuentas() {
+  cuentasVisibles = !cuentasVisibles;
+  const icono = document.getElementById('flechaCuentas');
+  icono.textContent = cuentasVisibles ? '▼' : '▶';
+  const filas = document.querySelectorAll('.fila-cuenta');
+  filas.forEach(f => f.classList.toggle('fila-oculta', !cuentasVisibles));
+}
+
 // ------------------- CUENTAS -------------------
 async function cargarCuentas() {
   const res = await fetch('/cuentas');
@@ -412,6 +422,8 @@ async function cargarCuentas() {
 
   cuentas.forEach(c => {
     const tr = document.createElement("tr");
+    tr.classList.add("fila-cuenta");
+    if (!cuentasVisibles) tr.classList.add("fila-oculta");
     tr.innerHTML = `
       <td>${c.nombre}</td>
       <td><button onclick="eliminarCuenta(${c.id})">🗑️</button></td>
