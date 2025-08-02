@@ -203,7 +203,7 @@ async function cargarReporteFechaPago() {
   try {
     const res = await fetch('/reportes/por-fecha-pago');
     const data = await res.json();
-    renderTabla('reporte-fecha-pago', ['Fecha', 'Total'], data);
+    renderTabla('reporte-fecha-pago', ['Mes', 'Total'], data);
   } catch (error) {
     console.error('Error al cargar reporte por fecha de pago:', error);
   }
