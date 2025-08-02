@@ -38,11 +38,11 @@ router.get('/por-mes-pagado', async (req, res) => {
 router.get('/por-fecha-pago', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT TO_CHAR(fecha_pago, 'YYYY-MM-DD') AS fecha, SUM(monto) AS total
+      SELECT TO_CHAR(DATE_TRUNC('month', fecha_pago), 'YYYY-MM') AS mes, SUM(monto) AS total
       FROM pagos
       WHERE fecha_pago IS NOT NULL
-      GROUP BY fecha_pago
-      ORDER BY fecha_pago
+      GROUP BY DATE_TRUNC('month', fecha_pago)
+      ORDER BY mes
     `);
     res.json(result.rows);
   } catch (err) {
