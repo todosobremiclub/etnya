@@ -18,14 +18,14 @@ router.get('/por-cuenta', async (req, res) => {
   }
 });
 
-// 2. Monto por mes pagado
+// 2. Monto por mes pagado (corregido)
 router.get('/por-mes-pagado', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT TO_CHAR(mes_pagado, 'MM/YYYY') AS mes, SUM(monto) AS total
+      SELECT TO_CHAR(mes_pagado, 'YYYY-MM') AS mes, SUM(monto) AS total
       FROM pagos
       GROUP BY mes
-      ORDER BY TO_DATE(mes, 'MM/YYYY')
+      ORDER BY mes
     `);
     res.json(result.rows);
   } catch (err) {
