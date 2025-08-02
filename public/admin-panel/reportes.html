@@ -137,10 +137,16 @@
   </div>
 
   <script>
-    function cerrarSesion() {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
-    }
+
+if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem('etnya_login');
+    window.location.href = 'login.html';
+  }
+
 
     // Generador de tabla básica
     function renderTabla(idContenedor, columnas, datos) {
@@ -209,12 +215,23 @@ async function cargarReporteFechaPago() {
   }
 }
 
+async function cargarReporteAlumnosSede() {
+  try {
+    const res = await fetch('/reportes/alumnos-por-sede');
+    const data = await res.json();
+    renderTabla('reporte-alumnos-sede', ['Sede', 'Cantidad'], data);
+  } catch (error) {
+    console.error('Error al cargar reporte de alumnos por sede:', error);
+  }
+}
 
 
     window.onload = () => {
       cargarReporteCuenta();
       cargarReporteMesPagado();
       cargarReporteFechaPago();
+      cargarReporteAlumnosSede();
+
 
 
     };
