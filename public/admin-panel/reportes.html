@@ -70,6 +70,45 @@
     th {
       background-color: #eee;
     }
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 0;
+  }
+
+  .sidebar a, .sidebar button {
+    flex: 1 0 50%;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .contenido {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .bloque-reporte {
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  th, td {
+    font-size: 13px;
+  }
+}
+
   </style>
 </head>
 <body>
