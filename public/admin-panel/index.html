@@ -471,7 +471,7 @@ function abrirFichaAlumno(id) {
     <hr>
     <h3>Adjuntos</h3>
     <div id="adjuntosLista">Cargando...</div>
-    <input type="file" id="archivoAdjunto">
+    <input type="file" id="archivoAdjunto" accept="image/*" capture="environment">
     <button onclick="subirAdjunto(${alumno.id})">Subir archivo</button>
   `;
 
