@@ -318,7 +318,7 @@
   <form id="formAlumno">
     <input type="number" placeholder="N° Alumna/o" name="numero_alumno" required>
     <input type="text" placeholder="Nombre" name="nombre" required>
-    <input type="text" placeholder="Apellido" name="apellido" required>
+    <input type="text" placeholder="Apellido" name="apellido">
 
     <label>Fecha de nacimiento:
       <input type="date" name="fecha_nacimiento" onchange="calcularEdad(this)">
@@ -335,7 +335,7 @@
       <input type="date" name="fecha_inicio">
     </label>
 
-    <select name="tipo_clase" id="tipoClaseSelect" required>
+    <select name="tipo_clase" id="tipoClaseSelect">
       <option value="">Tipo de clase</option>
     </select>
 
@@ -362,8 +362,9 @@
 <table>
   <thead>
     <tr>
-      <th>N° Alumna/o</th>
-      <th>Apellido</th>
+      <th onclick="ordenarPor('numero_alumno')">N°</th>
+<th onclick="ordenarPor('apellido')">Apellido</th>
+
       <th>Nombre</th>
       <th>F. Nacimiento</th>
       <th>Edad</th>
@@ -429,6 +430,27 @@ let sedeSeleccionada = 'Todas';
   function ordenarPor(campo) {
     // Pendiente
   }
+
+let ordenActual = { campo: null, asc: true };
+
+function ordenarPor(campo) {
+  if (ordenActual.campo === campo) {
+    ordenActual.asc = !ordenActual.asc;
+  } else {
+    ordenActual = { campo, asc: true };
+  }
+
+  alumnosGlobal.sort((a, b) => {
+    const valorA = (a[campo] || '').toString().toLowerCase();
+    const valorB = (b[campo] || '').toString().toLowerCase();
+    if (valorA < valorB) return ordenActual.asc ? -1 : 1;
+    if (valorA > valorB) return ordenActual.asc ? 1 : -1;
+    return 0;
+  });
+
+  renderizarAlumnos();
+}
+
 
   function toggleFormulario() {
     const contenedor = document.getElementById('contenedorFormulario');
