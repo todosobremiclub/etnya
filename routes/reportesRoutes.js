@@ -58,6 +58,7 @@ router.get('/alumnos-por-sede', async (req, res) => {
     const result = await pool.query(`
       SELECT sede, COUNT(*) AS cantidad
       FROM alumnos
+      WHERE activo = true
       GROUP BY sede
       ORDER BY cantidad DESC
     `);
@@ -74,6 +75,7 @@ router.get('/alumnos-por-modalidad', async (req, res) => {
     const result = await pool.query(`
       SELECT tipo_clase AS modalidad, COUNT(*) AS cantidad
       FROM alumnos
+      WHERE activo = true
       GROUP BY modalidad
       ORDER BY cantidad DESC
     `);
@@ -83,5 +85,7 @@ router.get('/alumnos-por-modalidad', async (req, res) => {
     res.status(500).send('Error en reporte de alumnos por modalidad');
   }
 });
+
+
 
 module.exports = router;
