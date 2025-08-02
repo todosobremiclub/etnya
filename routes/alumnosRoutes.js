@@ -1,6 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const multer = require('multer');
+const path = require('path');
+
+// Configuración de multer para subida de archivos locales
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const nombre = Date.now() + ext;
+    cb(null, nombre);
+  }
+});
+const upload = multer({ storage });
 
 // Obtener todos los alumnos
 router.get('/', async (req, res) => {
@@ -16,35 +29,24 @@ router.get('/', async (req, res) => {
 // Guardar nuevo alumno
 router.post('/', async (req, res) => {
   const {
-  numero_alumno,
-  nombre,
-  apellido,
-  fecha_nacimiento,
-  edad,
-  telefono,
-  contacto_nombre,
-  contacto_telefono,
-  fecha_inicio,
-  tipo_clase,
-  sede,
-  estado_pago,
-  activo
-} = req.body;
+    numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+    telefono, contacto_nombre, contacto_telefono,
+    fecha_inicio, tipo_clase, sede, estado_pago, activo
+  } = req.body;
 
   try {
-   await pool.query(
-  `INSERT INTO alumnos (
-    numero_alumno, nombre, apellido, fecha_nacimiento, edad,
-    telefono, contacto_nombre, contacto_telefono,
-    fecha_inicio, tipo_clase, sede, estado_pago, activo
-  ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-  [
-    numero_alumno, nombre, apellido, fecha_nacimiento, edad,
-    telefono, contacto_nombre, contacto_telefono,
-    fecha_inicio, tipo_clase, sede, estado_pago, activo
-  ]
-);
-
+    await pool.query(
+      `INSERT INTO alumnos (
+        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+        telefono, contacto_nombre, contacto_telefono,
+        fecha_inicio, tipo_clase, sede, estado_pago, activo
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [
+        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+        telefono, contacto_nombre, contacto_telefono,
+        fecha_inicio, tipo_clase, sede, estado_pago, activo
+      ]
+    );
 
     res.status(200).send('Alumno guardado correctamente');
   } catch (err) {
@@ -66,62 +68,46 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Actualizar alumno por ID
-// Actualizar alumno por ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const {
-  numero_alumno,
-  nombre,
-  apellido,
-  fecha_nacimiento,
-  edad,
-  telefono,
-  contacto_nombre,
-  contacto_telefono,
-  fecha_inicio,
-  tipo_clase,
-  sede,
-  estado_pago,
-  activo
-} = req.body;
-
+    numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+    telefono, contacto_nombre, contacto_telefono,
+    fecha_inicio, tipo_clase, sede, estado_pago, activo
+  } = req.body;
 
   try {
-    // Validar si ese número de alumno ya existe en otro registro
     const existente = await pool.query(
-  'SELECT id FROM alumnos WHERE numero_alumno = $1 AND sede = $2 AND id != $3',
-  [numero_alumno, sede, id]
-);
-
+      'SELECT id FROM alumnos WHERE numero_alumno = $1 AND sede = $2 AND id != $3',
+      [numero_alumno, sede, id]
+    );
 
     if (existente.rows.length > 0) {
       return res.status(400).send('El número de alumno ya está en uso por otro alumno.');
     }
 
-   
-   await pool.query(
-  `UPDATE alumnos SET
-    numero_alumno = $1,
-    nombre = $2,
-    apellido = $3,
-    fecha_nacimiento = $4,
-    edad = $5,
-    telefono = $6,
-    contacto_nombre = $7,
-    contacto_telefono = $8,
-    fecha_inicio = $9,
-    tipo_clase = $10,
-    sede = $11,
-    estado_pago = $12,
-    activo = $13
-  WHERE id = $14`,
-  [
-    numero_alumno, nombre, apellido, fecha_nacimiento, edad,
-    telefono, contacto_nombre, contacto_telefono,
-    fecha_inicio, tipo_clase, sede, estado_pago, activo, id
-  ]
-);
-
+    await pool.query(
+      `UPDATE alumnos SET
+        numero_alumno = $1,
+        nombre = $2,
+        apellido = $3,
+        fecha_nacimiento = $4,
+        edad = $5,
+        telefono = $6,
+        contacto_nombre = $7,
+        contacto_telefono = $8,
+        fecha_inicio = $9,
+        tipo_clase = $10,
+        sede = $11,
+        estado_pago = $12,
+        activo = $13
+      WHERE id = $14`,
+      [
+        numero_alumno, nombre, apellido, fecha_nacimiento, edad,
+        telefono, contacto_nombre, contacto_telefono,
+        fecha_inicio, tipo_clase, sede, estado_pago, activo, id
+      ]
+    );
 
     res.sendStatus(200);
   } catch (err) {
@@ -143,6 +129,75 @@ router.put('/:id/activo', async (req, res) => {
   }
 });
 
+
+// === RUTAS OBSERVACIONES ===
+
+// Obtener observaciones de un alumno
+router.get('/:id/observaciones', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM observaciones WHERE alumno_id = $1 ORDER BY fecha DESC',
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener observaciones:', err);
+    res.status(500).send('Error al obtener observaciones');
+  }
+});
+
+// Agregar nueva observación
+router.post('/:id/observaciones', async (req, res) => {
+  const { id } = req.params;
+  const { texto } = req.body;
+  try {
+    await pool.query(
+      'INSERT INTO observaciones (alumno_id, texto) VALUES ($1, $2)',
+      [id, texto]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al guardar observación:', err);
+    res.status(500).send('Error al guardar observación');
+  }
+});
+
+// === RUTAS ADJUNTOS ===
+
+// Obtener archivos adjuntos de un alumno
+router.get('/:id/adjuntos', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM adjuntos WHERE alumno_id = $1 ORDER BY fecha DESC',
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener adjuntos:', err);
+    res.status(500).send('Error al obtener adjuntos');
+  }
+});
+
+// Subir archivo adjunto
+router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
+  const { id } = req.params;
+  const archivo = req.file;
+
+  if (!archivo) return res.status(400).send('Archivo no recibido');
+
+  try {
+    const url = `/uploads/${archivo.filename}`;
+    await pool.query(
+      'INSERT INTO adjuntos (alumno_id, nombre_archivo, url) VALUES ($1, $2, $3)',
+      [id, archivo.originalname, url]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al guardar archivo:', err);
+    res.status(500).send('Error al guardar archivo');
+  }
+});
+
 module.exports = router;
-
-

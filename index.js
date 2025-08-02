@@ -22,6 +22,8 @@ app.use('/feriados', feriadosRoutes);
 app.use('/pagos', pagosRoutes);
 app.use('/cuentas', cuentasRoutes);
 app.use('/reportes', reportesRoutes); // ✅ endpoint para reportes
+app.use('/uploads', express.static('uploads'));
+
 
 // Servir frontend estático
 app.use(express.static(path.join(__dirname, 'public/admin-panel')));
