@@ -199,10 +199,23 @@ async function cargarReporteMesPagado() {
   }
 }
 
+async function cargarReporteFechaPago() {
+  try {
+    const res = await fetch('/reportes/por-fecha-pago');
+    const data = await res.json();
+    renderTabla('reporte-fecha-pago', ['Fecha', 'Total'], data);
+  } catch (error) {
+    console.error('Error al cargar reporte por fecha de pago:', error);
+  }
+}
+
+
 
     window.onload = () => {
       cargarReporteCuenta();
       cargarReporteMesPagado();
+      cargarReporteFechaPago();
+
 
     };
   </script>
