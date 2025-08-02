@@ -189,8 +189,21 @@
       }
     }
 
+async function cargarReporteMesPagado() {
+  try {
+    const res = await fetch('/reportes/por-mes-pagado');
+    const data = await res.json();
+    renderTabla('reporte-mes-pagado', ['Mes', 'Total'], data);
+  } catch (error) {
+    console.error('Error al cargar reporte por mes pagado:', error);
+  }
+}
+
+
     window.onload = () => {
       cargarReporteCuenta();
+      cargarReporteMesPagado();
+
     };
   </script>
 </body>
