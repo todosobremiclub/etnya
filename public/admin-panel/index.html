@@ -326,7 +326,7 @@
 
 
     <input type="number" placeholder="Edad" name="edad" readonly>
-    <input type="text" placeholder="Teléfono" name="telefono">
+    <input type="text" placeholder="Teléfono" name="telefono" required>
     <input type="text" placeholder="Nombre contacto emergencia" name="contacto_nombre">
     <input type="text" placeholder="Tel. contacto emergencia" name="contacto_telefono">
 
@@ -427,9 +427,7 @@ let sedeSeleccionada = 'Todas';
     input.form.edad.value = edad;
   }
 
-  function ordenarPor(campo) {
-    // Pendiente
-  }
+ 
 
 let ordenActual = { campo: null, asc: true };
 
@@ -447,6 +445,98 @@ function ordenarPor(campo) {
     if (valorA > valorB) return ordenActual.asc ? 1 : -1;
     return 0;
   });
+
+function abrirFichaAlumno(id) {
+  const alumno = alumnosGlobal.find(a => a.id === id);
+  if (!alumno) return;
+
+  const cont = document.getElementById('fichaContenido');
+  cont.innerHTML = `
+    <p><strong>Número:</strong> ${alumno.numero_alumno}</p>
+    <p><strong>Nombre:</strong> ${alumno.nombre} ${alumno.apellido}</p>
+    <p><strong>Teléfono:</strong> ${alumno.telefono || ''}</p>
+    <p><strong>Contacto:</strong> ${alumno.contacto_nombre || ''} - ${alumno.contacto_telefono || ''}</p>
+    <p><strong>Fecha nacimiento:</strong> ${formatearFecha(alumno.fecha_nacimiento)}</p>
+    <p><strong>Inicio:</strong> ${formatearFecha(alumno.fecha_inicio)}</p>
+    <p><strong>Tipo clase:</strong> ${alumno.tipo_clase || ''}</p>
+    <hr>
+    <h3>Observaciones</h3>
+    <div id="observacionesLista">Cargando...</div>
+    <textarea id="nuevaObservacion" rows="2" style="width: 100%;"></textarea>
+    <button onclick="guardarObservacion(${alumno.id})">Agregar</button>
+
+    <hr>
+    <h3>Adjuntos</h3>
+    <div id="adjuntosLista">Cargando...</div>
+    <input type="file" id="archivoAdjunto">
+    <button onclick="subirAdjunto(${alumno.id})">Subir archivo</button>
+  `;
+
+  document.getElementById('modalFicha').style.display = 'flex';
+
+  cargarObservaciones(id);
+  cargarAdjuntos(id);
+}
+
+function cerrarModalFicha() {
+  document.getElementById('modalFicha').style.display = 'none';
+}
+
+async function cargarObservaciones(id) {
+  const div = document.getElementById('observacionesLista');
+  try {
+    const res = await fetch(`/alumnos/${id}/observaciones`);
+    const observaciones = await res.json();
+    div.innerHTML = observaciones.map(o => `
+      <p><strong>${new Date(o.fecha).toLocaleString()}</strong><br>${o.texto}</p>
+    `).join('') || '<p>No hay observaciones.</p>';
+  } catch {
+    div.innerHTML = '<p>Error al cargar observaciones.</p>';
+  }
+}
+
+async function guardarObservacion(id) {
+  const texto = document.getElementById('nuevaObservacion').value;
+  if (!texto.trim()) return;
+  await fetch(`/alumnos/${id}/observaciones`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ texto })
+  });
+  document.getElementById('nuevaObservacion').value = '';
+  cargarObservaciones(id);
+}
+
+async function cargarAdjuntos(id) {
+  const div = document.getElementById('adjuntosLista');
+  try {
+    const res = await fetch(`/alumnos/${id}/adjuntos`);
+    const adjuntos = await res.json();
+    div.innerHTML = adjuntos.map(a => `
+      <p><a href="${a.url}" target="_blank">${a.nombre_archivo}</a> (${new Date(a.fecha).toLocaleDateString()})</p>
+    `).join('') || '<p>No hay archivos adjuntos.</p>';
+  } catch {
+    div.innerHTML = '<p>Error al cargar archivos.</p>';
+  }
+}
+
+async function subirAdjunto(id) {
+  const input = document.getElementById('archivoAdjunto');
+  const archivo = input.files[0];
+  if (!archivo) return alert('Seleccioná un archivo');
+
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+
+  await fetch(`/alumnos/${id}/adjuntos`, {
+    method: 'POST',
+    body: formData
+  });
+
+  input.value = '';
+  cargarAdjuntos(id);
+}
+
 
   renderizarAlumnos();
 }
@@ -494,6 +584,7 @@ function ordenarPor(campo) {
     const sede = alumno.sede === 'Craig' ? 'C' : 'G';
 
     const tr = document.createElement('tr');
+    tr.ondblclick = () => abrirFichaAlumno(alumno.id);
     tr.innerHTML = `
       <td>${numero}-${sede}</td>
       <td>${alumno.apellido}</td>
@@ -708,6 +799,38 @@ function cerrarSesion() {
 }
 
 </script>
+<!-- 🔍 Modal de ficha de alumno -->
+<div id="modalFicha" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+">
+  <div style="
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  ">
+    <button onclick="cerrarModalFicha()" style="
+      position: absolute;
+      top: 10px; right: 10px;
+      border: none; background: none;
+      font-size: 20px; cursor: pointer;
+    ">✖</button>
+
+    <h2 id="fichaTitulo">Ficha del Alumno</h2>
+    <div id="fichaContenido"></div>
+  </div>
+</div>
 
 
 </body>
