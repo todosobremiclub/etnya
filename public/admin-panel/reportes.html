@@ -109,9 +109,52 @@
   }
 }
 
+.hamburguesa {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 2000;
+  font-size: 26px;
+  background: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .hamburguesa {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #91586d;
+    z-index: 1500;
+    flex-direction: column;
+  }
+
+  .sidebar.mostrar {
+    display: flex;
+  }
+
+  .contenido {
+    margin-left: 0;
+    padding: 70px 16px 16px;
+  }
+}
+
+
   </style>
 </head>
 <body>
+
+<button id="toggleMenu" class="hamburguesa">☰</button>
+
   
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
@@ -274,10 +317,12 @@ async function cargarReporteAlumnosModalidad() {
       cargarReporteAlumnosSede();
       cargarReporteAlumnosModalidad();
 
-
-
-
     };
+
+document.getElementById("toggleMenu").addEventListener("click", () => {
+  document.querySelector(".sidebar").classList.toggle("mostrar");
+});
+
   </script>
 </body>
 </html>
