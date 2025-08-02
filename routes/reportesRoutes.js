@@ -51,42 +51,8 @@ router.get('/por-fecha-pago', async (req, res) => {
   }
 });
 
-	
-// 4. Monto por sede
-router.get('/por-sede', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT a.sede, SUM(p.monto) AS total
-      FROM pagos p
-      JOIN alumnos a ON a.id = p.alumno_id
-      GROUP BY a.sede
-      ORDER BY total DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error en /por-sede:', err);
-    res.status(500).send('Error en reporte por sede');
-  }
-});
 
-// 5. Monto por modalidad
-router.get('/por-modalidad', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT a.tipo_clase AS modalidad, SUM(p.monto) AS total
-      FROM pagos p
-      JOIN alumnos a ON a.id = p.alumno_id
-      GROUP BY modalidad
-      ORDER BY total DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error en /por-modalidad:', err);
-    res.status(500).send('Error en reporte por modalidad');
-  }
-});
-
-// 6. Alumnos por sede
+// 4. Alumnos por sede
 router.get('/alumnos-por-sede', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -102,7 +68,7 @@ router.get('/alumnos-por-sede', async (req, res) => {
   }
 });
 
-// 7. Alumnos por modalidad
+// 5. Alumnos por modalidad
 router.get('/alumnos-por-modalidad', async (req, res) => {
   try {
     const result = await pool.query(`
