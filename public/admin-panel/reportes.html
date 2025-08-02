@@ -225,12 +225,23 @@ async function cargarReporteAlumnosSede() {
   }
 }
 
+async function cargarReporteAlumnosModalidad() {
+  try {
+    const res = await fetch('/reportes/alumnos-por-modalidad');
+    const data = await res.json();
+    renderTabla('reporte-alumnos-modalidad', ['Modalidad', 'Cantidad'], data);
+  } catch (error) {
+    console.error('Error al cargar reporte de alumnos por modalidad:', error);
+  }
+}
 
     window.onload = () => {
       cargarReporteCuenta();
       cargarReporteMesPagado();
       cargarReporteFechaPago();
       cargarReporteAlumnosSede();
+      cargarReporteAlumnosModalidad();
+
 
 
 
