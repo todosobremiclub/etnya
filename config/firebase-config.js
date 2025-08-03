@@ -9,4 +9,6 @@ if (!admin.apps.length) {
 
 }
 
-module.exports = admin;
+const bucket = admin.storage().bucket(); // ✅ Esto es lo que tenés que exportar
+
+module.exports = bucket;
