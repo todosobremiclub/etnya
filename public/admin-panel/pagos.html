@@ -159,6 +159,9 @@
 
 <body>
 
+<button id="menuToggle" onclick="toggleMenu()">☰</button>
+
+
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
@@ -542,6 +545,12 @@ function mostrarFormularioPago() {
   const form = document.getElementById("formularioPago");
   form.style.display = form.style.display === "none" ? "block" : "none";
 }
+
+function toggleMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('mostrar');
+}
+
 
 </script>
 
