@@ -19,13 +19,23 @@ const storage = multer.diskStorage({
 
 // === ALUMNOS ===
 
-// Obtener todos los alumnos
+// Obtener todos los alumnos con último mes pagado
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM alumnos ORDER BY numero_alumno ASC');
+    const result = await pool.query(`
+      SELECT
+        a.*,
+        (
+          SELECT MAX(mes_pagado)
+          FROM pagos
+          WHERE alumno_id = a.id
+        ) AS ultimo_mes_pagado
+      FROM alumnos a
+      ORDER BY numero_alumno ASC
+    `);
     res.json(result.rows);
   } catch (err) {
-    console.error('Error al obtener alumnos:', err);
+    console.error('Error al obtener alumnos con pagos:', err);
     res.status(500).send('Error al obtener alumnos');
   }
 });
