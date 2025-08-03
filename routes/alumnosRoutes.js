@@ -246,9 +246,10 @@ router.delete('/:id/archivos/:nombreArchivo', async (req, res) => {
   try {
     await bucket.file(nombreArchivo).delete(); // Firebase
     await pool.query(
-      'DELETE FROM adjuntos WHERE alumno_id = $1 AND nombre_archivo = $2',
-      [id, nombreArchivo]
-    );
+  'INSERT INTO adjuntos (alumno_id, nombre_archivo, url, fecha) VALUES ($1, $2, $3, NOW())',
+  [id, nombreUnico, url]  // ✅ este nombre coincide con Firebase
+);
+
     res.sendStatus(200);
   } catch (err) {
     console.error('Error al eliminar archivo adjunto:', err);
