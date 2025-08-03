@@ -23,16 +23,32 @@
 
   /* Sidebar lateral */
   .sidebar {
-    position: fixed;
-    top: 0;
+  width: 200px;
+  height: 100vh;
+  background-color: #91586d;
+  padding-top: 60px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+    width: 100%;
+    height: auto;
+    position: absolute;
+    top: 50px;
     left: 0;
-    width: 200px;
-    height: 100vh;
-    background-color: #91586d;
-    padding-top: 60px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    z-index: 1000;
   }
+
+  .sidebar.mostrar {
+    display: block;
+  }
+}
+
 
    .sidebar a {
     display: block;
