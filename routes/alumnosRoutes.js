@@ -244,11 +244,22 @@ router.delete('/:id/archivos/:nombreArchivo', async (req, res) => {
   const { id, nombreArchivo } = req.params;
 
   try {
-    await bucket.file(nombreArchivo).delete(); // Firebase
+    // Intentar eliminar de Firebase Storage
+    try {
+      await bucket.file(nombreArchivo).delete();
+    } catch (error) {
+      if (error.code === 404) {
+        console.warn(`Archivo no encontrado en Firebase: ${nombreArchivo}`);
+      } else {
+        throw error; // Si es otro error, lo relanzamos
+      }
+    }
+
+    // Eliminar de la base de datos
     await pool.query(
-  'INSERT INTO adjuntos (alumno_id, nombre_archivo, url, fecha) VALUES ($1, $2, $3, NOW())',
-  [id, nombreUnico, url]  // ✅ este nombre coincide con Firebase
-);
+      'DELETE FROM adjuntos WHERE alumno_id = $1 AND nombre_archivo = $2',
+      [id, nombreArchivo]
+    );
 
     res.sendStatus(200);
   } catch (err) {
