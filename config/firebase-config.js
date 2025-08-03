@@ -8,7 +8,7 @@ admin.initializeApp({
     private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     client_email: process.env.FIREBASE_CLIENT_EMAIL,
   }),
-  storageBucket: 'etnya.appspot.com'
+  storageBucket: 'etnya-652be.appspot.com' // tu bucket real
 });
 
 const bucket = admin.storage().bucket();
