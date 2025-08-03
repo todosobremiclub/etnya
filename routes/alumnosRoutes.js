@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
     cb(null, nombre);
   }
 });
-const upload = multer({ storage });
+
 
 // Obtener todos los alumnos
 router.get('/', async (req, res) => {
@@ -190,15 +190,37 @@ router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
   if (!archivo) return res.status(400).send('Archivo no recibido');
 
   try {
-    const url = `/uploads/${archivo.filename}`;
-    await pool.query(
-      'INSERT INTO adjuntos (alumno_id, nombre_archivo, url) VALUES ($1, $2, $3)',
-      [id, archivo.originalname, url]
-    );
-    res.sendStatus(200);
+    const nombreUnico = `${Date.now()}-${uuidv4()}-${archivo.originalname}`;
+    const file = bucket.file(nombreUnico);
+
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: archivo.mimetype
+      }
+    });
+
+    stream.on('error', (err) => {
+      console.error('Error al subir a Firebase:', err);
+      res.status(500).send('Error al subir archivo');
+    });
+
+    stream.on('finish', async () => {
+      // Hacer público
+      await file.makePublic();
+      const url = file.publicUrl();
+
+      await pool.query(
+        'INSERT INTO adjuntos (alumno_id, nombre_archivo, url) VALUES ($1, $2, $3)',
+        [id, archivo.originalname, url]
+      );
+
+      res.sendStatus(200);
+    });
+
+    stream.end(archivo.buffer);
   } catch (err) {
-    console.error('Error al guardar archivo:', err);
-    res.status(500).send('Error al guardar archivo');
+    console.error('Error al subir archivo:', err);
+    res.status(500).send('Error al subir archivo');
   }
 });
 
