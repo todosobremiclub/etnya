@@ -534,13 +534,35 @@ async function cargarObservaciones(id) {
   try {
     const res = await fetch(`/alumnos/${id}/observaciones`);
     const observaciones = await res.json();
+    if (!observaciones.length) {
+      div.innerHTML = '<p>No hay observaciones.</p>';
+      return;
+    }
+
     div.innerHTML = observaciones.map(o => `
-      <p><strong>${new Date(o.fecha).toLocaleString()}</strong><br>${o.texto}</p>
-    `).join('') || '<p>No hay observaciones.</p>';
+      <p>
+        <strong>${new Date(o.fecha).toLocaleString()}</strong><br>
+        ${o.texto}
+        <button onclick="eliminarObservacion(${id}, ${o.id})" style="float: right; background-color: transparent; color: #91586d;">🗑️</button>
+      </p>
+    `).join('');
   } catch {
     div.innerHTML = '<p>Error al cargar observaciones.</p>';
   }
 }
+
+async function eliminarObservacion(idAlumno, idObservacion) {
+  if (!confirm('¿Eliminar esta observación?')) return;
+  try {
+    await fetch(`/alumnos/${idAlumno}/observaciones/${idObservacion}`, {
+      method: 'DELETE'
+    });
+    cargarObservaciones(idAlumno);
+  } catch (err) {
+    alert('Error al eliminar observación');
+  }
+}
+
 
 async function guardarObservacion(id) {
   const texto = document.getElementById('nuevaObservacion').value;
@@ -559,11 +581,32 @@ async function cargarAdjuntos(id) {
   try {
     const res = await fetch(`/alumnos/${id}/adjuntos`);
     const adjuntos = await res.json();
+    if (!adjuntos.length) {
+      div.innerHTML = '<p>No hay archivos adjuntos.</p>';
+      return;
+    }
+
     div.innerHTML = adjuntos.map(a => `
-      <p><a href="${a.url}" target="_blank">${a.nombre_archivo}</a> (${new Date(a.fecha).toLocaleDateString()})</p>
-    `).join('') || '<p>No hay archivos adjuntos.</p>';
+      <p>
+        <a href="${a.url}" target="_blank">${a.nombre_archivo}</a>
+        (${new Date(a.fecha).toLocaleDateString()})
+        <button onclick="eliminarAdjunto(${id}, '${a.nombre_archivo}')" style="float: right; background-color: transparent; color: #91586d;">🗑️</button>
+      </p>
+    `).join('');
   } catch {
     div.innerHTML = '<p>Error al cargar archivos.</p>';
+  }
+}
+
+async function eliminarAdjunto(idAlumno, nombreArchivo) {
+  if (!confirm('¿Eliminar este archivo?')) return;
+  try {
+    await fetch(`/alumnos/${idAlumno}/archivos/${encodeURIComponent(nombreArchivo)}`, {
+      method: 'DELETE'
+    });
+    cargarAdjuntos(idAlumno);
+  } catch (err) {
+    alert('Error al eliminar archivo');
   }
 }
 

@@ -5,8 +5,9 @@ const bucket = require('../config/firebase-config');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
 
-// Configuración de multer para subida de archivos locales
+// Configuración de multer para subida de archivos locales (por si se necesita)
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, cb) => {
@@ -16,6 +17,7 @@ const storage = multer.diskStorage({
   }
 });
 
+// === ALUMNOS ===
 
 // Obtener todos los alumnos
 router.get('/', async (req, res) => {
@@ -132,7 +134,7 @@ router.put('/:id/activo', async (req, res) => {
 });
 
 
-// === RUTAS OBSERVACIONES ===
+// === OBSERVACIONES ===
 
 // Obtener observaciones de un alumno
 router.get('/:id/observaciones', async (req, res) => {
@@ -155,7 +157,7 @@ router.post('/:id/observaciones', async (req, res) => {
   const { texto } = req.body;
   try {
     await pool.query(
-      'INSERT INTO observaciones (alumno_id, texto) VALUES ($1, $2)',
+      'INSERT INTO observaciones (alumno_id, texto, fecha) VALUES ($1, $2, NOW())',
       [id, texto]
     );
     res.sendStatus(200);
@@ -165,7 +167,23 @@ router.post('/:id/observaciones', async (req, res) => {
   }
 });
 
-// === RUTAS ADJUNTOS ===
+// Eliminar observación
+router.delete('/:id/observaciones/:idObservacion', async (req, res) => {
+  const { id, idObservacion } = req.params;
+  try {
+    await pool.query(
+      'DELETE FROM observaciones WHERE id = $1 AND alumno_id = $2',
+      [idObservacion, id]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al eliminar observación:', err);
+    res.status(500).send('Error al eliminar observación');
+  }
+});
+
+
+// === ADJUNTOS ===
 
 // Obtener archivos adjuntos de un alumno
 router.get('/:id/adjuntos', async (req, res) => {
@@ -182,7 +200,7 @@ router.get('/:id/adjuntos', async (req, res) => {
   }
 });
 
-// Subir archivo adjunto
+// Subir archivo adjunto a Firebase
 router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
   const { id } = req.params;
   const archivo = req.file;
@@ -194,9 +212,7 @@ router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
     const file = bucket.file(nombreUnico);
 
     const stream = file.createWriteStream({
-      metadata: {
-        contentType: archivo.mimetype
-      }
+      metadata: { contentType: archivo.mimetype }
     });
 
     stream.on('error', (err) => {
@@ -205,13 +221,12 @@ router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
     });
 
     stream.on('finish', async () => {
-      // Hacer público
       await file.makePublic();
       const url = file.publicUrl();
 
       await pool.query(
-        'INSERT INTO adjuntos (alumno_id, nombre_archivo, url) VALUES ($1, $2, $3)',
-        [id, archivo.originalname, url]
+        'INSERT INTO adjuntos (alumno_id, nombre_archivo, url, fecha) VALUES ($1, $2, $3, NOW())',
+        [id, nombreUnico, url]
       );
 
       res.sendStatus(200);
@@ -221,6 +236,23 @@ router.post('/:id/adjuntos', upload.single('archivo'), async (req, res) => {
   } catch (err) {
     console.error('Error al subir archivo:', err);
     res.status(500).send('Error al subir archivo');
+  }
+});
+
+// Eliminar archivo adjunto
+router.delete('/:id/archivos/:nombreArchivo', async (req, res) => {
+  const { id, nombreArchivo } = req.params;
+
+  try {
+    await bucket.file(nombreArchivo).delete(); // Firebase
+    await pool.query(
+      'DELETE FROM adjuntos WHERE alumno_id = $1 AND nombre_archivo = $2',
+      [id, nombreArchivo]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al eliminar archivo adjunto:', err);
+    res.status(500).send('Error al eliminar archivo');
   }
 });
 
