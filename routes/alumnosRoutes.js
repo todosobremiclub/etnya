@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const bucket = require('../config/firebase-config');
 const multer = require('multer');
-const path = require('path');
+const upload = multer({ storage: multer.memoryStorage() });
+const { v4: uuidv4 } = require('uuid');
 
 // Configuración de multer para subida de archivos locales
 const storage = multer.diskStorage({
