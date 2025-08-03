@@ -199,6 +199,44 @@
       grid-template-columns: 1fr;
     }
 
+@media (max-width: 768px) {
+  .tabla-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
+  table {
+    width: 100%;
+    min-width: 720px;
+  }
+
+  th, td {
+    font-size: 12px;
+    padding: 6px 6px;
+  }
+
+  .search-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #sedeSelector button {
+    margin: 6px 4px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .acciones button {
+    padding: 3px 6px;
+  }
+
+  #toggleFormulario {
+    width: 100%;
+    font-size: 14px;
+  }
+}
+
+
     .sidebar {
       width: 100%;
       height: auto;
@@ -405,6 +443,7 @@ button:hover {
 
 
   <h2 style="text-align:center; margin-top:40px;">Sede Craig</h2>
+<div class="tabla-wrapper">
 <table>
   <thead>
   <tr>
@@ -424,7 +463,7 @@ button:hover {
 </table>
 
 <h2 style="text-align:center; margin-top:40px;">Sede Goyena</h2>
-<table>
+<div class="tabla-wrapper"><table>
   <thead>
   <tr>
     <th onclick="ordenarPor('numero_alumno')">N°</th>
