@@ -1021,6 +1021,12 @@ function toggleSidebar() {
   document.querySelector('.sidebar').classList.toggle('mostrar');
 }
 
+// Mostrar automáticamente el botón ☰ en pantallas chicas al cargar
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.innerWidth <= 768) {
+    document.getElementById('menuToggle').style.display = 'block';
+  }
+});
 
 </script>
 <!-- 🔍 Modal de ficha de alumno -->
