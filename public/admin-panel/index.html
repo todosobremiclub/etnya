@@ -404,43 +404,38 @@ button:hover {
   <h2 style="text-align:center; margin-top:40px;">Sede Craig</h2>
 <table>
   <thead>
-    <tr>
-      <th onclick="ordenarPor('numero_alumno')">N°</th>
-<th onclick="ordenarPor('apellido')">Apellido</th>
+  <tr>
+    <th onclick="ordenarPor('numero_alumno')">N°</th>
+    <th onclick="ordenarPor('apellido')">Apellido</th>
+    <th>Nombre</th>
+    <th>Teléfono</th>
+    <th>Edad</th>
+    <th>Inicio</th>
+    <th>Pago</th>
+    <th>Activo</th>
+    <th>Opciones</th>
+  </tr>
+</thead>
 
-      <th>Nombre</th>
-      <th>F. Nacimiento</th>
-      <th>Edad</th>
-      <th>Teléfono</th>
-      <th>Contacto</th>
-      <th>Inicio</th>
-      <th>Clase</th>
-      <th>Pago</th>
-      <th>Activo</th>
-      <th>Opciones</th>
-    </tr>
-  </thead>
   <tbody id="tablaCraig"></tbody>
 </table>
 
 <h2 style="text-align:center; margin-top:40px;">Sede Goyena</h2>
 <table>
   <thead>
-    <tr>
-      <th>N° Alumna/o</th>
-      <th>Apellido</th>
-      <th>Nombre</th>
-      <th>F. Nacimiento</th>
-      <th>Edad</th>
-      <th>Teléfono</th>
-      <th>Contacto</th>
-      <th>Inicio</th>
-      <th>Clase</th>
-      <th>Pago</th>
-      <th>Activo</th>
-      <th>Opciones</th>
-    </tr>
-  </thead>
+  <tr>
+    <th onclick="ordenarPor('numero_alumno')">N°</th>
+    <th onclick="ordenarPor('apellido')">Apellido</th>
+    <th>Nombre</th>
+    <th>Teléfono</th>
+    <th>Edad</th>
+    <th>Inicio</th>
+    <th>Pago</th>
+    <th>Activo</th>
+    <th>Opciones</th>
+  </tr>
+</thead>
+
   <tbody id="tablaGoyena"></tbody>
 </table>
 
@@ -631,30 +626,25 @@ async function subirAdjunto(id) {
     const tr = document.createElement('tr');
     tr.ondblclick = () => abrirFichaAlumno(alumno.id);
     tr.innerHTML = `
-      <td>${numero}-${sede}</td>
-      <td>${alumno.apellido}</td>
-      <td>${alumno.nombre}</td>
-      <td>${alumno.fecha_nacimiento ? formatearFecha(alumno.fecha_nacimiento) : ''}</td>
-      <td>${alumno.edad || ''}</td>
-      <td>
-  ${alumno.telefono || ''}
-  ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp">
-    🟢
-  </a>` : ''}
-</td>
+  <td>${numero}-${sede}</td>
+  <td>${alumno.apellido}</td>
+  <td>${alumno.nombre}</td>
+  <td>
+    ${alumno.telefono || ''}
+    ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp">🟢</a>` : ''}
+  </td>
+  <td>${alumno.edad || ''}</td>
+  <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
+  <td>${alumno.estado_pago || ''}</td>
+  <td>
+    <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
+  </td>
+  <td class="acciones">
+    <button onclick="editarAlumno(${alumno.id})">🖉</button>
+    <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
+  </td>
+`;
 
-      <td>${alumno.contacto_nombre || ''} ${alumno.contacto_telefono || ''}</td>
-      <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
-      <td class="clase" title="${alumno.tipo_clase || ''}">${alumno.tipo_clase || ''}</td>
-      <td>${alumno.estado_pago || ''}</td>
-      <td>
-        <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
-      </td>
-      <td class="acciones">
-        <button onclick="editarAlumno(${alumno.id})">🖉</button>
-        <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
-      </td>
-    `;
 
     if (sedeSeleccionada === 'Todas' || alumno.sede === sedeSeleccionada) {
   if (alumno.sede === 'Craig') {
