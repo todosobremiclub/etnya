@@ -170,9 +170,20 @@
 
   <main>
   <h1>Registrar Pago</h1>
+<div style="text-align: center; margin-bottom: 20px;">
+  <button onclick="mostrarFormularioPago()" style="
+    padding: 10px 20px;
+    background-color: #91586d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+  ">➕ Registrar Pago</button>
+</div>
 
   <!-- FORMULARIO BLANCO -->
-  <div class="formulario">
+  <div class="formulario" id="formularioPago" style="display: none;">
     <label for="alumno-select">Buscar y seleccionar alumno:</label>
     <select id="alumno-select" style="width: 100%"></select>
 
@@ -208,7 +219,17 @@
 
   <!-- Botón Guardar (fuera del formulario) -->
   <div style="text-align: center; margin-top: 20px;">
-    <button onclick="guardarPago()">Guardar Pago</button>
+    <button onclick="guardarPago()" style="
+  background-color: #91586d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+">💾 Guardar Pago</button>
+
   </div>
 
   <!-- MÓDULO PAGOS REGISTRADOS -->
@@ -502,7 +523,10 @@ async function cargarCuentas() {
     console.error('Error al cargar cuentas:', err);
   }
 }
-
+function mostrarFormularioPago() {
+  const form = document.getElementById("formularioPago");
+  form.style.display = form.style.display === "none" ? "block" : "none";
+}
 
 </script>
 
