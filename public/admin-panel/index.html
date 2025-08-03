@@ -882,7 +882,19 @@ function toggleObservaciones() {
       font-size: 20px; cursor: pointer;
     ">✖</button>
 
-    <h2 id="fichaTitulo">Ficha del Alumno</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+  <h2 id="fichaTitulo" style="margin: 0; color: #91586d;">Ficha del Alumno</h2>
+  <button onclick="cerrarModalFicha()" style="
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #91586d;
+    cursor: pointer;
+    margin-left: 10px;
+  ">✖</button>
+</div>
+<hr style="border: none; border-top: 2px solid #e5c7cf; margin: 10px 0;">
+
     <div id="fichaContenido"></div>
   </div>
 </div>
