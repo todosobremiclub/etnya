@@ -600,12 +600,17 @@ async function cargarBecados() {
 
 async function agregarBecado() {
   const id = document.getElementById('selectBecado').value;
-  if (!id) return alert('Seleccioná un alumno');
+  console.log('Alumno seleccionado:', id); // <-- debug útil
+
+  if (!id) {
+    alert('Seleccioná un alumno');
+    return;
+  }
 
   const res = await fetch('/becados', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ alumno_id: id })
+    body: JSON.stringify({ alumno_id: parseInt(id) }) // asegurate de enviar número
   });
 
   if (res.ok) {
