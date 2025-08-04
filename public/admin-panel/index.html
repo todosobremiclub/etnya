@@ -766,10 +766,12 @@ async function cargarBecados() {
     alumnosGlobal = await res.json();
 
     const becadosSet = new Set(becados.map(b => Number(b.id))); // 👈 esta es la corrección
-    alumnosGlobal.forEach(a => {
-      a.becado = becadosSet.has(Number(a.id));
-      console.log(`${a.apellido} - becado: ${a.becado}`);
-    });
+   alumnosGlobal.forEach(a => {
+  const esBecado = becadosSet.has(Number(a.id));
+  console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
+  a.becado = esBecado;
+});
+
 
     renderizarAlumnos();
   } catch (err) {
