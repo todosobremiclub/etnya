@@ -444,6 +444,12 @@ button:hover {
     <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
     Mostrar inactivos
   </label>
+
+<label style="display: flex; align-items: center; gap: 6px;">
+  <input type="checkbox" id="mostrarConDeuda" onchange="renderizarAlumnos()">
+  Mostrar con deuda
+</label>
+
 </div>
 
 <!-- 🔽 Tiles para seleccionar sede -->
@@ -453,7 +459,7 @@ button:hover {
   <button onclick="seleccionarSede('Goyena')">Goyena</button>
 </div>
 
-<button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar nuevo alumna/o</button>
+<button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar alumna/o</button>
 
 <div id="contenedorFormulario" style="display: none;">
   <form id="formAlumno">
@@ -766,6 +772,7 @@ function calcularEstadoPago(ultimoMesPago) {
 
 
   function renderizarAlumnos() {
+  const mostrarConDeuda = document.getElementById('mostrarConDeuda')?.checked || false;
   const filtroTexto = document.getElementById('buscar').value.toLowerCase();
   const filtroClase = document.getElementById('filtroClase').value;
   const mostrarInactivos = document.getElementById('mostrarInactivos')?.checked || false;
@@ -780,6 +787,8 @@ function calcularEstadoPago(ultimoMesPago) {
     if (!mostrarInactivos && !alumno.activo) return;
     if (filtroClase && alumno.tipo_clase !== filtroClase) return;
     if (!textoCompleto.includes(filtroTexto)) return;
+    if (mostrarConDeuda && calcularEstadoPago(alumno.ultimo_mes_pagado) !== 'mora') return;
+
 
     const numero = alumno.numero_alumno.toString().padStart(2, '0');
     const sede = alumno.sede === 'Craig' ? 'C' : 'G';
