@@ -313,12 +313,15 @@
 </table>
 
 <h2 class="titulo-feriados">Becados</h2>
-<form onsubmit="agregarBecado(); return false;" style="margin-top: 20px;">
-  <input type="text" id="selectBecadoNombre" placeholder="Buscar alumna/o..." oninput="buscarAlumno()" required>
-  <select id="selectBecado" class="fila-becado" required style="width: 100%; margin-top: 6px;">
+<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; flex-direction: column; gap: 10px;">
+  <input type="text" id="buscarAlumnoBecado" placeholder="Buscar alumna/o..." oninput="filtrarSelectBecado()" style="padding: 6px;">
+  
+  <select id="selectBecado" required style="padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
+    <!-- las opciones se cargan dinámicamente -->
   </select>
-  <button type="submit" class="fila-becado" style="margin-top: 6px;">Guardar</button>
+
+  <button type="submit" style="align-self: flex-end;">Guardar</button>
 </form>
 
 <table>
@@ -547,8 +550,13 @@ function toggleMenu() {
 }
 
 async function cargarAlumnosParaBecado() {
+let listaAlumnosBecado = [];
+
+async function cargarAlumnosParaBecado() {
   const res = await fetch('/alumnos');
   const alumnos = await res.json();
+  listaAlumnosBecado = alumnos; // guardar para filtro
+
   const select = document.getElementById('selectBecado');
   select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
   alumnos.forEach(a => {
@@ -558,6 +566,23 @@ async function cargarAlumnosParaBecado() {
     select.appendChild(option);
   });
 }
+
+function filtrarSelectBecado() {
+  const texto = document.getElementById('buscarAlumnoBecado').value.toLowerCase();
+  const select = document.getElementById('selectBecado');
+  select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
+
+  listaAlumnosBecado.forEach(a => {
+    const label = `${a.numero_alumno.toString().padStart(2, '0')} - ${a.apellido}, ${a.nombre}`;
+    if (label.toLowerCase().includes(texto)) {
+      const option = document.createElement('option');
+      option.value = a.id;
+      option.textContent = label;
+      select.appendChild(option);
+    }
+  });
+}
+
 
 async function cargarBecados() {
   const res = await fetch('/becados');
