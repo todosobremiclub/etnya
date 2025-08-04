@@ -803,18 +803,17 @@ function calcularEstadoPago(alumno) {
   tbodyCraig.innerHTML = '';
   tbodyGoyena.innerHTML = '';
 
-  const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
-  if (!mostrarInactivos && !alumno.activo) return;
-  if (filtroClase && alumno.tipo_clase !== filtroClase) return;
-  if (!textoCompleto.includes(filtroTexto)) return;
-  if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
+  alumnosGlobal.forEach(alumno => {
+    const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
+    if (!mostrarInactivos && !alumno.activo) return;
+    if (filtroClase && alumno.tipo_clase !== filtroClase) return;
+    if (!textoCompleto.includes(filtroTexto)) return;
+    if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
 
-  const numero = alumno.numero_alumno.toString().padStart(2, '0');
-  const sede = alumno.sede === 'Craig' ? 'C' : 'G';
-
-    const estadoPago = calcularEstadoPago(alumno.ultimo_mes_pagado);
-    const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336'; // verde o rojo
-    const texto = estadoPago === 'al_dia' ? 'Al día' : 'Mora';
+    const numero = alumno.numero_alumno.toString().padStart(2, '0');
+    const sede = alumno.sede === 'Craig' ? 'C' : 'G';
+    const estadoPago = calcularEstadoPago(alumno);
+    const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
 
     const tr = document.createElement('tr');
     tr.ondblclick = () => abrirFichaAlumno(alumno.id);
@@ -824,14 +823,13 @@ function calcularEstadoPago(alumno) {
       <td>${alumno.nombre}</td>
       <td>
         ${alumno.telefono || ''}
-       ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px; margin-left: 4px;"></i></a>` : ''}
+        ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px; margin-left: 4px;"></i></a>` : ''}
       </td>
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
       <td>
-  <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
-</td>
-
+        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
+      </td>
       <td>
         <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
       </td>
@@ -850,6 +848,7 @@ function calcularEstadoPago(alumno) {
     }
   });
 }
+
 
 
 
