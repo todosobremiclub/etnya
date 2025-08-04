@@ -268,6 +268,22 @@
     <tbody id="tablaTipos"></tbody>
   </table>
 
+<h2 class="titulo-feriados">Tipos de Gastos</h2>
+<form id="formGasto">
+  <input type="text" name="nombre" placeholder="Nombre del gasto" required>
+  <button type="submit">Guardar</button>
+</form>
+<table>
+  <thead>
+    <tr>
+      <th><span id="flechaGastos" class="toggle-icon" onclick="toggleGastos()">▶</span> Nombre</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tbodyGastos"></tbody>
+</table>
+
+
   <h2 class="titulo-feriados">Feriados</h2>
   <form id="formFeriado">
     <input type="date" name="fecha" required>
@@ -642,6 +658,77 @@ function cerrarSesion() {
   window.location.href = 'login.html';
 }
 
+let gastosVisibles = false;
+let editandoGastoId = null;
+
+function toggleGastos() {
+  gastosVisibles = !gastosVisibles;
+  document.getElementById('flechaGastos').textContent = gastosVisibles ? '▼' : '▶';
+  document.querySelectorAll('.fila-gasto').forEach(f => {
+    f.classList.toggle('fila-oculta', !gastosVisibles);
+  });
+}
+
+async function cargarGastos() {
+  const res = await fetch('/gastos/tipos-gasto');
+  const data = await res.json();
+  const tbody = document.getElementById('tbodyGastos');
+  tbody.innerHTML = '';
+
+  data.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.classList.add('fila-gasto');
+    if (!gastosVisibles) tr.classList.add('fila-oculta');
+    tr.innerHTML = `
+      <td>${g.nombre}</td>
+      <td class="acciones">
+        <button onclick="editarGasto(${g.id}, '${g.nombre}')">✏️</button>
+        <button onclick="eliminarGasto(${g.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function editarGasto(id, nombre) {
+  const form = document.getElementById('formGasto');
+  form.nombre.value = nombre;
+  editandoGastoId = id;
+  form.querySelector('button[type="submit"]').textContent = "Actualizar";
+}
+
+document.getElementById('formGasto').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const nombre = this.nombre.value.trim();
+  if (!nombre) return;
+
+  const metodo = editandoGastoId ? 'PUT' : 'POST';
+  const url = editandoGastoId ? `/gastos/tipos-gasto/${editandoGastoId}` : '/gastos/tipos-gasto';
+
+  const res = await fetch(url, {
+    method: metodo,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre })
+  });
+
+  if (res.ok) {
+    this.reset();
+    editandoGastoId = null;
+    this.querySelector('button[type="submit"]').textContent = "Guardar";
+    cargarGastos();
+  } else {
+    alert('Error al guardar el gasto');
+  }
+});
+
+async function eliminarGasto(id) {
+  if (!confirm('¿Eliminar este tipo de gasto?')) return;
+  const res = await fetch(`/gastos/tipos-gasto/${id}`, { method: 'DELETE' });
+  if (res.ok) cargarGastos();
+  else alert('Error al eliminar');
+}
+
+
 
 
 // ------------------- ONLOAD -------------------
@@ -656,6 +743,7 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
   cargarCuentas();
   cargarAlumnosParaBecado();
   cargarBecados();
+  cargarGastos();
 
   // Ocultar la tabla de becados al inicio
   becadosVisibles = false;
