@@ -597,10 +597,14 @@ async function cargarBecados() {
     const tr = document.createElement('tr');
     tr.classList.add('fila-becado');
     tr.innerHTML = `
-      <td>${b.nombre_completo}</td>
-      <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
-    `;
-    tbody.appendChild(tr);
+  <td>${b.nombre_completo}</td>
+  <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
+`;
+tr.classList.add('fila-becado');
+tr.style.display = becadosVisibles ? '' : 'none'; // 👈 esta línea
+tbody.appendChild(tr);
+
+
   });
 }
 
@@ -657,8 +661,9 @@ window.onload = () => {
   cargarBecados();
 
   // Ocultar sección de becados al inicio (formulario + tabla)
- document.querySelectorAll('.fila-becado').forEach(el => el.style.display = '');
-document.getElementById('flechaBecados').textContent = '▼';
+ document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
+document.getElementById('flechaBecados').textContent = '▶';
+
 
 
 
