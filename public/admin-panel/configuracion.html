@@ -312,34 +312,26 @@
   <tbody id="tbodyCuentas"></tbody>
 </table>
 
-<table>
-  <thead>
-    <tr>
-      <th colspan="2">
-        <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
-        Alumnas/os Becados
-      </th>
-    </tr>
-  </thead>
-</table>
-
-<!-- Todo esto debe ir oculto/desplegable -->
-<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; gap: 10px; margin-top: 12px;">
-  <select id="selectBecado" required style="flex: 1; padding: 6px;">
+<h2 class="titulo-feriados">Becados</h2>
+<form onsubmit="agregarBecado(); return false;" style="margin-top: 20px;">
+  <input type="text" id="selectBecadoNombre" placeholder="Buscar alumna/o..." oninput="buscarAlumno()" required>
+  <select id="selectBecado" class="fila-becado" required style="width: 100%; margin-top: 6px;">
     <option value="">Seleccionar alumna/o...</option>
   </select>
-  <button type="submit">Guardar</button>
+  <button type="submit" class="fila-becado" style="margin-top: 6px;">Guardar</button>
 </form>
 
 <table>
   <thead>
     <tr>
-      <th>Nombre</th>
+      <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
       <th>Acciones</th>
     </tr>
   </thead>
   <tbody id="tbodyBecados" class="fila-becado"></tbody>
 </table>
+
+
 </main>
 
 <script>
