@@ -750,7 +750,9 @@ async function cargarBecados() {
   try {
     const res = await fetch('/becados');
     const lista = await res.json();
+    console.log('Respuesta de /becados:', lista); // 👈 debug completo
     becados = lista.map(b => Number(b.alumno_id ?? b.id));
+    console.log('IDs becados:', becados);
   } catch (err) {
     console.error('Error al cargar becados:', err);
     becados = [];
@@ -762,10 +764,11 @@ async function cargarBecados() {
   try {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
-    alumnosGlobal.forEach(a => {
-      a.becado = becados.includes(Number(a.id));
+    aalumnosGlobal.forEach(a => {
+  a.becado = becados.includes(Number(a.id));
+  console.log(`${a.apellido} - becado: ${a.becado}`);
+});
 
-    });
     renderizarAlumnos();
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
