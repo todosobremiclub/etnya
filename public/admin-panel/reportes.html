@@ -201,34 +201,17 @@
     <div class="bloque-reporte">
   <h2>1. Monto por cuenta</h2>
 
-  <div style="margin-bottom: 10px;">
-    <label for="mes-cuenta">Mes:</label>
-    <select id="mes-cuenta">
-      <option value="1">Enero</option>
-      <option value="2">Febrero</option>
-      <option value="3">Marzo</option>
-      <option value="4">Abril</option>
-      <option value="5">Mayo</option>
-      <option value="6">Junio</option>
-      <option value="7">Julio</option>
-      <option value="8">Agosto</option>
-      <option value="9">Septiembre</option>
-      <option value="10">Octubre</option>
-      <option value="11">Noviembre</option>
-      <option value="12">Diciembre</option>
-    </select>
+ 
 
-    <label for="anio-cuenta">Año:</label>
-    <select id="anio-cuenta">
-      <option value="2024">2024</option>
-      <option value="2025" selected>2025</option>
-    </select>
-
-    <button onclick="filtrarPorCuenta()">Filtrar</button>
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+    <button onclick="cambiarMes(-1)">◀</button>
+    <div id="mes-anio-cuenta" style="font-weight: bold;"></div>
+    <button onclick="cambiarMes(1)">▶</button>
   </div>
 
   <div id="reporte-cuenta"></div>
 </div>
+
 
 
     <div class="bloque-reporte">
@@ -316,12 +299,6 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
   }
 }
 
-function filtrarPorCuenta() {
-  const mes = document.getElementById('mes-cuenta').value;
-  const anio = document.getElementById('anio-cuenta').value;
-  cargarReporteCuenta(mes, anio);
-}
-
 
 async function cargarReporteMesPagado() {
   try {
@@ -363,18 +340,48 @@ async function cargarReporteAlumnosModalidad() {
   }
 }
 
-    window.onload = () => {
-      cargarReporteCuenta();
-      cargarReporteMesPagado();
-      cargarReporteFechaPago();
-      cargarReporteAlumnosSede();
-      cargarReporteAlumnosModalidad();
+let mesActual = new Date().getMonth() + 1; // enero = 1
+let anioActual = new Date().getFullYear();
 
-    };
+const meses = [
+  '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+function actualizarTituloMesAnio() {
+  const titulo = document.getElementById('mes-anio-cuenta');
+  titulo.textContent = `${meses[mesActual]} ${anioActual}`;
+}
+
+function cambiarMes(delta) {
+  mesActual += delta;
+  if (mesActual < 1) {
+    mesActual = 12;
+    anioActual -= 1;
+  } else if (mesActual > 12) {
+    mesActual = 1;
+    anioActual += 1;
+  }
+  actualizarTituloMesAnio();
+  cargarReporteCuenta(mesActual, anioActual);
+}
+
+
+    window.onload = () => {
+  actualizarTituloMesAnio();
+  cargarReporteCuenta(mesActual, anioActual);
+  cargarReporteMesPagado();
+  cargarReporteFechaPago();
+  cargarReporteAlumnosSede();
+  cargarReporteAlumnosModalidad();
+};
+
 
 document.getElementById("toggleMenu").addEventListener("click", () => {
   document.querySelector(".sidebar").classList.toggle("mostrar");
 });
+
+
 
   </script>
 </body>
