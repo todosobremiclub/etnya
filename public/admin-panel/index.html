@@ -773,6 +773,7 @@ async function cargarBecados() {
 }
 
 function calcularEstadoPago(alumno) {
+console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`);
   if (alumno.becado) return 'al_dia';
 
   const ultimoMesPago = alumno.ultimo_mes_pagado;
@@ -805,6 +806,7 @@ function calcularEstadoPago(alumno) {
   tbodyGoyena.innerHTML = '';
 
   alumnosGlobal.forEach(alumno => {
+console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
     const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
     if (!mostrarInactivos && !alumno.activo) return;
     if (filtroClase && alumno.tipo_clase !== filtroClase) return;
