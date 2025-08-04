@@ -313,16 +313,6 @@
 </table>
 
 <h2 class="titulo-feriados">Becados</h2>
-<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; flex-direction: column; gap: 10px;">
-  <input type="text" id="buscarAlumnoBecado" placeholder="Buscar alumna/o..." oninput="filtrarSelectBecado()" style="padding: 6px;">
-  
-  <select id="selectBecado" required style="padding: 6px;">
-    <option value="">Seleccionar alumna/o...</option>
-    <!-- las opciones se cargan dinámicamente -->
-  </select>
-
-  <button type="submit" style="align-self: flex-end;">Guardar</button>
-</form>
 
 <table>
   <thead>
@@ -331,7 +321,23 @@
       <th>Acciones</th>
     </tr>
   </thead>
-  <tbody id="tbodyBecados" class="fila-becado"></tbody>
+</table>
+
+<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
+  <select id="selectBecado" required style="flex: 1; padding: 6px;">
+    <option value="">Seleccionar alumna/o...</option>
+  </select>
+  <button type="submit">Guardar</button>
+</form>
+
+<table class="fila-becado">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tbodyBecados"></tbody>
 </table>
 
 
@@ -487,6 +493,7 @@ async function eliminarFeriado(id) {
   else alert('Error al eliminar');
 }
 
+let listaAlumnosBecado = [];
 let cuentasVisibles = false;
 
 function toggleCuentas() {
@@ -556,7 +563,6 @@ async function cargarAlumnosParaBecado() {
   const res = await fetch('/alumnos');
   const alumnos = await res.json();
   listaAlumnosBecado = alumnos;
-  let listaAlumnosBecado = [];
 
   const select = document.getElementById('selectBecado');
   select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
@@ -630,7 +636,6 @@ function toggleBecados() {
   becadosVisibles = !becadosVisibles;
   const icono = document.getElementById('flechaBecados');
   icono.textContent = becadosVisibles ? '▼' : '▶';
-
   document.querySelectorAll('.fila-becado').forEach(el => {
     el.style.display = becadosVisibles ? '' : 'none';
   });
