@@ -644,7 +644,9 @@ let becadosVisibles = true;
 function toggleBecados() {
   becadosVisibles = !becadosVisibles;
   document.getElementById('flechaBecados').textContent = becadosVisibles ? '▼' : '▶';
-  document.querySelectorAll('.fila-becado').forEach(el => {
+
+  const filas = document.querySelectorAll('#tbodyBecados tr');
+  filas.forEach(el => {
     el.style.display = becadosVisibles ? '' : 'none';
   });
 }
