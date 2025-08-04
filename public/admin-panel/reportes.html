@@ -199,9 +199,37 @@
     
 
     <div class="bloque-reporte">
-      <h2>1. Monto por cuenta</h2>
-      <div id="reporte-cuenta"></div>
-    </div>
+  <h2>1. Monto por cuenta</h2>
+
+  <div style="margin-bottom: 10px;">
+    <label for="mes-cuenta">Mes:</label>
+    <select id="mes-cuenta">
+      <option value="1">Enero</option>
+      <option value="2">Febrero</option>
+      <option value="3">Marzo</option>
+      <option value="4">Abril</option>
+      <option value="5">Mayo</option>
+      <option value="6">Junio</option>
+      <option value="7">Julio</option>
+      <option value="8">Agosto</option>
+      <option value="9">Septiembre</option>
+      <option value="10">Octubre</option>
+      <option value="11">Noviembre</option>
+      <option value="12">Diciembre</option>
+    </select>
+
+    <label for="anio-cuenta">Año:</label>
+    <select id="anio-cuenta">
+      <option value="2024">2024</option>
+      <option value="2025" selected>2025</option>
+    </select>
+
+    <button onclick="filtrarPorCuenta()">Filtrar</button>
+  </div>
+
+  <div id="reporte-cuenta"></div>
+</div>
+
 
     <div class="bloque-reporte">
       <h2>2. Monto por mes pagado</h2>
@@ -274,15 +302,26 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
       contenedor.appendChild(tabla);
     }
 
-    async function cargarReporteCuenta() {
-      try {
-        const res = await fetch('/reportes/por-cuenta');
-        const data = await res.json();
-        renderTabla('reporte-cuenta', ['Cuenta', 'Total'], data);
-      } catch (error) {
-        console.error('Error al cargar reporte de cuenta:', error);
-      }
+    async function cargarReporteCuenta(mes = null, anio = null) {
+  try {
+    let url = '/reportes/por-cuenta';
+    if (mes && anio) {
+      url = `/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`;
     }
+    const res = await fetch(url);
+    const data = await res.json();
+    renderTabla('reporte-cuenta', ['Cuenta', 'Total'], data);
+  } catch (error) {
+    console.error('Error al cargar reporte de cuenta:', error);
+  }
+}
+
+function filtrarPorCuenta() {
+  const mes = document.getElementById('mes-cuenta').value;
+  const anio = document.getElementById('anio-cuenta').value;
+  cargarReporteCuenta(mes, anio);
+}
+
 
 async function cargarReporteMesPagado() {
   try {

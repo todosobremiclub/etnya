@@ -3,18 +3,23 @@ const router = express.Router();
 const pool = require('../db');
 
 // 1. Monto por cuenta
-router.get('/por-cuenta', async (req, res) => {
+router.get('/por-cuenta-filtrado', async (req, res) => {
+  const { mes, anio } = req.query;
+
   try {
-    const result = await pool.query(`
-      SELECT cuenta, SUM(monto) AS total
-      FROM pagos
-      GROUP BY cuenta
-      ORDER BY total DESC
-    `);
-    res.json(result.rows);
+    const resultados = await pool.query(
+      `SELECT cuenta, SUM(monto) AS total
+       FROM pagos
+       WHERE EXTRACT(MONTH FROM fecha_pago) = $1
+         AND EXTRACT(YEAR FROM fecha_pago) = $2
+       GROUP BY cuenta
+       ORDER BY cuenta`,
+      [mes, anio]
+    );
+    res.json(resultados.rows);
   } catch (err) {
-    console.error('Error en /por-cuenta:', err);
-    res.status(500).send('Error en reporte por cuenta');
+    console.error('Error al obtener reporte por cuenta filtrado:', err);
+    res.status(500).json({ error: 'Error del servidor' });
   }
 });
 
