@@ -588,6 +588,8 @@ function filtrarSelectBecado() {
 async function cargarBecados() {
   const res = await fetch('/becados');
   const becados = await res.json();
+  console.log('Becados cargados:', becados); // 👈 debug
+
   const tbody = document.getElementById('tbodyBecados');
   tbody.innerHTML = '';
 
