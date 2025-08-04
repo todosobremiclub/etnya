@@ -758,15 +758,15 @@ function calcularEstadoPago(ultimoMesPago) {
   if (!ultimoMesPago) return 'mora';
 
   const hoy = new Date();
-  const [añoUltimo, mesUltimo] = ultimoMesPago.split('-').map(Number);
-  const fechaUltimoPago = new Date(añoUltimo, mesUltimo - 1);
-  const fechaActual = new Date(hoy.getFullYear(), hoy.getMonth());
+  const mesActual = hoy.getMonth() + 1;
+  const anioActual = hoy.getFullYear();
 
-  const diferenciaMeses = (fechaActual.getFullYear() - fechaUltimoPago.getFullYear()) * 12 +
-                          (fechaActual.getMonth() - fechaUltimoPago.getMonth());
+  const [anioPago, mesPago] = ultimoMesPago.split('-').map(Number);
 
-  if (diferenciaMeses <= 0) return 'al_dia';
-  if (diferenciaMeses === 1 && hoy.getDate() <= 10) return 'al_dia';
+  if (anioPago === anioActual && mesPago === mesActual) {
+    return 'al_dia';
+  }
+
   return 'mora';
 }
 
