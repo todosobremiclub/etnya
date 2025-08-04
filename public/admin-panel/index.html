@@ -744,17 +744,37 @@ async function subirAdjunto(id) {
     }
   }
 
-  async function cargarAlumnos() {
-    try {
-      const res = await fetch('/alumnos');
-      alumnosGlobal = await res.json();
-      renderizarAlumnos();
-    } catch (err) {
-      console.error('Error al cargar alumnos:', err);
-    }
-  }
+let becados = [];
 
-function calcularEstadoPago(ultimoMesPago) {
+async function cargarBecados() {
+  try {
+    const res = await fetch('/becados');
+    const lista = await res.json();
+    becados = lista.map(b => b.id); // solo array de IDs
+  } catch (err) {
+    console.error('Error al cargar becados:', err);
+    becados = [];
+  }
+}
+
+
+  async function cargarAlumnos() {
+  try {
+    const res = await fetch('/alumnos');
+    alumnosGlobal = await res.json();
+    alumnosGlobal.forEach(a => {
+      a.becado = becados.includes(a.id); // asignar bandera becado
+    });
+    renderizarAlumnos();
+  } catch (err) {
+    console.error('Error al cargar alumnos:', err);
+  }
+}
+
+function calcularEstadoPago(alumno) {
+  if (alumno.becado) return 'al_dia';
+
+  const ultimoMesPago = alumno.ultimo_mes_pagado;
   if (!ultimoMesPago) return 'mora';
 
   const hoy = new Date();
@@ -770,6 +790,10 @@ function calcularEstadoPago(ultimoMesPago) {
   return 'mora';
 }
 
+alumnosGlobal.forEach(alumno => {
+  alumno.becado = becados.includes(alumno.id);
+});
+
 
   function renderizarAlumnos() {
   const mostrarConDeuda = document.getElementById('mostrarConDeuda')?.checked || false;
@@ -782,16 +806,14 @@ function calcularEstadoPago(ultimoMesPago) {
   tbodyCraig.innerHTML = '';
   tbodyGoyena.innerHTML = '';
 
-  alumnosGlobal.forEach(alumno => {
-    const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
-    if (!mostrarInactivos && !alumno.activo) return;
-    if (filtroClase && alumno.tipo_clase !== filtroClase) return;
-    if (!textoCompleto.includes(filtroTexto)) return;
-    if (mostrarConDeuda && calcularEstadoPago(alumno.ultimo_mes_pagado) !== 'mora') return;
+  const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
+  if (!mostrarInactivos && !alumno.activo) return;
+  if (filtroClase && alumno.tipo_clase !== filtroClase) return;
+  if (!textoCompleto.includes(filtroTexto)) return;
+  if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
 
-
-    const numero = alumno.numero_alumno.toString().padStart(2, '0');
-    const sede = alumno.sede === 'Craig' ? 'C' : 'G';
+  const numero = alumno.numero_alumno.toString().padStart(2, '0');
+  const sede = alumno.sede === 'Craig' ? 'C' : 'G';
 
     const estadoPago = calcularEstadoPago(alumno.ultimo_mes_pagado);
     const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336'; // verde o rojo
@@ -988,11 +1010,13 @@ async function cargarOpcionesFiltroClase() {
 }
 
 
-  window.onload = function () {
-  cargarAlumnos();
+  window.onload = async function () {
+  await cargarBecados();                // 👈 Cargar primero becados
+  await cargarAlumnos();                // 👈 Luego alumnos
   cargarOpcionesTipoClase();
   cargarOpcionesFiltroClase();
 };
+
 function seleccionarSede(sede) {
   sedeSeleccionada = sede;
   document.querySelectorAll('#sedeSelector button').forEach(btn => {
