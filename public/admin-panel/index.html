@@ -751,7 +751,7 @@ async function cargarBecados() {
     const res = await fetch('/becados');
     const lista = await res.json();
     console.log('Respuesta de /becados:', lista); // 👈 debug completo
-    becados = lista.map(b => Number(b.alumno_id ?? b.id));
+    becados = lista;
     console.log('IDs becados:', becados);
   } catch (err) {
     console.error('Error al cargar becados:', err);
@@ -771,6 +771,7 @@ alumnosGlobal.forEach(a => {
   console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
   a.becado = esBecado;
 });
+
 
 
  // 👈 esta es la corrección
