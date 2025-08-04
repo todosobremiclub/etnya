@@ -319,7 +319,7 @@ async function cargarTotalAnual() {
   try {
     const res = await fetch(`/reportes/total-anual-por-cuenta?anio=${anioActual}`);
     const data = await res.json();
-    const total = parseFloat(data.total || 0);
+    const total = parseFloat(data?.total ?? 0);
     const texto = `$ ${Math.round(total).toLocaleString('es-AR')}`;
     document.getElementById('acumulado-anual').textContent = `Total anual: ${texto}`;
   } catch (error) {
