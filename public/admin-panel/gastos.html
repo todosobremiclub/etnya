@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagos Generales - Etnya</title>
+  <title>Gastos - Etnya</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -94,35 +94,59 @@
   </style>
 </head>
 <body>
-  <div class="contenedor">
-    <h1>Pagos Generales</h1>
-    <button class="boton-registrar" onclick="abrirModal()">Registrar Pago</button>
+  <!-- Botón menú hamburguesa -->
+  <button id="menuToggle" onclick="toggleMenu()">☰</button>
 
-    <!-- Modal -->
-    <div class="modal" id="modalPago">
-      <div class="modal-contenido">
-        <h2>Registrar Pago</h2>
-        <label for="tipoGasto">Tipo de Gasto:</label>
-        <select id="tipoGasto"></select>
+  <!-- Sidebar -->
+ <div class="sidebar">
+  <a href="index.html">📋 Alumnas/os</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="gastos.html">🧾 Gastos</a>
+  <a href="agenda.html">📅 Agenda</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="reportes.html">📈 Reportes</a>
+  <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
+    🚪 Cerrar sesión
+  </button>
+</div>
 
-        <label for="mes">Mes:</label>
-        <input type="month" id="mes" />
 
-        <label for="monto">Monto:</label>
-        <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)" />
+  <!-- Contenido principal -->
+  <main>
+    <div class="contenedor">
+      <h1>Pagos Generales</h1>
+      <button class="boton-registrar" onclick="abrirModal()">Registrar Pago</button>
 
-        <div class="acciones">
-          <button class="cancelar" onclick="cerrarModal()">Cancelar</button>
-          <button class="guardar" onclick="guardarPago()">Guardar</button>
+      <!-- Modal -->
+      <div class="modal" id="modalPago">
+        <div class="modal-contenido">
+          <h2>Registrar Pago</h2>
+          <label for="tipoGasto">Tipo de Gasto:</label>
+          <select id="tipoGasto"></select>
+
+          <label for="mes">Mes:</label>
+          <input type="month" id="mes" />
+
+          <label for="monto">Monto:</label>
+          <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)" />
+
+          <div class="acciones">
+            <button class="cancelar" onclick="cerrarModal()">Cancelar</button>
+            <button class="guardar" onclick="guardarPago()">Guardar</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Aquí se insertarán los pagos agrupados por mes -->
-    <div id="listaPagos"></div>
-  </div>
+      <!-- Aquí se insertarán los pagos agrupados por mes -->
+      <div id="listaPagos"></div>
+    </div>
+  </main>
 
   <script>
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      window.location.href = 'login.html';
+    }
+
     function abrirModal() {
       document.getElementById('modalPago').style.display = 'flex';
     }
@@ -141,32 +165,38 @@
     }
 
     function guardarPago() {
-      // A completar con validación y envío al backend
+      // Validación y envío al backend
       cerrarModal();
     }
 
-    // Aquí luego cargaremos los tipos de gasto desde el backend
-    window.onload = () => {
-    fetchTiposDeGasto();
-  };
+    function fetchTiposDeGasto() {
+      fetch('/gastos/tipos-gasto')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('tipoGasto');
+          select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
+          data.forEach(gasto => {
+            const option = document.createElement('option');
+            option.value = gasto.id;
+            option.textContent = gasto.nombre;
+            select.appendChild(option);
+          });
+        })
+        .catch(err => console.error('Error al cargar tipos de gasto:', err));
+    }
 
-  function fetchTiposDeGasto() {
-    fetch('/config/tipos-gasto')
-      .then(res => res.json())
-      .then(data => {
-        const select = document.getElementById('tipoGasto');
-        select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
-        data.forEach(gasto => {
-          const option = document.createElement('option');
-          option.value = gasto.id;
-          option.textContent = gasto.nombre;
-          select.appendChild(option);
-        });
-      })
-      .catch(err => {
-        console.error('Error al cargar tipos de gasto:', err);
-      });
-  }
+    function cerrarSesion() {
+      localStorage.removeItem('etnya_login');
+      window.location.href = 'login.html';
+    }
+
+    function toggleMenu() {
+      document.querySelector('.sidebar').classList.toggle('mostrar');
+    }
+
+    window.onload = () => {
+      fetchTiposDeGasto();
+    };
   </script>
 </body>
 </html>
