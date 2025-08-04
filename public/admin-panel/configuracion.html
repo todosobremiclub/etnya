@@ -314,15 +314,6 @@
 
 <h2 class="titulo-feriados">Becados</h2>
 
-<table>
-  <thead>
-    <tr>
-      <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-</table>
-
 <form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
   <select id="selectBecado" required style="flex: 1; padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
@@ -330,14 +321,14 @@
   <button type="submit">Guardar</button>
 </form>
 
-<table class="fila-becado">
+<table>
   <thead>
     <tr>
-      <th>Nombre</th>
+      <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
       <th>Acciones</th>
     </tr>
   </thead>
-  <tbody id="tbodyBecados"></tbody>
+  <tbody id="tbodyBecados" class="fila-becado"></tbody>
 </table>
 
 
@@ -610,11 +601,13 @@ async function cargarBecados() {
 async function agregarBecado() {
   const id = document.getElementById('selectBecado').value;
   if (!id) return alert('Seleccioná un alumno');
+
   const res = await fetch('/becados', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ alumno_id: id })
   });
+
   if (res.ok) {
     await cargarBecados();
     alert('Alumno agregado como becado');
