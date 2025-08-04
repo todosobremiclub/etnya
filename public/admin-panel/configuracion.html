@@ -314,7 +314,7 @@
 
 <h2 class="titulo-feriados">Becados</h2>
 
-<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
+<form onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
   <select id="selectBecado" required style="flex: 1; padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
   </select>
@@ -324,7 +324,10 @@
 <table>
   <thead>
     <tr>
-      <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
+      <th>
+        <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
+        Alumnas/os Becados
+      </th>
       <th>Acciones</th>
     </tr>
   </thead>
@@ -628,13 +631,11 @@ async function eliminarBecado(id) {
 }
 
 
-let becadosVisibles = false;
+let becadosVisibles = true;
 
 function toggleBecados() {
   becadosVisibles = !becadosVisibles;
-  const icono = document.getElementById('flechaBecados');
-  icono.textContent = becadosVisibles ? '▼' : '▶';
-
+  document.getElementById('flechaBecados').textContent = becadosVisibles ? '▼' : '▶';
   document.querySelectorAll('.fila-becado').forEach(el => {
     el.style.display = becadosVisibles ? '' : 'none';
   });
@@ -652,8 +653,9 @@ window.onload = () => {
   cargarBecados();
 
   // Ocultar sección de becados al inicio (formulario + tabla)
-  document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
-document.getElementById('flechaBecados').textContent = '▶';
+ document.querySelectorAll('.fila-becado').forEach(el => el.style.display = '');
+document.getElementById('flechaBecados').textContent = '▼';
+
 
 
 };
