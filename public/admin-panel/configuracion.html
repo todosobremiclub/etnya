@@ -590,8 +590,10 @@ async function cargarBecados() {
   const becados = await res.json();
   const tbody = document.getElementById('tbodyBecados');
   tbody.innerHTML = '';
+
   becados.forEach(b => {
     const tr = document.createElement('tr');
+    tr.classList.add('fila-becado');
     tr.innerHTML = `
       <td>${b.nombre_completo}</td>
       <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
