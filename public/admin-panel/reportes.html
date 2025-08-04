@@ -250,45 +250,48 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
 
     // Generador de tabla básica
     function renderTabla(idContenedor, columnas, datos) {
-      const contenedor = document.getElementById(idContenedor);
-      contenedor.innerHTML = '';
+  const contenedor = document.getElementById(idContenedor);
+  contenedor.innerHTML = '';
 
-      if (!datos.length) {
-        contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
-        return;
+  if (!datos.length) {
+    contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
+    return;
+  }
+
+  const tabla = document.createElement('table');
+  const thead = document.createElement('thead');
+  const tbody = document.createElement('tbody');
+
+  const filaEncabezado = document.createElement('tr');
+  columnas.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    filaEncabezado.appendChild(th);
+  });
+  thead.appendChild(filaEncabezado);
+
+  datos.forEach(row => {
+    const tr = document.createElement('tr');
+    columnas.forEach(col => {
+      const td = document.createElement('td');
+      let valor = row[col.toLowerCase()] ?? '-';
+      
+      // ✅ Formato solo para columnas "Total"
+      if (col.toLowerCase() === 'total' && typeof valor === 'number') {
+        valor = `$ ${Math.round(valor).toLocaleString('es-AR')}`;
       }
 
-      const tabla = document.createElement('table');
-      const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
+      td.textContent = valor;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
 
-      const filaEncabezado = document.createElement('tr');
-      columnas.forEach(col => {
-        const th = document.createElement('th');
-        th.textContent = col;
-        filaEncabezado.appendChild(th);
-      });
-      thead.appendChild(filaEncabezado);
-
-      datos.forEach(row => {
-        const tr = document.createElement('tr');
-        columnas.forEach(col => {
-          const td = document.createElement('td');
-          let valor = row[col.toLowerCase()] ?? '-';
-if (col.toLowerCase() === 'total' && typeof valor === 'number') {
-  valor = `$ ${Math.round(valor).toLocaleString('es-AR')}`;
+  tabla.appendChild(thead);
+  tabla.appendChild(tbody);
+  contenedor.appendChild(tabla);
 }
-td.textContent = valor;
 
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-
-      tabla.appendChild(thead);
-      tabla.appendChild(tbody);
-      contenedor.appendChild(tabla);
-    }
 
     async function cargarReporteCuenta(mes = null, anio = null) {
   try {
