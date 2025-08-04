@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pagos Generales - Etnya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #cce1d6;
+      color: #444;
+    }
+
+    .contenedor {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #91586d;
+      text-align: center;
+    }
+
+    .boton-registrar {
+      background-color: #91586d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .modal-contenido {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .modal-contenido label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    .modal-contenido input, .modal-contenido select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .acciones {
+      margin-top: 15px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .acciones button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .guardar {
+      background-color: #91586d;
+      color: white;
+    }
+
+    .cancelar {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <h1>Pagos Generales</h1>
+    <button class="boton-registrar" onclick="abrirModal()">Registrar Pago</button>
+
+    <!-- Modal -->
+    <div class="modal" id="modalPago">
+      <div class="modal-contenido">
+        <h2>Registrar Pago</h2>
+        <label for="tipoGasto">Tipo de Gasto:</label>
+        <select id="tipoGasto"></select>
+
+        <label for="mes">Mes:</label>
+        <input type="month" id="mes" />
+
+        <label for="monto">Monto:</label>
+        <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)" />
+
+        <div class="acciones">
+          <button class="cancelar" onclick="cerrarModal()">Cancelar</button>
+          <button class="guardar" onclick="guardarPago()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aquí se insertarán los pagos agrupados por mes -->
+    <div id="listaPagos"></div>
+  </div>
+
+  <script>
+    function abrirModal() {
+      document.getElementById('modalPago').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalPago').style.display = 'none';
+    }
+
+    function formatearMonto(input) {
+      let valor = input.value.replace(/\D/g, '');
+      if (valor) {
+        input.value = '$ ' + Number(valor).toLocaleString('es-AR');
+      } else {
+        input.value = '';
+      }
+    }
+
+    function guardarPago() {
+      // A completar con validación y envío al backend
+      cerrarModal();
+    }
+
+    // Aquí luego cargaremos los tipos de gasto desde el backend
+    window.onload = () => {
+    fetchTiposDeGasto();
+  };
+
+  function fetchTiposDeGasto() {
+    fetch('/config/tipos-gasto')
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById('tipoGasto');
+        select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
+        data.forEach(gasto => {
+          const option = document.createElement('option');
+          option.value = gasto.id;
+          option.textContent = gasto.nombre;
+          select.appendChild(option);
+        });
+      })
+      .catch(err => {
+        console.error('Error al cargar tipos de gasto:', err);
+      });
+  }
+  </script>
+</body>
+</html>
