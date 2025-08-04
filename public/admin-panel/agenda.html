@@ -165,9 +165,53 @@
   font-size: 14px;
 }
 
+#menuToggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1100;
+  background-color: #91586d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  #menuToggle {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+    width: 100%;
+    height: auto;
+    position: absolute;
+    top: 50px;
+    left: 0;
+  }
+
+  .sidebar.mostrar {
+    display: block;
+  }
+
+  main {
+    margin-left: 0;
+    padding: 20px;
+  }
+}
+
+
   </style>
 </head>
 <body>
+
+<!-- Botón menú hamburguesa -->
+<button id="menuToggle" onclick="toggleMenu()">☰</button>
+
 
 <div style="margin-left: 200px;">
   <div style="
@@ -319,6 +363,12 @@ function cerrarSesion() {
   localStorage.removeItem('etnya_login');
   window.location.href = 'login.html';
 }
+
+function toggleMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('mostrar');
+}
+
 
 </script>
 
