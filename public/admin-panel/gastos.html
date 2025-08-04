@@ -81,89 +81,75 @@
         margin-left: 0;
         padding: 20px;
       }
+
+      .formulario {
+        width: 90%;
+      }
     }
 
-    .contenedor {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
+    .formulario {
+      max-width: 600px;
+      margin: auto;
       background: white;
+      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      position: relative;
     }
 
-    h1 {
-      color: #91586d;
-      text-align: center;
-    }
-
-    .boton-registrar {
-      background-color: #91586d;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.4);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-
-    .modal-contenido {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .modal-contenido label {
-      display: block;
-      margin: 10px 0 5px;
-    }
-
-    .modal-contenido input, .modal-contenido select {
+    .formulario input, .formulario select {
       width: 100%;
       padding: 8px;
+      margin: 10px 0;
       border: 1px solid #ccc;
       border-radius: 6px;
     }
 
-    .acciones {
-      margin-top: 15px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
+    .formulario label {
+      font-weight: bold;
     }
 
-    .acciones button {
-      padding: 8px 12px;
+    .formulario .boton-guardar {
+      background-color: #91586d;
+      color: white;
       border: none;
+      padding: 8px 14px;
       border-radius: 6px;
-      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .formulario .boton-guardar:hover {
+      background-color: #6d3e4e;
+    }
+
+    .formulario .cerrar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #91586d;
       cursor: pointer;
     }
 
-    .guardar {
-      background-color: #91586d;
-      color: white;
-    }
-
-    .cancelar {
-      background-color: #ccc;
+    h1 {
+      text-align: center;
+      color: #91586d;
     }
   </style>
 </head>
+
 <body>
+
+  <div style="margin-left: 200px;">
+    <div style="display: flex; align-items: center; justify-content: center; padding: 20px 0; transform: translateX(-10px);">
+      <img src="logo.jpeg" alt="Logo" style="height: 60px; margin-right: 16px;">
+      <h2 style="margin: 0; font-size: 28px; color: #91586d;">Gastos Etnya</h2>
+    </div>
+  </div>
 
   <!-- Botón menú hamburguesa -->
   <button id="menuToggle" onclick="toggleMenu()">☰</button>
@@ -181,35 +167,38 @@
     </button>
   </div>
 
-  <!-- Contenido principal -->
   <main>
-    <div class="contenedor">
-      <h1>Gastos Etnya</h1>
-      <button class="boton-registrar" onclick="abrirModal()">Registrar Pago</button>
-
-      <!-- Modal -->
-      <div class="modal" id="modalPago">
-        <div class="modal-contenido">
-          <h2>Registrar Pago</h2>
-          <label for="tipoGasto">Tipo de Gasto:</label>
-          <select id="tipoGasto"></select>
-
-          <label for="mes">Mes:</label>
-          <input type="month" id="mes" />
-
-          <label for="monto">Monto:</label>
-          <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)" />
-
-          <div class="acciones">
-            <button class="cancelar" onclick="cerrarModal()">Cancelar</button>
-            <button class="guardar" onclick="guardarPago()">Guardar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Aquí se insertarán los pagos agrupados por mes -->
-      <div id="listaPagos"></div>
+    <!-- Botón registrar -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <button onclick="abrirModal()" style="
+        padding: 10px 20px;
+        background-color: #91586d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      ">➕ Registrar Gasto</button>
     </div>
+
+    <!-- FORMULARIO -->
+    <div class="formulario" id="formularioGasto" style="display: none;">
+      <button class="cerrar" onclick="cerrarModal()">✖</button>
+
+      <label for="tipoGasto">Tipo de Gasto:</label>
+      <select id="tipoGasto"></select>
+
+      <label for="mes">Mes:</label>
+      <input type="month" id="mes" required>
+
+      <label for="monto">Monto:</label>
+      <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)">
+
+      <button class="boton-guardar" onclick="guardarPago()">Guardar</button>
+    </div>
+
+    <!-- Aquí se insertarán los gastos -->
+    <div id="listaPagos"></div>
   </main>
 
   <script>
@@ -218,11 +207,11 @@
     }
 
     function abrirModal() {
-      document.getElementById('modalPago').style.display = 'flex';
+      document.getElementById("formularioGasto").style.display = "block";
     }
 
     function cerrarModal() {
-      document.getElementById('modalPago').style.display = 'none';
+      document.getElementById("formularioGasto").style.display = "none";
     }
 
     function formatearMonto(input) {
@@ -235,8 +224,8 @@
     }
 
     function guardarPago() {
-      // Validación y envío al backend
       cerrarModal();
+      // TODO: Agregar validación y fetch POST al backend
     }
 
     function fetchTiposDeGasto() {
@@ -261,7 +250,8 @@
     }
 
     function toggleMenu() {
-      document.querySelector('.sidebar').classList.toggle('mostrar');
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('mostrar');
     }
 
     window.onload = () => {
