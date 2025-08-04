@@ -765,7 +765,14 @@ async function cargarBecados() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-    const becadosSet = new Set(becados.map(b => Number(b.alumno_id)));
+    const becadosSet = new Set(becados.map(b => Number(b.id)));
+alumnosGlobal.forEach(a => {
+  const esBecado = becadosSet.has(Number(a.id));
+  console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
+  a.becado = esBecado;
+});
+
+
  // 👈 esta es la corrección
    alumnosGlobal.forEach(a => {
   const esBecado = becadosSet.has(Number(a.id));
