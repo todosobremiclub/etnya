@@ -214,6 +214,7 @@ input[type="month"].fake-placeholder:invalid:before {
 
   <!-- FORMULARIO BLANCO -->
   <div class="formulario" id="formularioPago" style="display: none;">
+    <button class="cerrar" onclick="cerrarFormularioPago()">✖</button>
     <label for="alumno-select">Buscar y seleccionar alumno:</label>
     <select id="alumno-select" style="width: 100%"></select>
 
@@ -567,6 +568,11 @@ function toggleMenu() {
   const sidebar = document.querySelector('.sidebar');
   sidebar.classList.toggle('mostrar');
 }
+
+function cerrarFormularioPago() {
+  document.getElementById("formularioPago").style.display = "none";
+}
+
 
 
 </script>
