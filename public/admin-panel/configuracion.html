@@ -549,13 +549,13 @@ function toggleMenu() {
   sidebar.classList.toggle('mostrar');
 }
 
-async function cargarAlumnosParaBecado() {
+
 let listaAlumnosBecado = [];
 
 async function cargarAlumnosParaBecado() {
   const res = await fetch('/alumnos');
   const alumnos = await res.json();
-  listaAlumnosBecado = alumnos; // guardar para filtro
+  listaAlumnosBecado = alumnos;
 
   const select = document.getElementById('selectBecado');
   select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
