@@ -6,16 +6,15 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT becados.id, alumnos.id AS alumno_id,
-             alumnos.numero_alumno || ' - ' || alumnos.apellido || ', ' || alumnos.nombre AS nombre_completo
-      FROM becados
-      JOIN alumnos ON alumnos.id = becados.alumno_id
-      ORDER BY alumnos.apellido, alumnos.nombre
+      SELECT b.id, a.nombre || ' ' || a.apellido AS nombre_completo
+      FROM becados b
+      JOIN alumnos a ON b.alumno_id = a.id
+      ORDER BY a.apellido, a.nombre
     `);
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener becados:', error);
-    res.status(500).json({ error: 'Error al obtener becados' });
+    res.status(500).send('Error al obtener becados');
   }
 });
 
