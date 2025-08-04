@@ -764,7 +764,7 @@ async function cargarBecados() {
   try {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
-    aalumnosGlobal.forEach(a => {
+    alumnosGlobal.forEach(a => {
   a.becado = becados.includes(Number(a.id));
   console.log(`${a.apellido} - becado: ${a.becado}`);
 });
