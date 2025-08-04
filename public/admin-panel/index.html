@@ -763,7 +763,8 @@ async function cargarBecados() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
     alumnosGlobal.forEach(a => {
-      a.becado = becados.includes(a.id); // asignar bandera becado
+      a.becado = becados.includes(Number(a.id));
+
     });
     renderizarAlumnos();
   } catch (err) {
