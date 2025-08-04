@@ -595,18 +595,15 @@ async function cargarBecados() {
   tbody.innerHTML = '';
 
   becados.forEach(b => {
-    const tr = document.createElement('tr');
-    tr.classList.add('fila-becado');
-    tr.innerHTML = `
-  <td>${b.nombre_completo}</td>
-  <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
-`;
-tr.classList.add('fila-becado');
-tr.style.display = becadosVisibles ? '' : 'none'; // 👈 esta línea
-tbody.appendChild(tr);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${b.nombre_completo}</td>
+    <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
+  `;
+  tr.style.display = becadosVisibles ? '' : 'none'; // controla visibilidad
+  tbody.appendChild(tr);
+});
 
-
-  });
 }
 
 async function agregarBecado() {
