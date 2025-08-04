@@ -15,6 +15,7 @@ const feriadosRoutes = require('./routes/feriadosRoutes');
 const pagosRoutes = require('./routes/pagosRoutes');
 const cuentasRoutes = require('./routes/cuentasRoutes');
 const reportesRoutes = require('./routes/reportesRoutes'); // ✅ nueva ruta
+const becadosRoutes = require('./routes/becadosRoutes');
 
 app.use('/alumnos', alumnosRoutes);
 app.use('/tipos-clase', tiposClaseRoutes);
@@ -22,7 +23,9 @@ app.use('/feriados', feriadosRoutes);
 app.use('/pagos', pagosRoutes);
 app.use('/cuentas', cuentasRoutes);
 app.use('/reportes', reportesRoutes); // ✅ endpoint para reportes
+app.use('/becados', becadosRoutes);
 app.use('/uploads', express.static('uploads'));
+
 
 
 // Servir frontend estático
