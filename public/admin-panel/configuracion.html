@@ -331,7 +331,6 @@
   <tbody id="tbodyBecados" class="fila-becado"></tbody>
 </table>
 
-
 </main>
 
 <script>
@@ -635,6 +634,7 @@ function toggleBecados() {
   becadosVisibles = !becadosVisibles;
   const icono = document.getElementById('flechaBecados');
   icono.textContent = becadosVisibles ? '▼' : '▶';
+
   document.querySelectorAll('.fila-becado').forEach(el => {
     el.style.display = becadosVisibles ? '' : 'none';
   });
@@ -652,8 +652,9 @@ window.onload = () => {
   cargarBecados();
 
   // Ocultar sección de becados al inicio (formulario + tabla)
- // document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
-  document.getElementById('flechaBecados').textContent = '▼';
+  document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
+document.getElementById('flechaBecados').textContent = '▶';
+
 
 };
 </script>
