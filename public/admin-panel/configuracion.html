@@ -565,13 +565,14 @@ async function cargarAlumnosParaBecado() {
   listaAlumnosBecado = alumnos;
 
   const select = document.getElementById('selectBecado');
-  select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
-  alumnos.forEach(a => {
-    const option = document.createElement('option');
-    option.value = a.id;
-    option.textContent = `${a.numero_alumno.toString().padStart(2, '0')} - ${a.apellido}, ${a.nombre}`;
-    select.appendChild(option);
-  });
+select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
+alumnos.forEach(a => {
+  const option = document.createElement('option');
+  option.value = a.id;
+  option.textContent = `${a.numero_alumno.toString().padStart(2, '0')} - ${a.apellido}, ${a.nombre}`;
+  select.appendChild(option);
+});
+
 }
 
 function filtrarSelectBecado() {
@@ -653,8 +654,9 @@ window.onload = () => {
   cargarBecados();
 
   // Ocultar sección de becados al inicio (formulario + tabla)
-  document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
-  document.getElementById('flechaBecados').textContent = '▶';
+ // document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
+  document.getElementById('flechaBecados').textContent = '▼';
+
 };
 </script>
 </body>
