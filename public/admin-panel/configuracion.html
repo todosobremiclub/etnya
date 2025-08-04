@@ -338,9 +338,7 @@
 </main>
 
 <script>
-if (localStorage.getItem('etnya_login') !== 'ok') {
-  window.location.href = 'login.html';
-}
+
 
 // ------------------- MODALIDADES -------------------
 let editandoId = null;
@@ -649,11 +647,20 @@ function toggleBecados() {
   });
 }
 
+function cerrarSesion() {
+  localStorage.removeItem('etnya_login');
+  window.location.href = 'login.html';
+}
 
 
 
 // ------------------- ONLOAD -------------------
 window.onload = () => {
+if (localStorage.getItem('etnya_login') !== 'ok') {
+  window.location.href = 'login.html';
+}
+
+
   cargarTiposClase();
   cargarFeriados();
   cargarCuentas();
@@ -664,6 +671,8 @@ window.onload = () => {
   becadosVisibles = false;
   document.getElementById('flechaBecados').textContent = '▶';
 };
+
+
 
 </script>
 </body>
