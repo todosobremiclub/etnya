@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Alumnos Etnya</title>
@@ -793,7 +796,7 @@ function calcularEstadoPago(ultimoMesPago) {
       <td>${alumno.nombre}</td>
       <td>
         ${alumno.telefono || ''}
-        ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp">🟢</a>` : ''}
+       ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px; margin-left: 4px;"></i></a>` : ''}
       </td>
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
