@@ -249,7 +249,7 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
 
 
     // Generador de tabla básica
-    function renderTabla(idContenedor, columnas, datos) {
+  function renderTabla(idContenedor, columnas, datos) {
   const contenedor = document.getElementById(idContenedor);
   contenedor.innerHTML = '';
 
@@ -270,15 +270,20 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
   });
   thead.appendChild(filaEncabezado);
 
+  const camposMonetarios = ['total', 'monto supervisora', 'monto supervisora 2'];
+
   datos.forEach(row => {
     const tr = document.createElement('tr');
     columnas.forEach(col => {
       const td = document.createElement('td');
-      let valor = row[col.toLowerCase()] ?? '-';
-      
-      // ✅ Formato solo para columnas "Total"
-      if (col.toLowerCase() === 'total' && typeof valor === 'number') {
-        valor = `$ ${Math.round(valor).toLocaleString('es-AR')}`;
+      let clave = col.toLowerCase();
+      let valor = row[clave] ?? row[col] ?? '-';
+
+      if (camposMonetarios.includes(clave)) {
+        const numero = parseFloat(valor);
+        if (!isNaN(numero)) {
+          valor = `$ ${Math.round(numero).toLocaleString('es-AR')}`;
+        }
       }
 
       td.textContent = valor;
@@ -291,6 +296,7 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
   tabla.appendChild(tbody);
   contenedor.appendChild(tabla);
 }
+
 
 
     async function cargarReporteCuenta(mes = null, anio = null) {
