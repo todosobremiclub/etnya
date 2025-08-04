@@ -660,14 +660,11 @@ window.onload = () => {
   cargarAlumnosParaBecado();
   cargarBecados();
 
-  // Ocultar sección de becados al inicio (formulario + tabla)
- document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
-document.getElementById('flechaBecados').textContent = '▶';
-
-
-
-
+  // Ocultar la tabla de becados al inicio
+  becadosVisibles = false;
+  document.getElementById('flechaBecados').textContent = '▶';
 };
+
 </script>
 </body>
 </html>
