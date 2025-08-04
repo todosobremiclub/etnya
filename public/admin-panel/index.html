@@ -750,9 +750,7 @@ async function cargarBecados() {
   try {
     const res = await fetch('/becados');
     const lista = await res.json();
-    console.log('Respuesta de /becados:', lista); // 👈 debug completo
-    becados = lista;
-    console.log('IDs becados:', becados);
+    becados = lista; // deja la lista de objetos como está
   } catch (err) {
     console.error('Error al cargar becados:', err);
     becados = [];
@@ -765,28 +763,21 @@ async function cargarBecados() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-    const becadosSet = new Set(becados.map(b => Number(b.id)));
-alumnosGlobal.forEach(a => {
-  const esBecado = becadosSet.has(Number(a.id));
-  console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
-  a.becado = esBecado;
-});
+    // ⚠️ usa alumno_id que es el correcto en /becados
+    const becadosSet = new Set(becados.map(b => Number(b.alumno_id)));
 
-
-
- // 👈 esta es la corrección
-   alumnosGlobal.forEach(a => {
-  const esBecado = becadosSet.has(Number(a.id));
-  console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
-  a.becado = esBecado;
-});
-
+    alumnosGlobal.forEach(a => {
+      const esBecado = becadosSet.has(Number(a.id));
+      console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
+      a.becado = esBecado;
+    });
 
     renderizarAlumnos();
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
   }
 }
+
 
 
 
