@@ -765,7 +765,7 @@ async function cargarBecados() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-    const becadosSet = new Set(becados.map(id => Number(id)));
+    const becadosSet = new Set(becados.map(b => Number(b.id))); // 👈 esta es la corrección
     alumnosGlobal.forEach(a => {
       a.becado = becadosSet.has(Number(a.id));
       console.log(`${a.apellido} - becado: ${a.becado}`);
@@ -776,6 +776,7 @@ async function cargarBecados() {
     console.error('Error al cargar alumnos:', err);
   }
 }
+
 
 
 function calcularEstadoPago(alumno) {
