@@ -764,16 +764,19 @@ async function cargarBecados() {
   try {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
+
+    const becadosSet = new Set(becados.map(id => Number(id)));
     alumnosGlobal.forEach(a => {
-  a.becado = becados.includes(Number(a.id));
-  console.log(`${a.apellido} - becado: ${a.becado}`);
-});
+      a.becado = becadosSet.has(Number(a.id));
+      console.log(`${a.apellido} - becado: ${a.becado}`);
+    });
 
     renderizarAlumnos();
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
   }
 }
+
 
 function calcularEstadoPago(alumno) {
 console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`);
