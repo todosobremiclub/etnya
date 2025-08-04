@@ -274,7 +274,12 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
         const tr = document.createElement('tr');
         columnas.forEach(col => {
           const td = document.createElement('td');
-          td.textContent = row[col.toLowerCase()] || '-';
+          let valor = row[col.toLowerCase()] ?? '-';
+if (col.toLowerCase() === 'total' && typeof valor === 'number') {
+  valor = `$ ${Math.round(valor).toLocaleString('es-AR')}`;
+}
+td.textContent = valor;
+
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
