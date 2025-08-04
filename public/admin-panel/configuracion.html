@@ -550,12 +550,13 @@ function toggleMenu() {
 }
 
 
-let listaAlumnosBecado = [];
+
 
 async function cargarAlumnosParaBecado() {
   const res = await fetch('/alumnos');
   const alumnos = await res.json();
   listaAlumnosBecado = alumnos;
+  let listaAlumnosBecado = [];
 
   const select = document.getElementById('selectBecado');
   select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
