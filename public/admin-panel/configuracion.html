@@ -184,6 +184,10 @@
 
 </head>
 <body>
+
+<!-- Botón menú hamburguesa -->
+<button id="menuToggle" onclick="toggleMenu()">☰</button>
+
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
@@ -471,6 +475,12 @@ async function eliminarCuenta(id) {
   if (res.ok) await cargarCuentas();
   else alert("Error al eliminar.");
 }
+
+function toggleMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('mostrar');
+}
+
 
 // ------------------- ONLOAD -------------------
 window.onload = () => {
