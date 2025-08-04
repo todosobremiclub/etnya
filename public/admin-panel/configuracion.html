@@ -312,9 +312,19 @@
   <tbody id="tbodyCuentas"></tbody>
 </table>
 
-<h2 class="titulo-feriados">Becados</h2>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">
+        <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
+        Alumnas/os Becados
+      </th>
+    </tr>
+  </thead>
+</table>
 
-<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; gap: 10px;">
+<!-- Todo esto debe ir oculto/desplegable -->
+<form onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; gap: 10px; margin-top: 12px;">
   <select id="selectBecado" required style="flex: 1; padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
   </select>
@@ -324,7 +334,7 @@
 <table>
   <thead>
     <tr>
-      <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
+      <th>Nombre</th>
       <th>Acciones</th>
     </tr>
   </thead>
