@@ -91,6 +91,25 @@ router.get('/alumnos-por-modalidad', async (req, res) => {
   }
 });
 
+// 6. Total anual por cuenta
+router.get('/total-anual-por-cuenta', async (req, res) => {
+  const { anio } = req.query;
+
+  try {
+    const result = await pool.query(`
+      SELECT SUM(monto) AS total
+      FROM pagos
+      WHERE EXTRACT(YEAR FROM fecha_pago) = $1
+    `, [anio]);
+
+    res.json({ total: result.rows[0].total || 0 });
+  } catch (err) {
+    console.error('Error en /total-anual-por-cuenta:', err);
+    res.status(500).json({ error: 'Error al obtener total anual por cuenta' });
+  }
+});
+
+
 
 
 module.exports = router;
