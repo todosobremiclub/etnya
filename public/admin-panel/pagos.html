@@ -153,6 +153,18 @@
     .select2-container .select2-dropdown {
       font-size: 13px;
     }
+
+input[type="month"].fake-placeholder:invalid::-webkit-datetime-edit {
+  color: transparent;
+}
+
+input[type="month"].fake-placeholder:invalid:before {
+  content: "Seleccionar mes";
+  color: #999;
+  position: absolute;
+  font-size: 14px;
+}
+
   </style>
 </head>
 
@@ -206,7 +218,8 @@
     <select id="alumno-select" style="width: 100%"></select>
 
     <label for="mesPago">Mes a pagar:</label>
-    <input type="month" id="mesPago">
+    <input type="month" id="mesPago" required class="fake-placeholder">
+
 
     <label for="modalidad">Modalidad:</label>
     <input type="text" id="modalidad" disabled>
