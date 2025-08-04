@@ -750,7 +750,7 @@ async function cargarBecados() {
   try {
     const res = await fetch('/becados');
     const lista = await res.json();
-    becados = lista.map(b => b.id); // solo array de IDs
+    becados = lista.map(b => Number(b.alumno_id ?? b.id));
   } catch (err) {
     console.error('Error al cargar becados:', err);
     becados = [];
