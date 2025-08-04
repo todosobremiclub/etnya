@@ -220,6 +220,11 @@
   }
 }
 
+.fila-becado {
+  display: none;
+}
+
+
 </style>
 
 </head>
@@ -307,20 +312,25 @@
   <tbody id="tbodyCuentas"></tbody>
 </table>
 
-<h2 class="titulo-feriados">
-  <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
-  Alumnas/os Becados
-</h2>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">
+        <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
+        Alumnas/os Becados
+      </th>
+    </tr>
+  </thead>
+</table>
 
-
-<form id="formBecado" onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: auto; display: flex; gap: 10px;">
+<form id="formBecado" onsubmit="agregarBecado(); return false;" class="fila-becado" style="max-width: 700px; margin: auto; display: flex; gap: 10px;">
   <select id="selectBecado" required style="flex: 1; padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
   </select>
   <button type="submit">➕ Agregar</button>
 </form>
 
-<table id="tablaBecados">
+<table id="tablaBecados" class="fila-becado">
   <thead>
     <tr>
       <th>Nombre</th>
@@ -594,16 +604,16 @@ async function eliminarBecado(id) {
   else alert('Error al eliminar becado');
 }
 
-let becadosVisibles = true;
+let becadosVisibles = false;
 
 function toggleBecados() {
   becadosVisibles = !becadosVisibles;
   const icono = document.getElementById('flechaBecados');
   icono.textContent = becadosVisibles ? '▼' : '▶';
 
-  // Oculta tabla y form
-  document.getElementById('selectBecado').parentElement.style.display = becadosVisibles ? 'flex' : 'none';
-  document.querySelector('#tbodyBecados').parentElement.parentElement.style.display = becadosVisibles ? 'table' : 'none';
+  document.querySelectorAll('.fila-becado').forEach(el => {
+    el.style.display = becadosVisibles ? '' : 'none';
+  });
 }
 
 
@@ -617,9 +627,8 @@ window.onload = () => {
   cargarAlumnosParaBecado();
   cargarBecados();
 
-  // Ocultar sección de becados al inicio
-  document.getElementById('formBecado').style.display = 'none';
-  document.getElementById('tablaBecados').style.display = 'none';
+  // Ocultar sección de becados al inicio (formulario + tabla)
+  document.querySelectorAll('.fila-becado').forEach(el => el.style.display = 'none');
   document.getElementById('flechaBecados').textContent = '▶';
 };
 </script>
