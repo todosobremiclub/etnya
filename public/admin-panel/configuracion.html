@@ -308,14 +308,18 @@
 </table>
 
 <h2 class="titulo-feriados">Alumnas/os Becados</h2>
-<form onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: auto; display: flex; gap: 10px;">
+<span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
+  Alumnas/os Becados
+</h2>
+
+<form id="formBecado" onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: auto; display: flex; gap: 10px;">
   <select id="selectBecado" required style="flex: 1; padding: 6px;">
     <option value="">Seleccionar alumna/o...</option>
   </select>
   <button type="submit">➕ Agregar</button>
 </form>
 
-<table>
+<table id="tablaBecados">
   <thead>
     <tr>
       <th>Nombre</th>
@@ -324,8 +328,6 @@
   </thead>
   <tbody id="tbodyBecados"></tbody>
 </table>
-
-
 </main>
 
 <script>
@@ -591,6 +593,19 @@ async function eliminarBecado(id) {
   else alert('Error al eliminar becado');
 }
 
+let becadosVisibles = true;
+
+function toggleBecados() {
+  becadosVisibles = !becadosVisibles;
+  const icono = document.getElementById('flechaBecados');
+  icono.textContent = becadosVisibles ? '▼' : '▶';
+
+  // Oculta tabla y form
+  document.getElementById('selectBecado').parentElement.style.display = becadosVisibles ? 'flex' : 'none';
+  document.querySelector('#tbodyBecados').parentElement.parentElement.style.display = becadosVisibles ? 'table' : 'none';
+}
+
+
 
 
 // ------------------- ONLOAD -------------------
@@ -598,15 +613,14 @@ window.onload = () => {
   cargarTiposClase();
   cargarFeriados();
   cargarCuentas();
-cargarAlumnosParaBecado();
-cargarBecados();
+  cargarAlumnosParaBecado();
+  cargarBecados();
 
+  // Ocultar sección de becados al inicio
+  document.getElementById('formBecado').style.display = 'none';
+  document.getElementById('tablaBecados').style.display = 'none';
+  document.getElementById('flechaBecados').textContent = '▶';
 };
-
-function cerrarSesion() {
-  localStorage.removeItem('etnya_login');
-  window.location.href = 'login.html';
-}
 </script>
 </body>
 </html>
