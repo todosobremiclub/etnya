@@ -801,10 +801,9 @@ function calcularEstadoPago(ultimoMesPago) {
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
       <td>
-        <button style="background-color: ${color}; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 12px;">
-          ${texto}
-        </button>
-      </td>
+  <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
+</td>
+
       <td>
         <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
       </td>
