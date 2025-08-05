@@ -615,9 +615,12 @@ async function cargarClasesEnCalendario() {
     Object.values(map).forEach(id => generarTabla(id));
 
     clases.forEach(clase => {
-      const fecha = new Date(clase.fecha);
-      const dia = fecha.getDay() - 1; // 0 = lunes
-      const hora = clase.hora.slice(0, 5); // "10:00"
+  const fecha = new Date(clase.fecha);
+  let dia = fecha.getDay();
+  if (dia === 0) return;
+  dia -= 1;
+
+  const hora = clase.hora.slice(0, 5);
 
       const tablaId = map[clase.sede];
       const cuerpo = document.getElementById(tablaId);
