@@ -622,28 +622,30 @@ const hastaStr = hasta.toISOString().split('T')[0];
 
     clases.forEach(clase => {
   const [y, m, d] = clase.fecha.split('-');
-  const fecha = new Date(y, m - 1, d); // mes - 1 porque Date usa base 0
+  const fecha = new Date(y, m - 1, d);
 
-  let dia = fecha.getDay(); // 0 = domingo, 1 = lunes, ...
-  if (dia === 0) return;    // ignorar domingos
-  dia -= 1;                 // ajustamos para que lunes sea 0
-
+  let dia = fecha.getDay(); // 0 = domingo
+  if (dia === 0) return;
+  dia -= 1;
 
   const hora = clase.hora.slice(0, 5);
+  const tablaId = map[clase.sede];
+  if (!tablaId) return;
 
-      const tablaId = map[clase.sede];
-      const cuerpo = document.getElementById(tablaId);
-      const filas = cuerpo.querySelectorAll('tr');
+  const cuerpo = document.getElementById(tablaId);
+  const filas = cuerpo.querySelectorAll('tr');
 
-      for (let fila of filas) {
-        if (fila.children[0].textContent === hora) {
-          fila.children[dia + 1].innerHTML += `
-            <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
-          `;
-          break;
-        }
-      }
-    });
+  for (let fila of filas) {
+    if (fila.children[0].textContent === hora) {
+      if (!fila.children[dia + 1]) return;
+      fila.children[dia + 1].innerHTML += `
+        <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
+      `;
+      break;
+    }
+  }
+});
+
 
   } catch (err) {
     console.error('Error al cargar clases:', err);
