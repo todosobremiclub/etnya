@@ -388,10 +388,12 @@ select::-ms-expand {
 
 
   function cambiarSemana(delta) {
-    offsetSemanas += delta;
-    actualizarEncabezadoTabla("theadCraig");
-    actualizarEncabezadoTabla("theadGoyena");
-  }
+  offsetSemanas += delta;
+  actualizarEncabezadoTabla("theadCraigReformer");
+  actualizarEncabezadoTabla("theadCraigCircuito");
+  actualizarEncabezadoTabla("theadGoyena");
+}
+
 
   function generarTabla(cuerpoId) {
     const cuerpo = document.getElementById(cuerpoId);
