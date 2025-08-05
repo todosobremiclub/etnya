@@ -227,6 +227,12 @@
       <div id="reporte-alumnos-modalidad"></div>
     </div>
   </div>
+	
+<div class="bloque-reporte">
+  <h2>6. Ingresos por mes/año</h2>
+  <div id="reporte-ingresos"></div>
+  <div id="detalle-ingresos" style="margin-top: 20px;"></div>
+</div>
 
   <script>
 
@@ -386,6 +392,50 @@ function cambiarMes(delta) {
   cargarTotalAnual(); // 👈 agregado
 }
 
+async function cargarReporteIngresos() {
+  try {
+    const res = await fetch('/reportes/ingresos-por-mes');
+    const data = await res.json();
+    const contenedor = document.getElementById('reporte-ingresos');
+    contenedor.innerHTML = '';
+
+    if (!data.length) {
+      contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
+      return;
+    }
+
+    const tabla = document.createElement('table');
+    const thead = tabla.createTHead();
+    const tbody = tabla.createTBody();
+
+    thead.innerHTML = '<tr><th>Mes</th><th>Cantidad</th></tr>';
+
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="cursor:pointer; color:#91586d; text-decoration:underline;" onclick="verDetalleIngresos('${row.mes}')">${row.mes}</td>
+        <td>${row.cantidad}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    contenedor.appendChild(tabla);
+  } catch (err) {
+    console.error('Error al cargar reporte de ingresos:', err);
+  }
+}
+
+async function verDetalleIngresos(mes) {
+  try {
+    const res = await fetch(`/reportes/detalle-ingresos?mes=${mes}`);
+    const data = await res.json();
+    renderTabla('detalle-ingresos', ['Número', 'Nombre', 'Apellido', 'Fecha ingreso'], data);
+  } catch (err) {
+    console.error('Error al cargar detalle de ingresos:', err);
+  }
+}
+
+
 
    window.onload = () => {
   actualizarTituloMesAnio();
@@ -395,6 +445,8 @@ function cambiarMes(delta) {
   cargarReporteFechaPago();
   cargarReporteAlumnosSede();
   cargarReporteAlumnosModalidad();
+  cargarReporteIngresos();
+
 };
 
 

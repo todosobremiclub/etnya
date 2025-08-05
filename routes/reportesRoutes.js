@@ -109,6 +109,44 @@ router.get('/total-anual-por-cuenta', async (req, res) => {
   }
 });
 
+// 7. Alumnos por mes de ingreso (conteo)
+router.get('/ingresos-por-mes', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        TO_CHAR(fecha_inicio, 'YYYY-MM') AS mes,
+        COUNT(*) AS cantidad
+      FROM alumnos
+      WHERE fecha_inicio IS NOT NULL
+      GROUP BY mes
+      ORDER BY mes DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error en /ingresos-por-mes:', err);
+    res.status(500).send('Error en reporte por fecha de ingreso');
+  }
+});
+
+// 8. Detalle de alumnos por mes de ingreso
+router.get('/detalle-ingresos', async (req, res) => {
+  const { mes } = req.query;
+  try {
+    const result = await pool.query(`
+      SELECT numero_alumno, nombre, apellido, TO_CHAR(fecha_inicio, 'DD/MM/YYYY') AS fecha_ingreso
+      FROM alumnos
+      WHERE TO_CHAR(fecha_inicio, 'YYYY-MM') = $1
+      ORDER BY apellido, nombre
+    `, [mes]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error en /detalle-ingresos:', err);
+    res.status(500).send('Error en detalle por fecha de ingreso');
+  }
+});
+
+
 
 
 
