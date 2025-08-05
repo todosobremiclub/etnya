@@ -267,10 +267,11 @@ select::-ms-expand {
   
 
   <select id="selectorSede">
-    <option value="craig">Craig Reformer</option>
-    <option value="craig">Craig Circuito</option>
-    <option value="goyena">Goyena</option>
-  </select>
+  <option value="craig_reformer">Craig Reformer</option>
+  <option value="craig_circuito">Craig Circuito</option>
+  <option value="goyena">Goyena</option>
+</select>
+
 
 <!-- Botón y formulario de clase -->
 <button onclick="mostrarFormularioClase()" style="margin: 20px auto; display: block;">➕ Registrar Clase</button>
@@ -317,15 +318,23 @@ select::-ms-expand {
     <button class="next" onclick="cambiarSemana(1)">►</button>
   </div>
 
-  <table class="calendario" id="calendarioCraig">
-    <thead id="theadCraig"></thead>
-    <tbody id="cuerpoCraig"></tbody>
-  </table>
+  <table class="calendario" id="calendarioCraigReformer">
+  <thead id="theadCraigReformer"></thead>
+  <tbody id="cuerpoCraigReformer"></tbody>
+</table>
 
-  <table class="calendario" id="calendarioGoyena">
-    <thead id="theadGoyena"></thead>
-    <tbody id="cuerpoGoyena"></tbody>
-  </table>
+<table class="calendario" id="calendarioCraigCircuito">
+  <thead id="theadCraigCircuito"></thead>
+  <tbody id="cuerpoCraigCircuito"></tbody>
+</table>
+
+<table class="calendario" id="calendarioGoyena">
+  <thead id="theadGoyena"></thead>
+  <tbody id="cuerpoGoyena"></tbody>
+</table>
+
+
+
 </main>
 
 <script>
@@ -394,23 +403,34 @@ select::-ms-expand {
     });
   }
 
-  generarTabla("cuerpoCraig");
-  generarTabla("cuerpoGoyena");
-  actualizarEncabezadoTabla("theadCraig");
-  actualizarEncabezadoTabla("theadGoyena");
+  generarTabla("cuerpoCraigReformer");
+generarTabla("cuerpoCraigCircuito");
+generarTabla("cuerpoGoyena");
+
+actualizarEncabezadoTabla("theadCraigReformer");
+actualizarEncabezadoTabla("theadCraigCircuito");
+actualizarEncabezadoTabla("theadGoyena");
+
 
   const selector = document.getElementById('selectorSede');
-  const calendarioCraig = document.getElementById('calendarioCraig');
-  const calendarioGoyena = document.getElementById('calendarioGoyena');
+const calendarioCraigReformer = document.getElementById('calendarioCraigReformer');
+const calendarioCraigCircuito = document.getElementById('calendarioCraigCircuito');
+const calendarioGoyena = document.getElementById('calendarioGoyena');
 
-  selector.addEventListener('change', () => {
-    const sede = selector.value;
-    calendarioCraig.classList.toggle('active', sede === 'craig');
-    calendarioGoyena.classList.toggle('active', sede === 'goyena');
-  });
+selector.addEventListener('change', () => {
+  const sede = selector.value;
+  calendarioCraigReformer.classList.remove("active");
+  calendarioCraigCircuito.classList.remove("active");
+  calendarioGoyena.classList.remove("active");
 
-  selector.value = "craig";
-  calendarioCraig.classList.add("active");
+  if (sede === "craig_reformer") calendarioCraigReformer.classList.add("active");
+  if (sede === "craig_circuito") calendarioCraigCircuito.classList.add("active");
+  if (sede === "goyena") calendarioGoyena.classList.add("active");
+});
+
+selector.value = "craig_reformer";
+calendarioCraigReformer.classList.add("active");
+
 
 function cerrarSesion() {
   localStorage.removeItem('etnya_login');
