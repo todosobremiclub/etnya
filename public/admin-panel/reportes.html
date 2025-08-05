@@ -428,35 +428,27 @@ async function cargarReporteIngresos() {
     });
 
     // Crear bloques por año
-    for (const anio of Object.keys(agrupadoPorAnio).sort((a, b) => b - a)) {
-      const bloque = document.createElement('div');
-      bloque.style.marginBottom = '20px';
+    router.get('/detalle-ingresos', async (req, res) => {
+  const { mes } = req.query;
+  try {
+    const result = await pool.query(`
+      SELECT
+        numero_alumno AS "Número",
+        nombre AS "Nombre",
+        apellido AS "Apellido",
+        TO_CHAR(fecha_inicio, 'DD/MM/YYYY') AS "Fecha ingreso"
+      FROM alumnos
+      WHERE TO_CHAR(fecha_inicio, 'YYYY-MM') = $1
+      ORDER BY apellido, nombre
+    `, [mes]);
 
-      const titulo = document.createElement('h3');
-      titulo.textContent = anio;
-      titulo.style.color = '#91586d';
-      bloque.appendChild(titulo);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error en /detalle-ingresos:', err);
+    res.status(500).send('Error en detalle por fecha de ingreso');
+  }
+});
 
-      const tabla = document.createElement('table');
-      tabla.innerHTML = '<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
-      const tbody = document.createElement('tbody');
-
-      agrupadoPorAnio[anio].forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
-              onclick="verDetalleIngresos('${row.mesCompleto}')">
-            ${row.mes}
-          </td>
-          <td>${row.cantidad}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      tabla.appendChild(tbody);
-      bloque.appendChild(tabla);
-      contenedor.appendChild(bloque);
-    }
   } catch (err) {
     console.error('Error al cargar reporte de ingresos:', err);
   }
