@@ -336,47 +336,54 @@ $(document).ready(() => {
 
 
  async function guardarPago() {
+ async function guardarPago() {
   const alumnoId = $('#alumno-select').val();
   const mes = document.getElementById("mesPago").value;
   let monto = '';
-const cuenta = document.getElementById("cuenta").value;
+  const cuenta = document.getElementById("cuenta").value;
 
-
-if (document.getElementById("parcial").checked) {
-  monto = document.getElementById("montoParcial").value;
-  if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
-    alert("Ingresá un monto parcial válido.");
-    return;
+  if (document.getElementById("parcial").checked) {
+    monto = document.getElementById("montoParcial").value;
+    if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
+      alert("Ingresá un monto parcial válido.");
+      return;
+    }
+  } else {
+    monto = document.getElementById("monto").value;
   }
-} else {
-  monto = document.getElementById("monto").value;
-}
 
-
-  if (!alumnoId || !mes || !monto) {
+  if (!alumnoId || !mes || !monto || !cuenta) {
     alert("Faltan datos obligatorios.");
     return;
   }
 
-  const res = await fetch('/pagos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-  alumno_id: alumnoId,
-  mes_pagado: mes,
-  monto: parseFloat(monto),
-  cuenta
-})
+  try {
+    const res = await fetch('/pagos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        alumno_id: alumnoId,
+        mes_pagado: mes,
+        monto: parseFloat(monto),
+        cuenta
+      })
+    });
 
-  });
-
-  if (res.ok) {
-    alert("Pago registrado con éxito.");
-    await cargarPagos();
-  } else {
-    alert("Error al registrar el pago.");
+    if (res.ok) {
+      alert("Pago registrado con éxito.");
+      await cargarPagos();
+      cerrarFormularioPago();
+    } else if (res.status === 409) {
+      alert("Ya existe un pago registrado para ese alumno en ese mes.");
+    } else {
+      alert("Error al registrar el pago.");
+    }
+  } catch (error) {
+    console.error("Error en la solicitud:", error);
+    alert("Ocurrió un error al intentar registrar el pago.");
   }
 }
+
 
 
  async function cargarPagos() {
