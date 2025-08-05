@@ -392,6 +392,15 @@ function cambiarMes(delta) {
   cargarTotalAnual(); // 👈 agregado
 }
 
+
+let mesMostrado = null;
+
+function formatearMesYYYYMM(yyyyMM) {
+  const [anio, mes] = yyyyMM.split('-');
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return `${meses[parseInt(mes) - 1]} ${anio}`;
+}
+
 async function cargarReporteIngresos() {
   try {
     const res = await fetch('/reportes/ingresos-por-mes');
@@ -407,13 +416,14 @@ async function cargarReporteIngresos() {
     const tabla = document.createElement('table');
     const thead = tabla.createTHead();
     const tbody = tabla.createTBody();
-
     thead.innerHTML = '<tr><th>Mes</th><th>Cantidad</th></tr>';
 
     data.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="cursor:pointer; color:#91586d; text-decoration:underline;" onclick="verDetalleIngresos('${row.mes}')">${row.mes}</td>
+        <td style="cursor:pointer; color:#91586d; text-decoration:underline;" onclick="verDetalleIngresos('${row.mes}')">
+          ${formatearMesYYYYMM(row.mes)}
+        </td>
         <td>${row.cantidad}</td>
       `;
       tbody.appendChild(tr);
@@ -426,13 +436,38 @@ async function cargarReporteIngresos() {
 }
 
 async function verDetalleIngresos(mes) {
+  if (mesMostrado === mes) {
+    cerrarDetalleIngresos();
+    return;
+  }
+
+  mesMostrado = mes;
+  const cont = document.getElementById('detalle-ingresos');
+  cont.innerHTML = `<p style="font-weight:bold; margin-bottom:10px; color:#91586d;">
+    Detalle de ingresos en ${formatearMesYYYYMM(mes)}:
+  </p>`;
+
   try {
     const res = await fetch(`/reportes/detalle-ingresos?mes=${mes}`);
     const data = await res.json();
+
     renderTabla('detalle-ingresos', ['Número', 'Nombre', 'Apellido', 'Fecha ingreso'], data);
+
+    const volverBtn = document.createElement('button');
+    volverBtn.textContent = '⬆ Volver';
+    volverBtn.style.marginTop = '10px';
+    volverBtn.onclick = cerrarDetalleIngresos;
+
+    cont.appendChild(volverBtn);
   } catch (err) {
     console.error('Error al cargar detalle de ingresos:', err);
   }
+}
+
+function cerrarDetalleIngresos() {
+  mesMostrado = null;
+  document.getElementById('detalle-ingresos').innerHTML = '';
+}
 }
 
 
