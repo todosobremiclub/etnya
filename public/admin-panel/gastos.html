@@ -217,36 +217,62 @@
     }
 
     async function cargarGastosRegistrados() {
-      const res = await fetch('/gastos/registrados');
-      const gastos = await res.json();
-      const tbody = document.getElementById("tbodyGastos");
-      tbody.innerHTML = '';
+  const res = await fetch('/gastos/registrados');
+  const gastos = await res.json();
+  const tbody = document.getElementById("tbodyGastos");
+  tbody.innerHTML = '';
 
-      const agrupados = {};
-      gastos.forEach(g => {
-        const fecha = new Date(g.fecha);
-        const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-        if (!agrupados[clave]) agrupados[clave] = [];
-        agrupados[clave].push(g);
-      });
+  const agrupados = {};
 
-      for (const mes in agrupados) {
-        const filaMes = document.createElement("tr");
-        filaMes.innerHTML = `<td colspan="4" style="font-weight:bold; background:#f6e6ea;">🗓️ ${mes}</td>`;
-        tbody.appendChild(filaMes);
+  gastos.forEach(g => {
+    const fecha = new Date(g.fecha);
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    if (!agrupados[clave]) agrupados[clave] = [];
+    agrupados[clave].push(g);
+  });
 
-        agrupados[mes].forEach(g => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${g.nombre}</td>
-            <td>${mes}</td>
-            <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
-            <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-    }
+  let grupoIndex = 0;
+
+  for (const mesClave in agrupados) {
+    const grupoId = `grupo-${grupoIndex++}`;
+    const gastosDelMes = agrupados[mesClave];
+    const totalMes = gastosDelMes.reduce((sum, g) => sum + parseFloat(g.monto), 0);
+    const mesFormateado = formatearMesTexto(mesClave);
+
+    // Fila agrupadora (desplegable)
+    const filaMes = document.createElement("tr");
+    filaMes.innerHTML = `
+      <td colspan="4" style="font-weight:bold; background:#f6e6ea; cursor:pointer;"
+          onclick="toggleGrupo('${grupoId}')">
+        🗓️ ${mesFormateado}
+        <span style="float: right;">💰 Total: $${totalMes.toLocaleString('es-AR')}</span>
+      </td>`;
+    tbody.appendChild(filaMes);
+
+    // Filas individuales ocultas por defecto
+    gastosDelMes.forEach(g => {
+      const tr = document.createElement("tr");
+      tr.classList.add(grupoId);
+      tr.style.display = "none";
+      const fecha = new Date(g.fecha);
+      const mesReal = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      tr.innerHTML = `
+        <td>${g.nombre}</td>
+        <td>${formatearMesTexto(mesReal)}</td>
+        <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
+        <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+function toggleGrupo(grupoId) {
+  const filas = document.querySelectorAll(`.${grupoId}`);
+  filas.forEach(f => {
+    f.style.display = (f.style.display === 'none') ? '' : 'none';
+  });
+}
+
 
     async function eliminarGasto(id) {
       if (!confirm('¿Eliminar este gasto?')) return;
@@ -254,6 +280,14 @@
       if (res.ok) cargarGastosRegistrados();
       else alert('Error al eliminar');
     }
+
+function formatearMesTexto(fechaStr) {
+  const [anio, mes] = fechaStr.split("-");
+  const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  return `${nombresMeses[parseInt(mes) - 1]} ${anio}`;
+}
+
 
     window.onload = () => {
       if (localStorage.getItem('etnya_login') !== 'ok') {
