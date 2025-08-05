@@ -17,6 +17,7 @@ const cuentasRoutes = require('./routes/cuentasRoutes');
 const reportesRoutes = require('./routes/reportesRoutes'); // ✅ nueva ruta
 const becadosRoutes = require('./routes/becadosRoutes');
 const gastosRoutes = require('./routes/gastosRoutes');
+const clasesRoutes = require('./routes/clasesRoutes');
 
 app.use('/alumnos', alumnosRoutes);
 app.use('/tipos-clase', tiposClaseRoutes);
@@ -27,6 +28,7 @@ app.use('/reportes', reportesRoutes); // ✅ endpoint para reportes
 app.use('/becados', becadosRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/gastos', gastosRoutes);
+app.use('/clases', clasesRoutes);
 
 
 

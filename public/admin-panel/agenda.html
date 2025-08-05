@@ -296,7 +296,7 @@ select::-ms-expand {
     <label>Fecha:</label>
     <input type="date" id="fechaUnica" style="width: 100%; padding: 6px;"><br>
     <label>Horario:</label>
-    <input type="time" id="horaUnica" style="width: 100%; padding: 6px;"><br>
+    <input type="time" id="horaUnica" step="3600" style="width: 100%; padding: 6px;"><br>
     <label>Sede:</label>
     <select id="sedeUnica" style="width: 100%; padding: 6px;">
       <option value="Craig Circuito">Craig Circuito</option>
@@ -468,7 +468,7 @@ function armarCamposDias() {
       fila.style.marginBottom = '10px';
       fila.innerHTML = `
         <label>${dia}:</label>
-        <input type="time" id="hora-${dia}">
+        <input type="time" id="hora-${dia}" step="3600">
         <select id="sede-${dia}">
           <option value="">Sin clase</option>
           <option value="Craig Circuito">Craig Circuito</option>
