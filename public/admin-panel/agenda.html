@@ -392,6 +392,9 @@ select::-ms-expand {
   actualizarEncabezadoTabla("theadCraigReformer");
   actualizarEncabezadoTabla("theadCraigCircuito");
   actualizarEncabezadoTabla("theadGoyena");
+  cargarClasesEnCalendario();
+ 
+
 }
 
 
@@ -405,13 +408,16 @@ select::-ms-expand {
     });
   }
 
-  generarTabla("cuerpoCraigReformer");
+ generarTabla("cuerpoCraigReformer");
 generarTabla("cuerpoCraigCircuito");
 generarTabla("cuerpoGoyena");
 
 actualizarEncabezadoTabla("theadCraigReformer");
 actualizarEncabezadoTabla("theadCraigCircuito");
 actualizarEncabezadoTabla("theadGoyena");
+
+cargarClasesEnCalendario();
+
 
 
   const selector = document.getElementById('selectorSede');
@@ -581,6 +587,54 @@ async function guardarClase() {
   } catch (err) {
     console.error('Error en conexión:', err);
     alert('Error de red o conexión con el servidor');
+  }
+}
+
+async function cargarClasesEnCalendario() {
+  const { dias } = getSemanaYFechas(offsetSemanas);
+  const fechas = dias.map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (d.getDay() || 7) + 1 + i + offsetSemanas * 7);
+    return d.toISOString().split('T')[0];
+  });
+
+  const desde = fechas[0];
+  const hasta = fechas[fechas.length - 1];
+
+  try {
+    const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}`);
+    const clases = await res.json();
+
+    const map = {
+      'Craig Reformer': 'cuerpoCraigReformer',
+      'Craig Circuito': 'cuerpoCraigCircuito',
+      'Goyena': 'cuerpoGoyena'
+    };
+
+    // Borrar contenido anterior
+    Object.values(map).forEach(id => generarTabla(id));
+
+    clases.forEach(clase => {
+      const fecha = new Date(clase.fecha);
+      const dia = fecha.getDay() - 1; // 0 = lunes
+      const hora = clase.hora.slice(0, 5); // "10:00"
+
+      const tablaId = map[clase.sede];
+      const cuerpo = document.getElementById(tablaId);
+      const filas = cuerpo.querySelectorAll('tr');
+
+      for (let fila of filas) {
+        if (fila.children[0].textContent === hora) {
+          fila.children[dia + 1].innerHTML += `
+            <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
+          `;
+          break;
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('Error al cargar clases:', err);
   }
 }
 

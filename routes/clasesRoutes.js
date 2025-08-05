@@ -25,4 +25,27 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Obtener clases de una semana
+router.get('/', async (req, res) => {
+  const { desde, hasta } = req.query;
+
+  if (!desde || !hasta) {
+    return res.status(400).json({ error: 'Faltan fechas' });
+  }
+
+  try {
+    const resultado = await pool.query(`
+      SELECT c.*, a.nombre, a.apellido, a.numero_alumno
+      FROM clases c
+      JOIN alumnos a ON a.id = c.alumno_id
+      WHERE c.fecha BETWEEN $1 AND $2
+    `, [desde, hasta]);
+
+    res.json(resultado.rows);
+  } catch (err) {
+    console.error('Error al obtener clases:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 module.exports = router;
