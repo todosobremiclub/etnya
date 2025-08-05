@@ -278,4 +278,25 @@ router.delete('/:id/archivos/:nombreArchivo', async (req, res) => {
   }
 });
 
+router.get('/buscar', async (req, res) => {
+  const q = req.query.q || '';
+  try {
+    const resultado = await pool.query(`
+      SELECT id, numero_alumno, nombre, apellido
+      FROM alumnos
+      WHERE CAST(numero_alumno AS TEXT) ILIKE $1
+         OR nombre ILIKE $1
+         OR apellido ILIKE $1
+      ORDER BY apellido, nombre
+      LIMIT 20
+    `, [`%${q}%`]);
+
+    res.json(resultado.rows);
+  } catch (err) {
+    console.error('Error al buscar alumnos:', err);
+    res.status(500).send('Error al buscar alumnos');
+  }
+});
+
+
 module.exports = router;
