@@ -511,6 +511,54 @@ async function buscarAlumno() {
   }
 }
 
+function guardarClase() {
+  const alumnoId = document.getElementById('alumnoSeleccionado').value;
+  const alumnoNombre = document.getElementById('alumnoSeleccionado').selectedOptions[0]?.textContent;
+  const esUnica = document.getElementById('cargaUnica').checked;
+
+  if (!alumnoId) {
+    alert("Seleccioná un alumno");
+    return;
+  }
+
+  if (esUnica) {
+    const fecha = document.getElementById('fechaUnica').value;
+    const hora = document.getElementById('horaUnica').value;
+    const sede = document.getElementById('sedeUnica').value;
+
+    if (!fecha || !hora || !sede) {
+      alert("Completá todos los campos de clase única");
+      return;
+    }
+
+    console.log("Clase única:", { alumnoId, alumnoNombre, fecha, hora, sede });
+    // Acá se puede hacer un POST al backend
+  } else {
+    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    const clases = [];
+
+    dias.forEach(dia => {
+      const hora = document.getElementById(`hora-${dia}`).value;
+      const sede = document.getElementById(`sede-${dia}`).value;
+
+      if (hora && sede) {
+        clases.push({ dia, hora, sede });
+      }
+    });
+
+    if (clases.length === 0) {
+      alert("Debés registrar al menos una clase");
+      return;
+    }
+
+    console.log("Clases recurrentes:", { alumnoId, alumnoNombre, clases });
+    // Acá se puede hacer un POST al backend
+  }
+
+  alert("Clase procesada (falta guardar en backend)");
+  cerrarFormularioClase();
+}
+
 
 
 </script>
