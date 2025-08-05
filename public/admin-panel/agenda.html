@@ -267,9 +267,49 @@ select::-ms-expand {
   
 
   <select id="selectorSede">
-    <option value="craig">Craig</option>
+    <option value="craig">Craig Reformer</option>
+    <option value="craig">Craig Circuito</option>
     <option value="goyena">Goyena</option>
   </select>
+
+<!-- Botón y formulario de clase -->
+<button onclick="mostrarFormularioClase()" style="margin: 20px auto; display: block;">➕ Registrar Clase</button>
+
+<div id="formularioClase" style="display: none; background: #fff; border: 1px solid #ccc; padding: 20px; margin-bottom: 30px; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+  <h3 style="color:#91586d;">Registrar Clase</h3>
+
+  <label>Alumno/a:</label>
+  <input type="text" id="busquedaAlumno" oninput="buscarAlumno()" placeholder="Buscar por nombre o número" style="width: 100%; padding: 6px;">
+  <select id="alumnoSeleccionado" style="width: 100%; margin-bottom: 10px; padding: 6px;">
+    <!-- Opciones dinámicas -->
+  </select>
+
+  <label><input type="checkbox" id="cargaUnica" onchange="alternarCarga()"> Clase por única vez</label>
+
+  <div id="cargaRecurrente" style="margin-top: 10px;">
+    <p><strong>Días de la semana:</strong></p>
+    <div id="diasSemana"></div>
+  </div>
+
+  <div id="cargaUnicaCampos" style="display: none; margin-top: 10px;">
+    <label>Fecha:</label>
+    <input type="date" id="fechaUnica" style="width: 100%; padding: 6px;"><br>
+    <label>Horario:</label>
+    <input type="time" id="horaUnica" style="width: 100%; padding: 6px;"><br>
+    <label>Sede:</label>
+    <select id="sedeUnica" style="width: 100%; padding: 6px;">
+      <option value="Craig Circuito">Craig Circuito</option>
+      <option value="Craig Reformer">Craig Reformer</option>
+      <option value="Goyena">Goyena</option>
+    </select>
+  </div>
+
+  <div style="margin-top: 10px;">
+    <button onclick="guardarClase()">Guardar Clase</button>
+    <button onclick="cerrarFormularioClase()" type="button">Cancelar</button>
+  </div>
+</div>
+
 
   <div class="navegacion">
     <button class="prev" onclick="cambiarSemana(-1)">◄</button>
@@ -381,6 +421,74 @@ function toggleMenu() {
   const sidebar = document.querySelector('.sidebar');
   sidebar.classList.toggle('mostrar');
 }
+
+function mostrarFormularioClase() {
+  document.getElementById('formularioClase').style.display = 'block';
+  armarCamposDias();
+}
+
+function cerrarFormularioClase() {
+  document.getElementById('formularioClase').style.display = 'none';
+}
+
+function alternarCarga() {
+  const unica = document.getElementById('cargaUnica').checked;
+  document.getElementById('cargaRecurrente').style.display = unica ? 'none' : 'block';
+  document.getElementById('cargaUnicaCampos').style.display = unica ? 'block' : 'none';
+}
+
+function armarCamposDias() {
+  const contenedor = document.getElementById('diasSemana');
+  if (!contenedor.innerHTML) {
+    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    dias.forEach(dia => {
+      const fila = document.createElement('div');
+      fila.style.marginBottom = '10px';
+      fila.innerHTML = `
+        <label>${dia}:</label>
+        <input type="time" id="hora-${dia}">
+        <select id="sede-${dia}">
+          <option value="">Sin clase</option>
+          <option value="Craig Circuito">Craig Circuito</option>
+          <option value="Craig Reformer">Craig Reformer</option>
+          <option value="Goyena">Goyena</option>
+        </select>
+      `;
+      contenedor.appendChild(fila);
+    });
+  }
+}
+
+async function buscarAlumno() {
+  const texto = document.getElementById('busquedaAlumno').value.trim();
+  if (texto.length < 2) return; // No buscar hasta que haya 2+ letras
+
+  try {
+    const res = await fetch(`/alumnos/buscar?q=${encodeURIComponent(texto)}`);
+    const alumnos = await res.json();
+    const select = document.getElementById('alumnoSeleccionado');
+    select.innerHTML = '';
+
+    if (alumnos.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = 'No se encontraron resultados';
+      opt.disabled = true;
+      select.appendChild(opt);
+      return;
+    }
+
+    alumnos.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.apellido}, ${a.nombre} (N°${a.numero_alumno})`;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error('Error al buscar alumno:', err);
+  }
+}
+
 
 
 </script>
