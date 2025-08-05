@@ -298,7 +298,6 @@ select::-ms-expand {
 
   <label>Horario:</label>
   <select id="horaUnica" style="width: 100%; padding: 6px;">
-  <option value="08:00">08:00</option>
   <option value="09:00">09:00</option>
   <option value="10:00">10:00</option>
   <option value="11:00">11:00</option>
@@ -311,7 +310,6 @@ select::-ms-expand {
   <option value="18:00">18:00</option>
   <option value="19:00">19:00</option>
   <option value="20:00">20:00</option>
-  <option value="21:00">21:00</option>
 </select>
 
 
@@ -372,9 +370,11 @@ select::-ms-expand {
     const diaSemanaPrimerMes = primerDiaMes.getDay() || 7;
     const semanaDelMes = Math.ceil((hoy.getDate() + diaSemanaPrimerMes - 1) / 7);
 
-    const lunes = new Date(hoy);
-    const dia = hoy.getDay() || 7;
-    lunes.setDate(hoy.getDate() - dia + 1);
+   
+   const dia = hoy.getDay();
+const lunes = new Date(hoy);
+lunes.setDate(hoy.getDate() - ((dia + 6) % 7)); // fuerza siempre lunes
+
 
     const dias = [];
     for (let i = 0; i < 5; i++) {
@@ -618,14 +618,16 @@ const lunes = new Date(hoy);
 const diaSemana = hoy.getDay() || 7;
 lunes.setDate(hoy.getDate() - diaSemana + 1);
 
-const desde = lunes.toISOString().split('T')[0];
+const desde = new Date(lunes);
 const hasta = new Date(lunes);
-hasta.setDate(lunes.getDate() + 4); // viernes
+hasta.setDate(hasta.getDate() + 4);
+
+const desdeStr = desde.toISOString().split('T')[0];
 const hastaStr = hasta.toISOString().split('T')[0];
 
 
   try {
-    const res = await fetch(`/clases?desde=${desde}&hasta=${hastaStr}`);
+    const res = await fetch(`/clases?desde=${desdeStr}&hasta=${hastaStr}`);
     const clases = await res.json();
 
     const map = {
