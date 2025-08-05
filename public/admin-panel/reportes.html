@@ -427,32 +427,7 @@ async function cargarReporteIngresos() {
       });
     });
 
-    // Crear bloques por año
-    router.get('/detalle-ingresos', async (req, res) => {
-  const { mes } = req.query;
-  try {
-    const result = await pool.query(`
-      SELECT
-        numero_alumno AS "Número",
-        nombre AS "Nombre",
-        apellido AS "Apellido",
-        TO_CHAR(fecha_inicio, 'DD/MM/YYYY') AS "Fecha ingreso"
-      FROM alumnos
-      WHERE TO_CHAR(fecha_inicio, 'YYYY-MM') = $1
-      ORDER BY apellido, nombre
-    `, [mes]);
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error en /detalle-ingresos:', err);
-    res.status(500).send('Error en detalle por fecha de ingreso');
-  }
-});
-
-  } catch (err) {
-    console.error('Error al cargar reporte de ingresos:', err);
-  }
-}
+    
 
 async function verDetalleIngresos(mes) {
   mesMostrado = mes;
