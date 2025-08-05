@@ -29,10 +29,6 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   const { desde, hasta } = req.query;
 
-  if (!desde || !hasta) {
-    return res.status(400).json({ error: 'Faltan fechas' });
-  }
-
   try {
     const resultado = await pool.query(`
       SELECT c.*, a.nombre, a.apellido, a.numero_alumno
