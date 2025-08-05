@@ -511,7 +511,7 @@ async function buscarAlumno() {
   }
 }
 
-function guardarClase() {
+async function guardarClase() {
   const alumnoId = document.getElementById('alumnoSeleccionado').value;
   const alumnoNombre = document.getElementById('alumnoSeleccionado').selectedOptions[0]?.textContent;
   const esUnica = document.getElementById('cargaUnica').checked;
@@ -520,6 +520,8 @@ function guardarClase() {
     alert("Seleccioná un alumno");
     return;
   }
+
+  let clases = [];
 
   if (esUnica) {
     const fecha = document.getElementById('fechaUnica').value;
@@ -531,32 +533,55 @@ function guardarClase() {
       return;
     }
 
-    console.log("Clase única:", { alumnoId, alumnoNombre, fecha, hora, sede });
-    // Acá se puede hacer un POST al backend
+    clases.push({ fecha, hora, sede });
   } else {
     const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-    const clases = [];
+    const hoy = new Date();
+    const finAnio = new Date(hoy.getFullYear(), 11, 31);
 
-    dias.forEach(dia => {
-      const hora = document.getElementById(`hora-${dia}`).value;
-      const sede = document.getElementById(`sede-${dia}`).value;
+    for (let d = new Date(hoy); d <= finAnio; d.setDate(d.getDate() + 1)) {
+      const diaNombre = d.toLocaleDateString('es-AR', { weekday: 'long' });
+      const capitalizado = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
 
-      if (hora && sede) {
-        clases.push({ dia, hora, sede });
+      if (dias.includes(capitalizado)) {
+        const hora = document.getElementById(`hora-${capitalizado}`)?.value;
+        const sede = document.getElementById(`sede-${capitalizado}`)?.value;
+
+        if (hora && sede) {
+          clases.push({
+            fecha: d.toISOString().split('T')[0],
+            hora,
+            sede
+          });
+        }
       }
-    });
-
-    if (clases.length === 0) {
-      alert("Debés registrar al menos una clase");
-      return;
     }
-
-    console.log("Clases recurrentes:", { alumnoId, alumnoNombre, clases });
-    // Acá se puede hacer un POST al backend
   }
 
-  alert("Clase procesada (falta guardar en backend)");
-  cerrarFormularioClase();
+  if (clases.length === 0) {
+    alert("No hay clases válidas para guardar.");
+    return;
+  }
+
+  try {
+    const res = await fetch('/clases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alumno_id: alumnoId, clases })
+    });
+
+    if (res.ok) {
+      alert('Clases guardadas correctamente');
+      cerrarFormularioClase();
+    } else {
+      const data = await res.json();
+      console.error('Error al guardar clases:', data);
+      alert('Ocurrió un error al guardar las clases');
+    }
+  } catch (err) {
+    console.error('Error en conexión:', err);
+    alert('Error de red o conexión con el servidor');
+  }
 }
 
 
