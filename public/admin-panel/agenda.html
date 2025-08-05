@@ -592,17 +592,20 @@ async function guardarClase() {
 
 async function cargarClasesEnCalendario() {
   const { dias } = getSemanaYFechas(offsetSemanas);
-  const fechas = dias.map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (d.getDay() || 7) + 1 + i + offsetSemanas * 7);
-    return d.toISOString().split('T')[0];
-  });
+  const hoy = new Date();
+hoy.setDate(hoy.getDate() + offsetSemanas * 7);
+const lunes = new Date(hoy);
+const diaSemana = hoy.getDay() || 7;
+lunes.setDate(hoy.getDate() - diaSemana + 1);
 
-  const desde = fechas[0];
-  const hasta = fechas[fechas.length - 1];
+const desde = lunes.toISOString().split('T')[0];
+const hasta = new Date(lunes);
+hasta.setDate(lunes.getDate() + 4); // viernes
+const hastaStr = hasta.toISOString().split('T')[0];
+
 
   try {
-    const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}`);
+    const res = await fetch(`/clases?desde=${desde}&hasta=${hastaStr}`);
     const clases = await res.json();
 
     const map = {
