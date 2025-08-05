@@ -293,17 +293,20 @@ select::-ms-expand {
   </div>
 
   <div id="cargaUnicaCampos" style="display: none; margin-top: 10px;">
-    <label>Fecha:</label>
-    <input type="date" id="fechaUnica" style="width: 100%; padding: 6px;"><br>
-    <label>Horario:</label>
-    <input type="time" id="horaUnica" step="3600" style="width: 100%; padding: 6px;"><br>
-    <label>Sede:</label>
-    <select id="sedeUnica" style="width: 100%; padding: 6px;">
-      <option value="Craig Circuito">Craig Circuito</option>
-      <option value="Craig Reformer">Craig Reformer</option>
-      <option value="Goyena">Goyena</option>
-    </select>
-  </div>
+  <label>Fecha:</label>
+  <input type="date" id="fechaUnica" style="width: 100%; padding: 6px;"><br>
+
+  <label>Horario:</label>
+  <input type="time" id="horaUnica" step="3600" min="08:00" max="21:00" value="09:00" style="width: 100%; padding: 6px;"><br>
+
+  <label>Sede:</label>
+  <select id="sedeUnica" style="width: 100%; padding: 6px;">
+    <option value="Craig Circuito">Craig Circuito</option>
+    <option value="Craig Reformer">Craig Reformer</option>
+    <option value="Goyena">Goyena</option>
+  </select>
+</div>
+
 
   <div style="margin-top: 10px;">
     <button onclick="guardarClase()">Guardar Clase</button>
@@ -618,10 +621,13 @@ const hastaStr = hasta.toISOString().split('T')[0];
     Object.values(map).forEach(id => generarTabla(id));
 
     clases.forEach(clase => {
-  const fecha = new Date(clase.fecha);
-  let dia = fecha.getDay();
-  if (dia === 0) return;
-  dia -= 1;
+  const [y, m, d] = clase.fecha.split('-');
+  const fecha = new Date(y, m - 1, d); // mes - 1 porque Date usa base 0
+
+  let dia = fecha.getDay(); // 0 = domingo, 1 = lunes, ...
+  if (dia === 0) return;    // ignorar domingos
+  dia -= 1;                 // ajustamos para que lunes sea 0
+
 
   const hora = clase.hora.slice(0, 5);
 
