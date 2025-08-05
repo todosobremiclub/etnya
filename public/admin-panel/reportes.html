@@ -413,60 +413,74 @@ async function cargarReporteIngresos() {
       return;
     }
 
-    const tabla = document.createElement('table');
-    const thead = tabla.createTHead();
-    const tbody = tabla.createTBody();
-    thead.innerHTML = '<tr><th>Mes</th><th>Cantidad</th></tr>';
-
+    // Agrupar por año
+    const agrupadoPorAnio = {};
     data.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="cursor:pointer; color:#91586d; text-decoration:underline;" onclick="verDetalleIngresos('${row.mes}')">
-          ${formatearMesYYYYMM(row.mes)}
-        </td>
-        <td>${row.cantidad}</td>
-      `;
-      tbody.appendChild(tr);
+      const [anio, mesNum] = row.mes.split('-');
+      const mesNombre = formatearMesYYYYMM(row.mes).split(' ')[0];
+
+      if (!agrupadoPorAnio[anio]) agrupadoPorAnio[anio] = [];
+      agrupadoPorAnio[anio].push({
+        mes: mesNombre,
+        mesCompleto: row.mes,
+        cantidad: row.cantidad
+      });
     });
 
-    contenedor.appendChild(tabla);
+    // Crear bloques por año
+    for (const anio of Object.keys(agrupadoPorAnio).sort((a, b) => b - a)) {
+      const bloque = document.createElement('div');
+      bloque.style.marginBottom = '20px';
+
+      const titulo = document.createElement('h3');
+      titulo.textContent = anio;
+      titulo.style.color = '#91586d';
+      bloque.appendChild(titulo);
+
+      const tabla = document.createElement('table');
+      tabla.innerHTML = '<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      agrupadoPorAnio[anio].forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
+              onclick="verDetalleIngresos('${row.mesCompleto}')">
+            ${row.mes}
+          </td>
+          <td>${row.cantidad}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tabla.appendChild(tbody);
+      bloque.appendChild(tabla);
+      contenedor.appendChild(bloque);
+    }
   } catch (err) {
     console.error('Error al cargar reporte de ingresos:', err);
   }
 }
 
 async function verDetalleIngresos(mes) {
-  if (mesMostrado === mes) {
-    cerrarDetalleIngresos();
-    return;
-  }
-
   mesMostrado = mes;
-  const cont = document.getElementById('detalle-ingresos');
-  cont.innerHTML = `<p style="font-weight:bold; margin-bottom:10px; color:#91586d;">
-    Detalle de ingresos en ${formatearMesYYYYMM(mes)}:
-  </p>`;
+  document.getElementById('modalDetalleIngresos').style.display = 'flex';
+  document.getElementById('tituloDetalleIngreso').textContent = `Ingresos en ${formatearMesYYYYMM(mes)}`;
 
   try {
     const res = await fetch(`/reportes/detalle-ingresos?mes=${mes}`);
     const data = await res.json();
 
-    renderTabla('detalle-ingresos', ['Número', 'Nombre', 'Apellido', 'Fecha ingreso'], data);
-
-    const volverBtn = document.createElement('button');
-    volverBtn.textContent = '⬆ Volver';
-    volverBtn.style.marginTop = '10px';
-    volverBtn.onclick = cerrarDetalleIngresos;
-
-    cont.appendChild(volverBtn);
+    renderTabla('contenidoDetalleIngreso', ['Número', 'Nombre', 'Apellido', 'Fecha ingreso'], data);
   } catch (err) {
     console.error('Error al cargar detalle de ingresos:', err);
+    document.getElementById('contenidoDetalleIngreso').innerHTML = '<p>Error al cargar datos.</p>';
   }
 }
 
 function cerrarDetalleIngresos() {
   mesMostrado = null;
-  document.getElementById('detalle-ingresos').innerHTML = '';
+  document.getElementById('modalDetalleIngresos').style.display = 'none';
 }
 
 
@@ -491,5 +505,38 @@ document.getElementById("toggleMenu").addEventListener("click", () => {
 
 
   </script>
+
+<div id="modalDetalleIngresos" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+">
+  <div style="
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  ">
+    <button onclick="cerrarDetalleIngresos()" style="
+      position: absolute;
+      top: 10px; right: 10px;
+      border: none; background: none;
+      font-size: 20px; cursor: pointer;
+    ">✖</button>
+
+    <h3 id="tituloDetalleIngreso" style="color: #91586d; margin-top: 0;"></h3>
+    <div id="contenidoDetalleIngreso"></div>
+  </div>
+</div>
+
 </body>
 </html>
