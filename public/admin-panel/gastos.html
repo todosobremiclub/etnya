@@ -168,133 +168,145 @@
     </table>
   </main>
   <script>
-    function abrirModal() { document.getElementById("formularioGasto").style.display = "block"; }
-    function cerrarModal() { document.getElementById("formularioGasto").style.display = "none"; }
-    function cerrarSesion() { localStorage.removeItem('etnya_login'); window.location.href = 'login.html'; }
-    function toggleMenu() { document.querySelector('.sidebar').classList.toggle('mostrar'); }
-    function formatearMonto(input) {
-      let valor = input.value.replace(/\D/g, '');
-      input.value = valor ? '$ ' + Number(valor).toLocaleString('es-AR') : '';
+  function abrirModal() {
+    document.getElementById("formularioGasto").style.display = "block";
+  }
+
+  function cerrarModal() {
+    document.getElementById("formularioGasto").style.display = "none";
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem('etnya_login');
+    window.location.href = 'login.html';
+  }
+
+  function toggleMenu() {
+    document.querySelector('.sidebar').classList.toggle('mostrar');
+  }
+
+  function formatearMonto(input) {
+    let valor = input.value.replace(/\D/g, '');
+    input.value = valor ? '$ ' + Number(valor).toLocaleString('es-AR') : '';
+  }
+
+  async function fetchTiposDeGasto() {
+    const res = await fetch('/gastos/tipos-gasto');
+    const data = await res.json();
+    const select = document.getElementById('tipoGasto');
+    select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
+    data.forEach(g => {
+      const option = document.createElement('option');
+      option.value = g.nombre;
+      option.textContent = g.nombre;
+      select.appendChild(option);
+    });
+  }
+
+  async function guardarPago() {
+    const nombre = document.getElementById('tipoGasto').value;
+    const mes = document.getElementById('mes').value;
+    const montoStr = document.getElementById('monto').value.replace(/[^\d]/g, '');
+    const monto = parseFloat(montoStr);
+
+    if (!nombre || !mes || isNaN(monto)) {
+      alert('Completa todos los campos correctamente');
+      return;
     }
 
-    async function fetchTiposDeGasto() {
-      const res = await fetch('/gastos/tipos-gasto');
-      const data = await res.json();
-      const select = document.getElementById('tipoGasto');
-      select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
-      data.forEach(g => {
-        const option = document.createElement('option');
-        option.value = g.nombre;
-        option.textContent = g.nombre;
-        select.appendChild(option);
-      });
-    }
+    const res = await fetch('/gastos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, monto, fecha: mes + '-01' })
+    });
 
-    async function guardarPago() {
-      const nombre = document.getElementById('tipoGasto').value;
-      const mes = document.getElementById('mes').value;
-      const montoStr = document.getElementById('monto').value.replace(/[^\d]/g, '');
-      const monto = parseFloat(montoStr);
-
-      if (!nombre || !mes || isNaN(monto)) {
-        alert('Completa todos los campos correctamente');
-        return;
-      }
-
-      const res = await fetch('/gastos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, monto, fecha: mes + '-01' })
-      });
-
-      if (res.ok) {
-        alert('Gasto guardado');
-        cerrarModal();
-        cargarGastosRegistrados();
-      } else {
-        alert('Error al guardar');
-      }
-    }
-
-    async function cargarGastosRegistrados() {
-  const res = await fetch('/gastos/registrados');
-  const gastos = await res.json();
-  const tbody = document.getElementById("tbodyGastos");
-  tbody.innerHTML = '';
-
-  const agrupados = {};
-
-  gastos.forEach(g => {
-  const clave = g.fecha.slice(0, 7); // YYYY-MM exacto
-  if (!agrupados[clave]) agrupados[clave] = [];
-  agrupados[clave].push(g);
-});
-
-let grupoIndex = 0;
-
-for (const mesClave in agrupados) {
-  const grupoId = `grupo-${grupoIndex++}`;
-  const gastosDelMes = agrupados[mesClave];
-  const totalMes = gastosDelMes.reduce((sum, g) => sum + parseFloat(g.monto), 0);
-  const mesFormateado = formatearMesTexto(mesClave);
-
-  // Fila agrupadora (desplegable)
-  const filaMes = document.createElement("tr");
-  filaMes.innerHTML = `
-    <td colspan="4" style="font-weight:bold; background:#f6e6ea; cursor:pointer;"
-        onclick="toggleGrupo('${grupoId}')">
-      🗓️ ${mesFormateado}
-      <span style="float: right;">💰 Total: $${totalMes.toLocaleString('es-AR')}</span>
-    </td>`;
-  tbody.appendChild(filaMes);
-
-  // Filas individuales ocultas por defecto
-  gastosDelMes.forEach(g => {
-    const tr = document.createElement("tr");
-    tr.classList.add(grupoId);
-    tr.style.display = "none";
-    const mesReal = formatearMesTexto(g.fecha.slice(0, 7));
-    tr.innerHTML = `
-      <td>${g.nombre}</td>
-      <td>${mesReal}</td>
-      <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
-      <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-
-function toggleGrupo(grupoId) {
-  const filas = document.querySelectorAll(`.${grupoId}`);
-  filas.forEach(f => {
-    f.style.display = (f.style.display === 'none') ? '' : 'none';
-  });
-}
-
-
-    async function eliminarGasto(id) {
-      if (!confirm('¿Eliminar este gasto?')) return;
-      const res = await fetch(`/gastos/${id}`, { method: 'DELETE' });
-      if (res.ok) cargarGastosRegistrados();
-      else alert('Error al eliminar');
-    }
-
-function formatearMesTexto(fechaStr) {
-  const [anio, mes] = fechaStr.split("-");
-  const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-  return `${nombresMeses[parseInt(mes) - 1]} ${anio}`;
-}
-
-
-    window.onload = () => {
-      if (localStorage.getItem('etnya_login') !== 'ok') {
-        window.location.href = 'login.html';
-        return;
-      }
-      fetchTiposDeGasto();
+    if (res.ok) {
+      alert('Gasto guardado');
+      cerrarModal();
       cargarGastosRegistrados();
-    };
-  </script>
+    } else {
+      alert('Error al guardar');
+    }
+  }
+
+  async function cargarGastosRegistrados() {
+    const res = await fetch('/gastos/registrados');
+    const gastos = await res.json();
+    const tbody = document.getElementById("tbodyGastos");
+    tbody.innerHTML = '';
+
+    const agrupados = {};
+
+    gastos.forEach(g => {
+      const clave = g.fecha.slice(0, 7); // YYYY-MM exacto
+      if (!agrupados[clave]) agrupados[clave] = [];
+      agrupados[clave].push(g);
+    });
+
+    let grupoIndex = 0;
+
+    for (const mesClave in agrupados) {
+      const grupoId = `grupo-${grupoIndex++}`;
+      const gastosDelMes = agrupados[mesClave];
+      const totalMes = gastosDelMes.reduce((sum, g) => sum + parseFloat(g.monto), 0);
+      const mesFormateado = formatearMesTexto(mesClave);
+
+      // Fila agrupadora (desplegable)
+      const filaMes = document.createElement("tr");
+      filaMes.innerHTML = `
+        <td colspan="4" style="font-weight:bold; background:#f6e6ea; cursor:pointer;"
+            onclick="toggleGrupo('${grupoId}')">
+          🗓️ ${mesFormateado}
+          <span style="float: right;">💰 Total: $${totalMes.toLocaleString('es-AR')}</span>
+        </td>`;
+      tbody.appendChild(filaMes);
+
+      // Filas individuales ocultas por defecto
+      gastosDelMes.forEach(g => {
+        const tr = document.createElement("tr");
+        tr.classList.add(grupoId);
+        tr.style.display = "none";
+        const mesReal = formatearMesTexto(g.fecha.slice(0, 7));
+        tr.innerHTML = `
+          <td>${g.nombre}</td>
+          <td>${mesReal}</td>
+          <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
+          <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  } // ← cierre correcto de cargarGastosRegistrados()
+
+  function toggleGrupo(grupoId) {
+    const filas = document.querySelectorAll(`.${grupoId}`);
+    filas.forEach(f => {
+      f.style.display = (f.style.display === 'none') ? '' : 'none';
+    });
+  }
+
+  async function eliminarGasto(id) {
+    if (!confirm('¿Eliminar este gasto?')) return;
+    const res = await fetch(`/gastos/${id}`, { method: 'DELETE' });
+    if (res.ok) cargarGastosRegistrados();
+    else alert('Error al eliminar');
+  }
+
+  function formatearMesTexto(fechaStr) {
+    const [anio, mes] = fechaStr.split("-");
+    const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                          "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    return `${nombresMeses[parseInt(mes) - 1]} ${anio}`;
+  }
+
+  window.onload = () => {
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      window.location.href = 'login.html';
+      return;
+    }
+    fetchTiposDeGasto();
+    cargarGastosRegistrados();
+  };
+</script>
+
 </body>
 </html>
