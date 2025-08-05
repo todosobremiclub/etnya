@@ -426,7 +426,12 @@ button:hover {
     <h1>Gestión de Alumnas/os Etnya</h1>
   </div>
 
- <div style="text-align: right; margin-top: -20px; margin-bottom: 20px;">
+ <div style="text-align: right; margin-top: -20px; margin-bottom: 20px; padding-right: 20px;">
+  <button onclick="descargarExcel()" title="Descargar Excel" style="background: none; border: none; cursor: pointer;">
+    <i class="fas fa-file-excel" style="font-size: 18px; color: #2e7d32;"></i>
+  </button>
+</div>
+
   </div>
 
 
@@ -1054,6 +1059,11 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('menuToggle').style.display = 'block';
   }
 });
+
+function descargarExcel() {
+  window.open('/alumnos/exportar-xls', '_blank');
+}
+
 
 </script>
 <!-- 🔍 Modal de ficha de alumno -->

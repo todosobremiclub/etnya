@@ -298,5 +298,44 @@ router.get('/buscar', async (req, res) => {
   }
 });
 
+const ExcelJS = require('exceljs');
+
+router.get('/exportar-xls', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM alumnos ORDER BY numero_alumno ASC');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Alumnos');
+
+    worksheet.columns = [
+      { header: 'N°', key: 'numero_alumno', width: 10 },
+      { header: 'Nombre', key: 'nombre', width: 20 },
+      { header: 'Apellido', key: 'apellido', width: 20 },
+      { header: 'Teléfono', key: 'telefono', width: 15 },
+      { header: 'Contacto', key: 'contacto_nombre', width: 20 },
+      { header: 'Tel. contacto', key: 'contacto_telefono', width: 15 },
+      { header: 'Fecha nacimiento', key: 'fecha_nacimiento', width: 15 },
+      { header: 'Edad', key: 'edad', width: 8 },
+      { header: 'Fecha ingreso', key: 'fecha_inicio', width: 15 },
+      { header: 'Tipo clase', key: 'tipo_clase', width: 20 },
+      { header: 'Sede', key: 'sede', width: 10 },
+      { header: 'Activo', key: 'activo', width: 8 },
+    ];
+
+    result.rows.forEach(alumno => {
+      worksheet.addRow(alumno);
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.ms-excel');
+    res.setHeader('Content-Disposition', 'attachment; filename="alumnos.xls"');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Error al exportar alumnos:', err);
+    res.status(500).send('Error al exportar');
+  }
+});
+
+
 
 module.exports = router;
