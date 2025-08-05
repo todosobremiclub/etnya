@@ -639,42 +639,42 @@ const hastaStr = hasta.toISOString().split('T')[0];
     // Borrar contenido anterior
     Object.values(map).forEach(id => generarTabla(id));
 
-    clases.forEach(clase => {
-  const [y, m, d] = clase.fecha.split('-');
-  const fecha = new Date(y, m - 1, d);
+        clases.forEach(clase => {
+      const [y, m, d] = clase.fecha.split('-');
+      const fecha = new Date(y, m - 1, d);
 
-  let dia = fecha.getDay(); // 0 = domingo
-  if (dia === 0) return;
-  dia -= 1;
+      let dia = fecha.getDay(); // 0 = domingo
+      if (dia === 0) return;
+      dia -= 1;
 
-  const hora = clase.hora.slice(0, 5);
-  const tablaId = map[clase.sede];
-  if (!tablaId) return;
+      const hora = clase.hora.slice(0, 5);
+      const tablaId = map[clase.sede];
+      if (!tablaId) return;
 
-  const cuerpo = document.getElementById(tablaId);
-  const filas = cuerpo.querySelectorAll('tr');
+      const cuerpo = document.getElementById(tablaId);
+      const filas = cuerpo.querySelectorAll('tr');
 
-  for (let fila of filas) {
-  const horaFila = fila.children[0].textContent.trim().padStart(5, '0');
-  const horaClase = hora.padStart(5, '0');
+      for (let fila of filas) {
+        const horaFila = fila.children[0].textContent.trim().padStart(5, '0');
+        const horaClase = hora.padStart(5, '0');
 
-  if (horaFila === horaClase) {
-    const celda = fila.children[dia + 1];
-    if (!celda) return;
+        if (horaFila === horaClase) {
+          const celda = fila.children[dia + 1];
+          if (!celda) return;
 
-    celda.innerHTML += `
-      <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
-    `;
-    break;
-  }
-}
-
-
+          celda.innerHTML += `
+            <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
+          `;
+          break;
+        }
+      }
+    }); // ← cierre faltante del forEach
 
   } catch (err) {
     console.error('Error al cargar clases:', err);
   }
 }
+
 
 
 
