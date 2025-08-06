@@ -275,7 +275,8 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
   });
   thead.appendChild(filaEncabezado);
 
-  const camposMonetarios = ['total', 'monto supervisora', 'monto supervisora 2'];
+  const camposMonetarios = ['total', 'monto supervisora', 'monto supervisora 2', 'esperado'];
+
 
   datos.forEach(row => {
     const tr = document.createElement('tr');
