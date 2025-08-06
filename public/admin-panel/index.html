@@ -1042,10 +1042,12 @@ async function cargarOpcionesFiltroClase() {
 
  window.onload = async function () {
   await cargarBecados();
-  await cargarAlumnos(); // esto ya ejecutará renderizarAlumnos al final
+  await cargarAlumnos(); // carga los alumnos y becas
   await cargarOpcionesTipoClase();
   await cargarOpcionesFiltroClase();
+  seleccionarSede('Todas'); // ✅ fuerza el render correcto de todos al iniciar
 };
+
 
 
 
