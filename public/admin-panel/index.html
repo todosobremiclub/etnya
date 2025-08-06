@@ -170,9 +170,15 @@
   padding: 6px 8px;
   font-size: 13px;
   white-space: nowrap;
-  text-align: center;  /* ✅ centrado horizontal */
-  vertical-align: middle;  /* ✅ centrado vertical */
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #ddd; /* ✅ bordes tipo Excel */
 }
+
+table {
+  border-collapse: collapse;
+}
+
 
 
   th {
@@ -438,11 +444,7 @@ button:hover {
   <div class="search-filter">
   <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
   <select id="filtroClase" onchange="cargarAlumnos()"></select>
-  <label style="display: flex; align-items: center; gap: 6px;">
-    <input type="checkbox" id="mostrarInactivos" onchange="cargarAlumnos()">
-    Mostrar inactivos
-  </label>
-
+  
 <label style="display: flex; align-items: center; gap: 6px;">
   <input type="checkbox" id="mostrarConDeuda" onchange="renderizarAlumnos()">
   Mostrar con deuda
