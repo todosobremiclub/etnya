@@ -296,6 +296,11 @@ input[type="month"].fake-placeholder:invalid:before {
     </thead>
     <tbody id="tbodyPagos"></tbody>
   </table>
+
+<div id="ingresoEsperado" style="max-width: 900px; margin: 30px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.1); font-weight: bold; color: #91586d; font-size: 16px;">
+  Ingreso mensual esperado: $<span id="montoEsperado">0.00</span>
+</div>
+
 </main>
 
 
@@ -471,6 +476,30 @@ tbody.appendChild(tr);
   }
 }
 
+function calcularIngresoEsperado() {
+  const modalidadCantidad = {};
+  let total = 0;
+
+  alumnos.forEach(a => {
+    if (!a.activo) return; // Solo alumnos activos
+    const modalidad = a.tipo_clase;
+    if (!modalidad) return;
+
+    modalidadCantidad[modalidad] = (modalidadCantidad[modalidad] || 0) + 1;
+  });
+
+  for (const modalidad in modalidadCantidad) {
+    const cantidad = modalidadCantidad[modalidad];
+    const tipo = tiposClase.find(t =>
+      normalizarTexto(t.modalidad) === normalizarTexto(modalidad)
+    );
+    const precio = tipo?.precio || 0;
+    total += cantidad * precio;
+  }
+
+  document.getElementById('montoEsperado').textContent = total.toFixed(2);
+}
+
 
 
 
@@ -479,6 +508,9 @@ tbody.appendChild(tr);
   const dataAlumnos = await resAlumnos.json();
   alumnos.push(...dataAlumnos);
 await cargarCuentas();
+  await cargarPagos();
+  calcularIngresoEsperado();
+};
 
 
   const resTipos = await fetch('/tipos-clase');
