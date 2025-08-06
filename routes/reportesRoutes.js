@@ -150,6 +150,26 @@ router.get('/detalle-ingresos', async (req, res) => {
   }
 });
 
+// 9. Alumnos por modalidad seleccionada
+router.get('/detalle-modalidad', async (req, res) => {
+  const { modalidad } = req.query;
+  try {
+    const result = await pool.query(`
+      SELECT 
+        numero_alumno AS "Número",
+        nombre AS "Nombre",
+        apellido AS "Apellido"
+      FROM alumnos
+      WHERE tipo_clase = $1 AND activo = true
+      ORDER BY apellido, nombre
+    `, [modalidad]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error en /detalle-modalidad:', err);
+    res.status(500).send('Error al obtener detalle de modalidad');
+  }
+});
 
 
 

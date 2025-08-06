@@ -359,7 +359,27 @@ async function cargarReporteAlumnosModalidad() {
   try {
     const res = await fetch('/reportes/alumnos-por-modalidad');
     const data = await res.json();
-    renderTabla('reporte-alumnos-modalidad', ['Modalidad', 'Cantidad'], data);
+
+    const contenedor = document.getElementById('reporte-alumnos-modalidad');
+    contenedor.innerHTML = '';
+
+    const tabla = document.createElement('table');
+    const thead = tabla.createTHead();
+    thead.innerHTML = '<tr><th>Modalidad</th><th>Cantidad</th></tr>';
+    const tbody = document.createElement('tbody');
+
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
+            onclick="verDetalleModalidad('${row.modalidad}')">${row.modalidad}</td>
+        <td>${row.cantidad}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    contenedor.appendChild(tabla);
   } catch (error) {
     console.error('Error al cargar reporte de alumnos por modalidad:', error);
   }
@@ -491,6 +511,22 @@ function cerrarDetalleIngresos() {
   mesMostrado = null;
   document.getElementById('modalDetalleIngresos').style.display = 'none';
 }
+
+async function verDetalleModalidad(modalidad) {
+  document.getElementById('modalDetalleIngresos').style.display = 'flex';
+  document.getElementById('tituloDetalleIngreso').textContent = `Alumnos en: ${modalidad}`;
+
+  try {
+    const res = await fetch(`/reportes/detalle-modalidad?modalidad=${encodeURIComponent(modalidad)}`);
+    const data = await res.json();
+
+    renderTabla('contenidoDetalleIngreso', ['Número', 'Nombre', 'Apellido'], data);
+  } catch (err) {
+    console.error('Error al cargar detalle de modalidad:', err);
+    document.getElementById('contenidoDetalleIngreso').innerHTML = '<p>Error al cargar datos.</p>';
+  }
+}
+
 
 
    window.onload = () => {
