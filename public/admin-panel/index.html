@@ -857,7 +857,8 @@ console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
         <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
       </td>
       <td>
-  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' ✉️' : ''}
+  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}
+
 </td>
 
 
@@ -1039,6 +1040,8 @@ async function cargarOpcionesFiltroClase() {
   await cargarAlumnos();                // 👈 Luego alumnos
   cargarOpcionesTipoClase();
   cargarOpcionesFiltroClase();
+  seleccionarSede('Todas');
+
 };
 
 function seleccionarSede(sede) {
