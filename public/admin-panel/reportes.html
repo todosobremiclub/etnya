@@ -413,7 +413,6 @@ async function cargarReporteIngresos() {
       return;
     }
 
-    // Agrupar por año
     const agrupadoPorAnio = {};
     data.forEach(row => {
       const [anio, mesNum] = row.mes.split('-');
@@ -426,6 +425,49 @@ async function cargarReporteIngresos() {
         cantidad: row.cantidad
       });
     });
+
+    for (const anio of Object.keys(agrupadoPorAnio).sort((a, b) => b - a)) {
+      const bloque = document.createElement('div');
+      bloque.style.marginBottom = '16px';
+
+      const titulo = document.createElement('h3');
+      titulo.innerHTML = `<span class="flecha-anio">▶</span> ${anio}`;
+      titulo.style.color = '#91586d';
+      titulo.style.cursor = 'pointer';
+
+      const tabla = document.createElement('table');
+      tabla.innerHTML = '<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      agrupadoPorAnio[anio].forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
+              onclick="verDetalleIngresos('${row.mesCompleto}')">
+            ${row.mes}
+          </td>
+          <td>${row.cantidad}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tabla.appendChild(tbody);
+      tabla.style.display = 'none';
+
+      titulo.addEventListener('click', () => {
+        const visible = tabla.style.display === 'table';
+        tabla.style.display = visible ? 'none' : 'table';
+        titulo.querySelector('.flecha-anio').textContent = visible ? '▶' : '🔽';
+      });
+
+      bloque.appendChild(titulo);
+      bloque.appendChild(tabla);
+      contenedor.appendChild(bloque);
+    }
+  } catch (err) {
+    console.error('Error al cargar reporte de ingresos:', err);
+  }
+}
 
     
 
