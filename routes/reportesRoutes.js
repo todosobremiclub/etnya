@@ -134,10 +134,10 @@ router.get('/detalle-ingresos', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        numero_alumno AS numero,
-        nombre,
-        apellido,
-        TO_CHAR(fecha_inicio, 'DD/MM/YYYY') AS fecha_ingreso
+        numero_alumno AS "Número",
+        nombre AS "Nombre",
+        apellido AS "Apellido",
+        TO_CHAR(fecha_inicio, 'DD/MM/YYYY') AS "Fecha ingreso"
       FROM alumnos
       WHERE TO_CHAR(fecha_inicio, 'YYYY-MM') = $1
       ORDER BY apellido, nombre
