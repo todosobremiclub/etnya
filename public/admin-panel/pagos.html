@@ -507,57 +507,47 @@ function calcularIngresoEsperado() {
   const resAlumnos = await fetch('/alumnos');
   const dataAlumnos = await resAlumnos.json();
   alumnos.push(...dataAlumnos);
-await cargarCuentas();
-  await cargarPagos();
-  calcularIngresoEsperado();
-};
 
+  await cargarCuentas();
 
   const resTipos = await fetch('/tipos-clase');
   tiposClase = await resTipos.json();
 
-  // 🔧 ESTA LÍNEA ES CLAVE
   const alumnoSelect = document.getElementById("alumno-select");
-
-  // Cargar opciones en el select
   alumnoSelect.innerHTML = '';
- alumnos.forEach(a => {
-  const option = document.createElement("option");
-  option.value = a.id;
 
-  let numeroFormateado = a.numero_alumno;
-if (a.numero_alumno < 100) {
-  numeroFormateado = String(a.numero_alumno).padStart(2, '0');
-}
-option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+  alumnos.forEach(a => {
+    const option = document.createElement("option");
+    option.value = a.id;
 
+    let numeroFormateado = a.numero_alumno;
+    if (a.numero_alumno < 100) {
+      numeroFormateado = String(a.numero_alumno).padStart(2, '0');
+    }
+    option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+    alumnoSelect.appendChild(option);
+  });
 
-  alumnoSelect.appendChild(option);
-});
+  $('#alumno-select').on('change', function () {
+    const id = this.value;
+    const alumno = alumnos.find(a => a.id == id);
+    if (!alumno) return;
 
+    const tipo = tiposClase.find(t =>
+      normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
+    );
 
-  // Listener para mostrar modalidad y monto
- $('#alumno-select').on('change', function () {
-  const id = this.value;
-  const alumno = alumnos.find(a => a.id == id);
-  if (!alumno) return;
+    document.getElementById("modalidad").value = alumno.tipo_clase || '';
+    document.getElementById("monto").value = tipo?.precio || '';
+  });
 
-  const tipo = tiposClase.find(t =>
-    normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
-  );
-
-  document.getElementById("modalidad").value = alumno.tipo_clase || '';
-  document.getElementById("monto").value = tipo?.precio || '';
-});
-
-
-
-  // Activar Select2 y cargar pagos
-    alumnoSelect.dispatchEvent(new Event('change')); // <-- fuerza ejecución del cambio
-  $('#alumno-select').trigger('change.select2');   // <-- activa Select2 visualmente
+  alumnoSelect.dispatchEvent(new Event('change'));
+  $('#alumno-select').trigger('change.select2');
 
   await cargarPagos();
+  calcularIngresoEsperado();
 };
+
 
 function toggleGrupo(grupoId) {
     const filas = document.querySelectorAll(`.${grupoId}`);
