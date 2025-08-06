@@ -191,7 +191,6 @@
     <div class="bloque-reporte">
   <h2 style="display: flex; justify-content: space-between; align-items: center;">
     <span>1. Monto por cuenta</span>
-    <span id="acumulado-anual" style="font-size: 16px; color: #555;"></span>
   </h2>
 
   <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -310,19 +309,6 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
     console.error('Error al cargar reporte de cuenta:', error);
   }
 }
-
-async function cargarTotalAnual() {
-  try {
-    const res = await fetch(`/reportes/total-anual-por-cuenta?anio=${anioActual}`);
-    const data = await res.json();
-    const total = parseFloat(data?.total ?? 0);
-    const texto = `$ ${Math.round(total).toLocaleString('es-AR')}`;
-    document.getElementById('acumulado-anual').textContent = `Total anual: ${texto}`;
-  } catch (error) {
-    console.error('Error al cargar total anual:', error);
-  }
-}
-
 
 
 async function cargarReporteMesPagado() {
@@ -539,7 +525,6 @@ async function verDetalleModalidad(modalidad) {
    window.onload = () => {
   actualizarTituloMesAnio();
   cargarReporteCuenta(mesActual, anioActual);
-  cargarTotalAnual(); // 👈 agregado
   cargarReporteMesPagado();
   cargarReporteFechaPago();
   cargarReporteAlumnosSede();
