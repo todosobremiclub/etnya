@@ -758,23 +758,38 @@ async function cargarBecados() {
 }
 
 
- async function cargarAlumnos() {
+async function cargarAlumnos() {
   try {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-for (let alumno of alumnosGlobal) {
-  const [obsRes, adjRes] = await Promise.all([
-    fetch(`/alumnos/${alumno.id}/observaciones`),
-    fetch(`/alumnos/${alumno.id}/adjuntos`)
-  ]);
-  const observaciones = await obsRes.json();
-  const adjuntos = await adjRes.json();
+    // Para cada alumno, buscar observaciones y adjuntos en paralelo
+    for (let alumno of alumnosGlobal) {
+      try {
+        const [obsRes, adjRes] = await Promise.all([
+          fetch(`/alumnos/${alumno.id}/observaciones`),
+          fetch(`/alumnos/${alumno.id}/adjuntos`)
+        ]);
 
-  alumno.tiene_observaciones = observaciones.length > 0;
-  alumno.tiene_adjuntos = adjuntos.length > 0;
+        const observaciones = await obsRes.json();
+        const adjuntos = await adjRes.json();
+
+        alumno.tiene_observaciones = observaciones.length > 0;
+        alumno.tiene_adjuntos = adjuntos.length > 0;
+      } catch (error) {
+        console.warn(`Error al obtener info extra de alumno ${alumno.id}`, error);
+        alumno.tiene_observaciones = false;
+        alumno.tiene_adjuntos = false;
+      }
+    }
+
+    renderizarAlumnos(); // ✅ se ejecuta al final
+
+  } catch (err) {
+    console.error('Error al cargar alumnos:', err);
+    alert('Ocurrió un error al cargar los datos de los alumnos.');
+  }
 }
-
 
     // Convertimos a string para asegurar coincidencia exacta
     const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
@@ -1037,12 +1052,12 @@ async function cargarOpcionesFiltroClase() {
 
 
  window.onload = async function () {
-  await cargarBecados(); // ✅ Primero becados
-  await cargarAlumnos(); // ✅ Luego alumnos
+  await cargarBecados();
+  await cargarAlumnos(); // esto ya ejecutará renderizarAlumnos al final
   await cargarOpcionesTipoClase();
   await cargarOpcionesFiltroClase();
-  seleccionarSede('Todas'); // ✅ Esto ya llama a renderizarAlumnos
 };
+
 
 
 function seleccionarSede(sede) {
