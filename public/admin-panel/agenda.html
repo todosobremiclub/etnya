@@ -160,6 +160,39 @@
       cursor: pointer;
     }
 
+    .selector-sede-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .selector-sede-container select {
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 20px;
+      border: 1px solid #aaa;
+      background-color: #fff;
+    }
+
+    .selector-sede-container button {
+      background-color: #91586d;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .selector-sede-container button:hover {
+      background-color: #6d3e4e;
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         display: none;
@@ -190,6 +223,10 @@
       table.calendario {
         font-size: 11px;
       }
+
+      .selector-sede-container {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -214,16 +251,13 @@
     <h1>Agenda Semanal Etnya</h1>
   </div>
 
-  <h1>Agenda Semanal</h1>
-
-  <div class="selector-sede">
-    <label>Seleccionar sede:</label>
+  <div class="selector-sede-container">
+    <label for="selectorSede">Seleccionar sede:</label>
     <select id="selectorSede" onchange="renderizarAgenda()">
       <option value="craig_reformer">Craig Reformer</option>
       <option value="craig_circuito">Craig Circuito</option>
       <option value="goyena">Pedro Goyena</option>
     </select>
-    <br><br>
     <button onclick="mostrarFormulario()">➕ Registrar Clase</button>
   </div>
 
