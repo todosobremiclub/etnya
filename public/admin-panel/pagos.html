@@ -497,7 +497,8 @@ function calcularIngresoEsperado() {
     total += cantidad * precio;
   }
 
-  document.getElementById('montoEsperado').textContent = total.toFixed(2);
+  document.getElementById('montoEsperado').textContent = total.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+
 }
 
 
