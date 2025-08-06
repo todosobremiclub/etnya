@@ -763,7 +763,6 @@ async function cargarAlumnos() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-    // Para cada alumno, buscar observaciones y adjuntos en paralelo
     for (let alumno of alumnosGlobal) {
       try {
         const [obsRes, adjRes] = await Promise.all([
@@ -783,7 +782,15 @@ async function cargarAlumnos() {
       }
     }
 
-    renderizarAlumnos(); // ✅ se ejecuta al final
+    // ✅ Este bloque ahora está bien ubicado
+    const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
+    alumnosGlobal.forEach(a => {
+      const esBecado = becadosSet.has(String(a.id));
+      a.becado = esBecado;
+      console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
+    });
+
+    renderizarAlumnos(); // ✅ al final
 
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
