@@ -798,23 +798,7 @@ async function cargarAlumnos() {
   }
 }
 
-    // Convertimos a string para asegurar coincidencia exacta
-    const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
-
-    alumnosGlobal.forEach(a => {
-      const esBecado = becadosSet.has(String(a.id));
-      a.becado = esBecado;
-      console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
-    });
-
-   
-  } catch (err) {
-    console.error('Error al cargar alumnos:', err);
-  }
-
-
-
-
+    
 
 function calcularEstadoPago(alumno) {
 console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`);
