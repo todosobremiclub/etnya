@@ -2,683 +2,250 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agenda - Etnya</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background: #d9e8e2;
       margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #cce1d6;
-      color: #6d6d6d;
+      padding: 0;
     }
-
-   .sidebar a {
-    display: block;
-    padding: 10px 16px;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-size: 13px;
-  }
-
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100vh;
-  background-color: #91586d;
-  padding-top: 60px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-  z-index: 1000;
-}
-
-    .sidebar a:hover {
-      background-color: #6d3e4e;
-    }
-
-    main {
-      margin-left: 200px;
-      padding: 20px;
-    }
-
-    h1 {
+    h1, h2 {
       text-align: center;
-      color: #91586d;
+      color: #6b3c4e;
     }
-
+    .selector-sede {
+      text-align: center;
+      margin-top: 10px;
+    }
     select {
-  display: block;
-  margin: 20px auto;
-  padding: 10px 18px;
-  font-size: 18px;
-  border-radius: 30px;
-  border: none;
-  background-color: #e1c6cd;
-  color: #6d3e4e;
-  font-family: 'DM Serif Display', serif;
-  font-weight: 500;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  text-align-last: center;
-  cursor: pointer;
-}
-
-select option {
-  background-color: #f6e6ea;
-  color: #6d3e4e;
-  font-family: 'DM Serif Display', serif;
-  font-size: 16px;
-}
-
-
-select::-ms-expand {
-  display: none;
-}
-
-
+      font-size: 16px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
     .calendario {
-      display: none;
-      max-width: 1100px;
-      margin: auto;
+      max-width: 95%;
+      margin: 20px auto;
       border-collapse: collapse;
-      background-color: white;
+      background: white;
       border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
       overflow: hidden;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-
-    .calendario.active {
-      display: table;
-    }
-
     .calendario th, .calendario td {
       border: 1px solid #bbb;
       padding: 6px;
-      text-align: left;
+      height: 60px;
+      text-align: center;
       vertical-align: top;
-      font-size: 13px;
-      height: 80px;
-      width: 160px;
     }
-
     .calendario th {
-      background-color: #b48a99;
+      background-color: #91586d;
       color: white;
-      text-align: center;
     }
-
     .hora {
-      background-color: #e9e9e9;
-      font-weight: bold;
-      text-align: center;
-      width: 60px;
-    }
-
-    .recupera {
-      color: red;
+      background: #eee;
       font-weight: bold;
     }
-
-    .navegacion {
+    .nav-semana {
       text-align: center;
-      margin-bottom: 10px;
-      background-color: #e0d0d5;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: 600;
-      color: #444;
-      position: relative;
+      margin-top: 10px;
     }
-
-    .navegacion button {
-      position: absolute;
-      top: 10px;
-      background: none;
+    .nav-semana button {
+      padding: 5px 15px;
+      font-size: 16px;
+      background-color: #91586d;
+      color: white;
       border: none;
-      font-size: 18px;
+      border-radius: 4px;
       cursor: pointer;
-      color: #333;
+    }
+    .formulario-clase {
+      max-width: 600px;
+      background: white;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .formulario-clase input, .formulario-clase select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
     }
 
-    .navegacion button:hover {
-      color: #000;
-    }
-
-    .navegacion .prev {
-      left: 10px;
-    }
-
-    .navegacion .next {
-      right: 10px;
-    }
-
-    @media (max-width: 768px) {
-      main {
-        margin-left: 0;
-        padding: 10px;
-      }
-
-      .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-      }
-
-      .calendario th, .calendario td {
-        font-size: 11px;
-        padding: 4px;
-      }
-    }
-
-/* Ajustes para hacer más delgado el encabezado del mes y los días */
-.calendario thead tr:first-child th {
-  height: 32px;
-  padding: 4px 8px;
-  font-size: 16px;
-}
-
-.calendario thead tr:nth-child(2) th {
-  height: 28px;
-  padding: 4px;
-  font-size: 14px;
-}
-
-#menuToggle {
+ #campoSabado {
   display: none;
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 1100;
-  background-color: #91586d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 18px;
-  cursor: pointer;
 }
-
-@media (max-width: 768px) {
-  #menuToggle {
-    display: block;
-  }
-
-  .sidebar {
-    display: none;
-    width: 100%;
-    height: auto;
-    position: absolute;
-    top: 50px;
-    left: 0;
-  }
-
-  .sidebar.mostrar {
-    display: block;
-  }
-
-  main {
-    margin-left: 0;
-    padding: 20px;
-  }
-}
-
 
   </style>
 </head>
 <body>
 
-<!-- Botón menú hamburguesa -->
-<button id="menuToggle" onclick="toggleMenu()">☰</button>
+  <h1>Agenda Semanal</h1>
 
-
-<div style="margin-left: 200px;">
-  <div style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 0;
-    transform: translateX(-10px);
-  ">
-    <img src="logo.jpeg" alt="Logo" style="height: 60px; margin-right: 16px;">
-    <h2 style="margin: 0; font-size: 28px; color: #91586d;">Agenda Semanal Etnya</h2>
+  <div class="selector-sede">
+    <label>Seleccionar sede:</label>
+    <select id="selectorSede" onchange="renderizarAgenda()">
+      <option value="craig_reformer">Craig Reformer</option>
+      <option value="craig_circuito">Craig Circuito</option>
+      <option value="goyena">Pedro Goyena</option>
+    </select>
+    <br><br>
+    <button onclick="mostrarFormulario()">➕ Registrar Clase</button>
   </div>
+
+  <div class="nav-semana">
+    <button onclick="cambiarSemana(-1)">◄ Semana anterior</button>
+    <span id="tituloSemana">Semana actual</span>
+    <button onclick="cambiarSemana(1)">Semana siguiente ►</button>
+  </div>
+
+  <table class="calendario" id="tablaAgenda">	
+    <thead id="theadAgenda"></thead>
+    <tbody id="tbodyAgenda"></tbody>
+  </table>
+
+  <div class="formulario-clase" id="formularioClase" style="display: none;">
+    <h2>Registrar Clase</h2>
+    <input type="text" id="busquedaAlumno" placeholder="Buscar alumno...">
+    <select id="alumnoSeleccionado"></select>
+
+    <label><input type="checkbox" id="esPrueba"> Clase de Prueba</label>
+    <label><input type="checkbox" id="esUnica" onchange="alternarUnica()"> Clase por única vez</label>
+
+    <div id="formRecurrente">
+      <label>Sede:</label>
+      <select id="sedeRecurrente">
+        <option value="Craig Reformer">Craig Reformer</option>
+        <option value="Craig Circuito">Craig Circuito</option>
+        <option value="Pedro Goyena">Pedro Goyena</option>
+      </select>
+
+      <div id="diasSemana">
+  <label>Lunes: <input type="time" id="hora-Lunes" step="3600"></label><br>
+  <label>Martes: <input type="time" id="hora-Martes" step="3600"></label><br>
+  <label>Miércoles: <input type="time" id="hora-Miércoles" step="3600"></label><br>
+  <label>Jueves: <input type="time" id="hora-Jueves" step="3600"></label><br>
+  <label>Viernes: <input type="time" id="hora-Viernes" step="3600"></label><br>
+  <label id="campoSabado">Sábado: <input type="time" id="hora-Sábado" step="3600"></label><br>
+
+
 </div>
 
+    </div>
 
- <!-- Sidebar -->
-  <div class="sidebar">
-    <a href="index.html">📋 Alumnas/os</a>
-    <a href="pagos.html">💳 Pagos</a>
-    <a href="gastos.html">🧾 Gastos</a>
-    <a href="agenda.html">📅 Agenda</a>
-    <a href="configuracion.html">⚙️ Configuración</a>
-    <a href="reportes.html">📈 Reportes</a>
-    <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
-      🚪 Cerrar sesión
-    </button>
-  </div>
+    <div id="formUnica" style="display:none;">
+      <label>Fecha exacta:</label>
+      <input type="date" id="fechaUnica">
+      <label>Horario:</label>
+      <select id="horaUnica"></select>
+      <label>Sede:</label>
+      <select id="sedeUnica"></select>
+    </div>
 
-<main>
-  
-
-  <select id="selectorSede">
-  <option value="craig_reformer">Craig Reformer</option>
-  <option value="craig_circuito">Craig Circuito</option>
-  <option value="goyena">Goyena</option>
-</select>
-
-
-<!-- Botón y formulario de clase -->
-<button onclick="mostrarFormularioClase()" style="margin: 20px auto; display: block;">➕ Registrar Clase</button>
-
-<div id="formularioClase" style="display: none; background: #fff; border: 1px solid #ccc; padding: 20px; margin-bottom: 30px; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
-  <h3 style="color:#91586d;">Registrar Clase</h3>
-
-  <label>Alumno/a:</label>
-  <input type="text" id="busquedaAlumno" oninput="buscarAlumno()" placeholder="Buscar por nombre o número" style="width: 100%; padding: 6px;">
-  <select id="alumnoSeleccionado" style="width: 100%; margin-bottom: 10px; padding: 6px;">
-    <!-- Opciones dinámicas -->
-  </select>
-
-  <label><input type="checkbox" id="cargaUnica" onchange="alternarCarga()"> Clase por única vez</label>
-
-  <div id="cargaRecurrente" style="margin-top: 10px;">
-    <p><strong>Días de la semana:</strong></p>
-    <div id="diasSemana"></div>
-  </div>
-
-  <div id="cargaUnicaCampos" style="display: none; margin-top: 10px;">
-  <label>Fecha:</label>
-  <input type="date" id="fechaUnica" style="width: 100%; padding: 6px;"><br>
-
-  <label>Horario:</label>
-  <select id="horaUnica" style="width: 100%; padding: 6px;">
-  <option value="09:00">09:00</option>
-  <option value="10:00">10:00</option>
-  <option value="11:00">11:00</option>
-  <option value="12:00">12:00</option>
-  <option value="13:00">13:00</option>
-  <option value="14:00">14:00</option>
-  <option value="15:00">15:00</option>
-  <option value="16:00">16:00</option>
-  <option value="17:00">17:00</option>
-  <option value="18:00">18:00</option>
-  <option value="19:00">19:00</option>
-  <option value="20:00">20:00</option>
-</select>
-
-
-
-  <label>Sede:</label>
-  <select id="sedeUnica" style="width: 100%; padding: 6px;">
-    <option value="Craig Circuito">Craig Circuito</option>
-    <option value="Craig Reformer">Craig Reformer</option>
-    <option value="Goyena">Goyena</option>
-  </select>
-</div>
-
-
-  <div style="margin-top: 10px;">
     <button onclick="guardarClase()">Guardar Clase</button>
-    <button onclick="cerrarFormularioClase()" type="button">Cancelar</button>
+    <button onclick="cerrarFormulario()">Cancelar</button>
   </div>
-</div>
-
-
-  <div class="navegacion">
-    <button class="prev" onclick="cambiarSemana(-1)">◄</button>
-    <span id="tituloSemana">Semana</span>
-    <button class="next" onclick="cambiarSemana(1)">►</button>
-  </div>
-
-  <table class="calendario" id="calendarioCraigReformer">
-  <thead id="theadCraigReformer"></thead>
-  <tbody id="cuerpoCraigReformer"></tbody>
-</table>
-
-<table class="calendario" id="calendarioCraigCircuito">
-  <thead id="theadCraigCircuito"></thead>
-  <tbody id="cuerpoCraigCircuito"></tbody>
-</table>
-
-<table class="calendario" id="calendarioGoyena">
-  <thead id="theadGoyena"></thead>
-  <tbody id="cuerpoGoyena"></tbody>
-</table>
-
-
-
-</main>
 
 <script>
-  if (localStorage.getItem('etnya_login') !== 'ok') {
-    window.location.href = 'login.html';
-  }
+let semanaOffset = 0;
 
-  const horas = Array.from({ length: 12 }, (_, i) => `${9 + i}:00`);
-  let offsetSemanas = 0;
-
-  function getSemanaYFechas(offset = 0) {
-    const hoy = new Date();
-    hoy.setDate(hoy.getDate() + offset * 7);
-    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const diaSemanaPrimerMes = primerDiaMes.getDay() || 7;
-    const semanaDelMes = Math.ceil((hoy.getDate() + diaSemanaPrimerMes - 1) / 7);
-
-   
-   const dia = hoy.getDay();
-const lunes = new Date(hoy);
-lunes.setDate(hoy.getDate() - ((dia + 6) % 7)); // fuerza siempre lunes
-
-
-    const dias = [];
-    for (let i = 0; i < 5; i++) {
-      const fecha = new Date(lunes);
-      fecha.setDate(lunes.getDate() + i);
-      dias.push({
-        nombre: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'][i],
-        numero: fecha.getDate()
-      });
-    }
-
-    const mesNombre = lunes.toLocaleDateString('es-AR', { month: 'long' });
-    return { semanaDelMes, mesNombre, dias, anio: lunes.getFullYear() };
-  }
-
-  function actualizarEncabezadoTabla(theadId) {
-  const { semanaDelMes, mesNombre, dias, anio } = getSemanaYFechas(offsetSemanas);
-  const thead = document.getElementById(theadId);
-  thead.innerHTML = `
-    <tr>
-      <th colspan="6" style="text-align:center; background:#e0d0d5; color:#444; font-weight:600;">
-        ${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} ${anio}
-      </th>
-    </tr>
-    <tr>
-      <th class="hora">Hora</th>
-      ${dias.map(d => `<th>${d.nombre} ${d.numero}</th>`).join('')}
-    </tr>
-  `;
+function cambiarSemana(d) {
+  semanaOffset += d;
+  renderizarAgenda();
 }
 
-
-  function cambiarSemana(delta) {
-  offsetSemanas += delta;
-  actualizarEncabezadoTabla("theadCraigReformer");
-  actualizarEncabezadoTabla("theadCraigCircuito");
-  actualizarEncabezadoTabla("theadGoyena");
-  cargarClasesEnCalendario();
- 
-
-}
-
-
-  function generarTabla(cuerpoId) {
-    const cuerpo = document.getElementById(cuerpoId);
-    cuerpo.innerHTML = "";
-    horas.forEach(hora => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="hora">${hora}</td>` + '<td></td><td></td><td></td><td></td><td></td>';
-      cuerpo.appendChild(tr);
-    });
-  }
-
- generarTabla("cuerpoCraigReformer");
-generarTabla("cuerpoCraigCircuito");
-generarTabla("cuerpoGoyena");
-
-actualizarEncabezadoTabla("theadCraigReformer");
-actualizarEncabezadoTabla("theadCraigCircuito");
-actualizarEncabezadoTabla("theadGoyena");
-
-cargarClasesEnCalendario();
-
-
-
-  const selector = document.getElementById('selectorSede');
-const calendarioCraigReformer = document.getElementById('calendarioCraigReformer');
-const calendarioCraigCircuito = document.getElementById('calendarioCraigCircuito');
-const calendarioGoyena = document.getElementById('calendarioGoyena');
-
-selector.addEventListener('change', () => {
-  const sede = selector.value;
-  calendarioCraigReformer.classList.remove("active");
-  calendarioCraigCircuito.classList.remove("active");
-  calendarioGoyena.classList.remove("active");
-
-  if (sede === "craig_reformer") calendarioCraigReformer.classList.add("active");
-  if (sede === "craig_circuito") calendarioCraigCircuito.classList.add("active");
-  if (sede === "goyena") calendarioGoyena.classList.add("active");
-});
-
-selector.value = "craig_reformer";
-calendarioCraigReformer.classList.add("active");
-
-
-function cerrarSesion() {
-  localStorage.removeItem('etnya_login');
-  window.location.href = 'login.html';
-}
-
-function toggleMenu() {
-  const sidebar = document.querySelector('.sidebar');
-  sidebar.classList.toggle('mostrar');
-}
-
-function mostrarFormularioClase() {
-  document.getElementById('formularioClase').style.display = 'block';
-  armarCamposDias();
-}
-
-function cerrarFormularioClase() {
-  document.getElementById('formularioClase').style.display = 'none';
-}
-
-function alternarCarga() {
-  const unica = document.getElementById('cargaUnica').checked;
-  document.getElementById('cargaRecurrente').style.display = unica ? 'none' : 'block';
-  document.getElementById('cargaUnicaCampos').style.display = unica ? 'block' : 'none';
-}
-
-function armarCamposDias() {
-  const contenedor = document.getElementById('diasSemana');
-  if (!contenedor.innerHTML) {
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-    dias.forEach(dia => {
-      const fila = document.createElement('div');
-      fila.style.marginBottom = '10px';
-      fila.innerHTML = `
-        <label>${dia}:</label>
-        <input type="time" id="hora-${dia}" step="3600">
-        <select id="sede-${dia}">
-          <option value="">Sin clase</option>
-          <option value="Craig Circuito">Craig Circuito</option>
-          <option value="Craig Reformer">Craig Reformer</option>
-          <option value="Goyena">Goyena</option>
-        </select>
-      `;
-      contenedor.appendChild(fila);
-    });
-  }
-}
-
-async function buscarAlumno() {
-  const texto = document.getElementById('busquedaAlumno').value.trim();
-  if (texto.length < 2) return; // No buscar hasta que haya 2+ letras
-
-  try {
-    const res = await fetch(`/alumnos/buscar?q=${encodeURIComponent(texto)}`);
-    const alumnos = await res.json();
-    const select = document.getElementById('alumnoSeleccionado');
-    select.innerHTML = '';
-
-    if (alumnos.length === 0) {
-      const opt = document.createElement('option');
-      opt.textContent = 'No se encontraron resultados';
-      opt.disabled = true;
-      select.appendChild(opt);
-      return;
-    }
-
-    alumnos.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.id;
-      opt.textContent = `${a.apellido}, ${a.nombre} (N°${a.numero_alumno})`;
-      select.appendChild(opt);
-    });
-
-  } catch (err) {
-    console.error('Error al buscar alumno:', err);
-  }
-}
-
-async function guardarClase() {
-  const alumnoId = document.getElementById('alumnoSeleccionado').value;
-  const alumnoNombre = document.getElementById('alumnoSeleccionado').selectedOptions[0]?.textContent;
-  const esUnica = document.getElementById('cargaUnica').checked;
-
-  if (!alumnoId) {
-    alert("Seleccioná un alumno");
-    return;
-  }
-
-  let clases = [];
-
-  if (esUnica) {
-    const fecha = document.getElementById('fechaUnica').value;
-    const hora = document.getElementById('horaUnica').value;
-    const sede = document.getElementById('sedeUnica').value;
-
-    if (!fecha || !hora || !sede) {
-      alert("Completá todos los campos de clase única");
-      return;
-    }
-
-    clases.push({ fecha, hora, sede });
-  } else {
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-    const hoy = new Date();
-    const finAnio = new Date(hoy.getFullYear(), 11, 31);
-
-    for (let d = new Date(hoy); d <= finAnio; d.setDate(d.getDate() + 1)) {
-      const diaNombre = d.toLocaleDateString('es-AR', { weekday: 'long' });
-      const capitalizado = diaNombre.charAt(0).toUpperCase() + diaNombre.slice(1);
-
-      if (dias.includes(capitalizado)) {
-        const hora = document.getElementById(`hora-${capitalizado}`)?.value;
-        const sede = document.getElementById(`sede-${capitalizado}`)?.value;
-
-        if (hora && sede) {
-          clases.push({
-            fecha: d.toISOString().split('T')[0],
-            hora,
-            sede
-          });
-        }
-      }
-    }
-  }
-
-  if (clases.length === 0) {
-    alert("No hay clases válidas para guardar.");
-    return;
-  }
-
-  try {
-    const res = await fetch('/clases', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alumno_id: alumnoId, clases })
-    });
-
-    if (res.ok) {
-      alert('Clases guardadas correctamente');
-      cerrarFormularioClase();
-    } else {
-      const data = await res.json();
-      console.error('Error al guardar clases:', data);
-      alert('Ocurrió un error al guardar las clases');
-    }
-  } catch (err) {
-    console.error('Error en conexión:', err);
-    alert('Error de red o conexión con el servidor');
-  }
-}
-
-async function cargarClasesEnCalendario() {
+async function renderizarAgenda() {
+  const sede = document.getElementById('selectorSede').value;
   const hoy = new Date();
-hoy.setDate(hoy.getDate() + offsetSemanas * 7);
-const dia = hoy.getDay();
-const lunes = new Date(hoy);
-lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
+  hoy.setDate(hoy.getDate() + semanaOffset * 7);
+  const dia = hoy.getDay();
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
 
+  const dias = sede === 'goyena'
+    ? ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
+    : ['Lunes','Martes','Miércoles','Jueves','Viernes'];
 
+  const horas = sede === 'goyena'
+    ? Array.from({length: 14}, (_, i) => `${(8 + i).toString().padStart(2,'0')}:00`)
+    : Array.from({length: 12}, (_, i) => `${(9 + i).toString().padStart(2,'0')}:00`);
+
+  const thead = document.getElementById('theadAgenda');
+  const tbody = document.getElementById('tbodyAgenda');
+  thead.innerHTML = '';
+  tbody.innerHTML = '';
+
+  // encabezado con mes y año
+  const fechaStr = lunes.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  document.getElementById('tituloSemana').innerText = `${fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1)}`;
+
+  const encabezadoDias = dias.map((d, i) => {
+    const f = new Date(lunes);
+    f.setDate(lunes.getDate() + i);
+    return `<th>${d} ${f.getDate()}</th>`;
+  }).join('');
+
+  thead.innerHTML = `<tr><th class='hora'>Hora</th>${encabezadoDias}</tr>`;
+
+  const filas = horas.map(h => [`<td class='hora'>${h}</td>`].concat(dias.map(() => '<td></td>')));
+  for (let fila of filas) tbody.innerHTML += `<tr>${fila.join('')}</tr>`;
+
+  // cargar clases desde backend
   const desde = new Date(lunes);
   const hasta = new Date(lunes);
-  hasta.setDate(hasta.getDate() + 4);
+  hasta.setDate(hasta.getDate() + dias.length - 1);
 
   const desdeStr = desde.toISOString().split('T')[0];
   const hastaStr = hasta.toISOString().split('T')[0];
-
 
   try {
     const res = await fetch(`/clases?desde=${desdeStr}&hasta=${hastaStr}`);
     const clases = await res.json();
 
-    const map = {
-      'Craig Reformer': 'cuerpoCraigReformer',
-      'Craig Circuito': 'cuerpoCraigCircuito',
-      'Goyena': 'cuerpoGoyena'
-    };
-
-    // Borrar contenido anterior
-    Object.values(map).forEach(id => generarTabla(id));
-
-        clases.forEach(clase => {
-      const [y, m, d] = clase.fecha.split('-');
-      const fecha = new Date(y, m - 1, d);
-
-      let dia = fecha.getDay(); // 0 = domingo
-      if (dia === 0) return;
-      dia -= 1;
-
+    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
+      const fecha = new Date(clase.fecha);
       const hora = clase.hora.slice(0, 5);
-      const tablaId = map[clase.sede];
-      if (!tablaId) return;
+      const diaSemana = (fecha.getDay() + 6) % 7; // lunes = 0
+      if (diaSemana >= dias.length) return;
 
-      const cuerpo = document.getElementById(tablaId);
-      const filas = cuerpo.querySelectorAll('tr');
+      const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => tr.children[0].textContent === hora);
+      if (!fila) return;
 
-      for (let fila of filas) {
-        const horaFila = fila.children[0].textContent.trim().padStart(5, '0');
-        const horaClase = hora.padStart(5, '0');
-
-        if (horaFila === horaClase) {
-          const celda = fila.children[dia + 1];
-          if (!celda) return;
-
-          celda.innerHTML += `
-            <div><strong>${clase.apellido}, ${clase.nombre}</strong><br>N°${clase.numero_alumno}</div>
-          `;
-          break;
-        }
-      }
-    }); // ← cierre faltante del forEach
+   
+      const celda = fila.children[diaSemana + 1];
+      celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
+    });
 
   } catch (err) {
     console.error('Error al cargar clases:', err);
   }
 }
 
+function mostrarFormulario() {	
+  document.getElementById('formularioClase').style.display = 'block';
+}
+function cerrarFormulario() {
+  document.getElementById('formularioClase').style.display = 'none';
+}
+function alternarUnica() {
+  const esUnica = document.getElementById('esUnica').checked;
+  document.getElementById('formRecurrente').style.display = esUnica ? 'none' : 'block';
+  document.getElementById('formUnica').style.display = esUnica ? 'block' : 'none';
+}
+
+// Mostrar u ocultar el campo de Sábado según la sede seleccionada
+const sedeRecurrenteSelect = document.getElementById('sedeRecurrente');
+sedeRecurrenteSelect.addEventListener('change', () => {
+  const mostrar = sedeRecurrenteSelect.value === 'Pedro Goyena';
+  document.getElementById('campoSabado').style.display = mostrar ? 'block' : 'none';
+});
 
 
-
+renderizarAgenda();
 </script>
-
 </body>
 </html>
