@@ -785,7 +785,7 @@ for (let alumno of alumnosGlobal) {
       console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
     });
 
-    renderizarAlumnos();
+   
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
   }
@@ -1036,14 +1036,14 @@ async function cargarOpcionesFiltroClase() {
 }
 
 
-  window.onload = async function () {
-  await cargarBecados();                // 👈 Cargar primero becados
-  await cargarAlumnos();                // 👈 Luego alumnos
-  cargarOpcionesTipoClase();
-  cargarOpcionesFiltroClase();
-  seleccionarSede('Todas');
-
+ window.onload = async function () {
+  await cargarBecados(); // ✅ Primero becados
+  await cargarAlumnos(); // ✅ Luego alumnos
+  await cargarOpcionesTipoClase();
+  await cargarOpcionesFiltroClase();
+  seleccionarSede('Todas'); // ✅ Esto ya llama a renderizarAlumnos
 };
+
 
 function seleccionarSede(sede) {
   sedeSeleccionada = sede;
