@@ -321,9 +321,29 @@ if (localStorage.getItem('etnya_login') !== 'ok') {
 
 async function cargarReporteMesPagado() {
   try {
-    const res = await fetch('/reportes/por-mes-pagado');
-    const data = await res.json();
-    renderTabla('reporte-mes-pagado', ['Mes', 'Total'], data);
+    const [resAlumnos, resTipos, resReporte] = await Promise.all([
+      fetch('/alumnos'),
+      fetch('/tipos-clase'),
+      fetch('/reportes/por-mes-pagado')
+    ]);
+
+    const dataAlumnos = await resAlumnos.json();
+    const dataTipos = await resTipos.json();
+    const dataReporte = await resReporte.json();
+
+    window.alumnos = dataAlumnos;
+    window.tiposClase = dataTipos;
+
+    const montoEsperado = calcularMontoEsperadoPorMes();
+
+    const datosConEsperado = dataReporte.map(row => ({
+  mes: formatearMesYYYYMM(row.mes),
+  total: row.total,
+  esperado: montoEsperado
+}));
+
+
+    renderTabla('reporte-mes-pagado', ['Mes', 'Total', 'Esperado'], datosConEsperado);
   } catch (error) {
     console.error('Error al cargar reporte por mes pagado:', error);
   }
@@ -528,7 +548,60 @@ async function verDetalleModalidad(modalidad) {
   }
 }
 
+function calcularMontoEsperadoMensual() {
+  const modalidadCantidad = {};
+  let total = 0;
 
+  if (!Array.isArray(alumnos) || !Array.isArray(tiposClase)) return 0;
+
+  alumnos.forEach(a => {
+    if (!a.activo) return;
+    const modalidad = a.tipo_clase;
+    if (!modalidad) return;
+
+    modalidadCantidad[modalidad] = (modalidadCantidad[modalidad] || 0) + 1;
+  });
+
+  for (const modalidad in modalidadCantidad) {
+    const cantidad = modalidadCantidad[modalidad];
+    const tipo = tiposClase.find(t =>
+      t.modalidad.toLowerCase().trim() === modalidad.toLowerCase().trim()
+    );
+    const precio = tipo?.precio || 0;
+    total += cantidad * precio;
+  }
+
+  return total;
+}
+
+function calcularMontoEsperadoPorMes() {
+  const modalidadCantidad = {};
+  let total = 0;
+
+  if (!Array.isArray(alumnos) || !Array.isArray(tiposClase)) return 0;
+
+  alumnos.forEach(a => {
+    if (!a.activo) return;
+    const modalidad = a.tipo_clase;
+    if (!modalidad) return;
+
+    modalidadCantidad[modalidad] = (modalidadCantidad[modalidad] || 0) + 1;
+  });
+
+  const esperadoPorMes = {};
+
+  for (const modalidad in modalidadCantidad) {
+    const cantidad = modalidadCantidad[modalidad];
+    const tipo = tiposClase.find(t =>
+      t.modalidad.toLowerCase().trim() === modalidad.toLowerCase().trim()
+    );
+    const precio = tipo?.precio || 0;
+    const subtotal = cantidad * precio;
+    total += subtotal;
+  }
+
+  return total; // mismo para todos los meses si no filtramos
+}
 
    window.onload = () => {
   actualizarTituloMesAnio();
