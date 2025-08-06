@@ -611,14 +611,12 @@ async function guardarClase() {
 }
 
 async function cargarClasesEnCalendario() {
-  const { dias } = getSemanaYFechas(offsetSemanas);
+  const hoy = new Date();
+hoy.setDate(hoy.getDate() + offsetSemanas * 7);
+const dia = hoy.getDay();
+const lunes = new Date(hoy);
+lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
 
-  // Volvemos a calcular el lunes exacto desde los días generados
-  const primerDia = dias[0].numero;
-  const mesNombre = dias[0].nombre;
-  const baseDate = new Date();
-  baseDate.setDate(primerDia);
-  const lunes = new Date(baseDate.getFullYear(), baseDate.getMonth(), primerDia);
 
   const desde = new Date(lunes);
   const hasta = new Date(lunes);
