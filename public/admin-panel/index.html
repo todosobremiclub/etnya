@@ -517,7 +517,7 @@ button:hover {
     <th>Edad</th>
     <th>Inicio</th>
     <th>Pago</th>
-    <th>Activo</th>
+    <th>Info</th>
     <th>Opciones</th>
   </tr>
 </thead>
@@ -536,7 +536,7 @@ button:hover {
     <th>Edad</th>
     <th>Inicio</th>
     <th>Pago</th>
-    <th>Activo</th>
+    <th>Info</th>
     <th>Opciones</th>
   </tr>
 </thead>
@@ -763,6 +763,19 @@ async function cargarBecados() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
+for (let alumno of alumnosGlobal) {
+  const [obsRes, adjRes] = await Promise.all([
+    fetch(`/alumnos/${alumno.id}/observaciones`),
+    fetch(`/alumnos/${alumno.id}/adjuntos`)
+  ]);
+  const observaciones = await obsRes.json();
+  const adjuntos = await adjRes.json();
+
+  alumno.tiene_observaciones = observaciones.length > 0;
+  alumno.tiene_adjuntos = adjuntos.length > 0;
+}
+
+
     // Convertimos a string para asegurar coincidencia exacta
     const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
 
@@ -844,8 +857,10 @@ console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
         <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
       </td>
       <td>
-        <input type="checkbox" ${alumno.activo ? 'checked' : ''} onchange="toggleActivo(${alumno.id}, this.checked)">
-      </td>
+  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' ✉️' : ''}
+</td>
+
+
       <td class="acciones">
         <button onclick="editarAlumno(${alumno.id})">🖉</button>
         <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
