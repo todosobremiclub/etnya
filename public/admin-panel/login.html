@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <title>Login - Etnya</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Íconos Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
     body {
       margin: 0;
@@ -14,6 +18,7 @@
       align-items: center;
       height: 100vh;
     }
+
     .login-container {
       background-color: #fff;
       padding: 30px;
@@ -21,11 +26,13 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 300px;
     }
+
     .login-container h2 {
       margin-top: 0;
       text-align: center;
       color: #91586d;
     }
+
     input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px;
@@ -33,6 +40,7 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
+
     button {
       width: 100%;
       margin-top: 15px;
@@ -44,6 +52,7 @@
       cursor: pointer;
       font-weight: bold;
     }
+
     .error {
       color: red;
       font-size: 14px;
@@ -53,10 +62,24 @@
   </style>
 </head>
 <body>
+
   <div class="login-container">
     <h2>Ingreso Etnya</h2>
+
     <input type="text" id="usuario" placeholder="Usuario">
-    <input type="password" id="password" placeholder="Contraseña">
+
+    <div style="position: relative;">
+      <input type="password" id="password" placeholder="Contraseña" style="padding-right: 35px;">
+      <i class="fas fa-eye" id="togglePassword" style="
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #91586d;
+      "></i>
+    </div>
+
     <button onclick="login()">Ingresar</button>
     <div class="error" id="errorMsg"></div>
   </div>
@@ -67,11 +90,22 @@
       const pass = document.getElementById('password').value;
       if (user === 'Etnya' && pass === 'Goyena1982*') {
         localStorage.setItem('etnya_login', 'ok');
-        window.location.href = 'index.html'; // o la página principal
+        window.location.href = 'index.html';
       } else {
         document.getElementById('errorMsg').textContent = 'Usuario o contraseña incorrectos';
       }
     }
+
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    togglePassword.addEventListener('click', function () {
+      const tipo = passwordInput.type === 'password' ? 'text' : 'password';
+      passwordInput.type = tipo;
+      this.classList.toggle('fa-eye-slash');
+    });
   </script>
+
 </body>
 </html>
+
