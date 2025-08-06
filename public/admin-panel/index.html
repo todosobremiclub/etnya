@@ -782,7 +782,7 @@ async function cargarAlumnos() {
       }
     }
 
-    // ✅ Este bloque ahora está bien ubicado
+    // ✅ ESTO es lo que se queda
     const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
     alumnosGlobal.forEach(a => {
       const esBecado = becadosSet.has(String(a.id));
@@ -790,7 +790,7 @@ async function cargarAlumnos() {
       console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
     });
 
-    renderizarAlumnos(); // ✅ al final
+    renderizarAlumnos();
 
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
