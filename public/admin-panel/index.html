@@ -821,7 +821,8 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
   const mostrarConDeuda = document.getElementById('mostrarConDeuda')?.checked || false;
   const filtroTexto = document.getElementById('buscar').value.toLowerCase();
   const filtroClase = document.getElementById('filtroClase').value;
-  const mostrarInactivos = document.getElementById('mostrarInactivos')?.checked || false;
+  const mostrarInactivos = true; // ✅ mostrar siempre todos
+
 
   const tbodyCraig = document.getElementById('tablaCraig');
   const tbodyGoyena = document.getElementById('tablaGoyena');
