@@ -450,10 +450,17 @@ async function cargarReporteIngresos() {
       const bloque = document.createElement('div');
       bloque.style.marginBottom = '16px';
 
-      const titulo = document.createElement('h3');
-      titulo.innerHTML = `<span class="flecha-anio">▶</span> ${anio}`;
-      titulo.style.color = '#91586d';
-      titulo.style.cursor = 'pointer';
+      const titulo = document.createElement('div');
+titulo.innerHTML = `<span class="flecha-anio">▶</span> ${anio}`;
+titulo.style.color = '#91586d';
+titulo.style.cursor = 'pointer';
+titulo.style.fontSize = '15px';
+titulo.style.fontWeight = '600';
+titulo.style.margin = '6px 0';
+
+titulo.onmouseover = () => titulo.style.textDecoration = 'underline';
+titulo.onmouseout = () => titulo.style.textDecoration = 'none';
+
 
       const tabla = document.createElement('table');
       tabla.innerHTML = '<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
