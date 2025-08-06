@@ -1,4 +1,5 @@
-<!-- ACTUALIZADO: Agenda con diseño de configuración.html -->
+<!-- 🟣 COMPLETO: agenda.html con formulario modal moderno, checks funcionales, horarios enteros, y sede editable por día -->
+<!-- COMIENZA EL ARCHIVO HTML -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -110,56 +111,6 @@
       width: 80px;
     }
 
-    .formulario-clase {
-      max-width: 700px;
-      margin: 20px auto;
-      padding: 20px;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-    }
-
-    .formulario-clase input,
-    .formulario-clase select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      border: 1px solid #94b8a3;
-      font-size: 13px;
-      background-color: #f9f9f9;
-    }
-
-    .formulario-clase button {
-      background-color: #b48a99;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      margin-right: 8px;
-    }
-
-    .formulario-clase button:hover {
-      background-color: #91586d;
-    }
-
-    #menuToggle {
-      display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      background-color: #91586d;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
     .selector-sede-container {
       display: flex;
       justify-content: center;
@@ -193,6 +144,61 @@
       background-color: #6d3e4e;
     }
 
+    /* MODAL flotante para Registrar Clase */
+    #formularioClase {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #formularioClase .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    #formularioClase .modal-content input,
+    #formularioClase .modal-content select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #formularioClase .modal-content button {
+      background-color: #b48a99;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #formularioClase .modal-content button:hover {
+      background-color: #91586d;
+    }
+
+    #formularioClase .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         display: none;
@@ -209,6 +215,17 @@
 
       #menuToggle {
         display: block;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background-color: #91586d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 1100;
       }
 
       main {
@@ -231,9 +248,7 @@
   </style>
 </head>
 <body>
-<!-- Botón menú hamburguesa -->
 <button id="menuToggle" onclick="toggleMenu()">☰</button>
-<!-- Sidebar -->
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
@@ -261,45 +276,62 @@
     <button onclick="mostrarFormulario()">➕ Registrar Clase</button>
   </div>
 
-
   <div class="nav-semana">
     <button onclick="cambiarSemana(-1)">◄ Semana anterior</button>
     <span id="tituloSemana">Semana actual</span>
     <button onclick="cambiarSemana(1)">Semana siguiente ►</button>
   </div>
 
-  <table class="calendario" id="tablaAgenda">	
+  <table class="calendario" id="tablaAgenda">  
     <thead id="theadAgenda"></thead>
     <tbody id="tbodyAgenda"></tbody>
   </table>
 
-  <div class="formulario-clase" id="formularioClase" style="display: none;">
-    <h2>Registrar Clase</h2>
-    <input type="text" id="busquedaAlumno" placeholder="Buscar alumno...">
+  <div id="formularioClase" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center;">
+  <div class="modal-content">
+    <h2 style="text-align:center; color:#91586d;">Registrar Clase</h2>
+    <button onclick="cerrarFormulario()" class="close-btn">✖</button>
+
+    <input type="text" id="busquedaAlumno" placeholder="Buscar alumno..." oninput="buscarAlumno()">
     <select id="alumnoSeleccionado"></select>
 
-    <label><input type="checkbox" id="esPrueba"> Clase de Prueba</label>
+    <label><input type="checkbox" id="esPrueba" onchange="alternarUnica()"> Clase de Prueba</label>
     <label><input type="checkbox" id="esUnica" onchange="alternarUnica()"> Clase por única vez</label>
 
     <div id="formRecurrente">
       <label>Sede:</label>
-      <select id="sedeRecurrente">
+      <select id="sedeRecurrente" onchange="actualizarSedesPorDia()">
         <option value="Craig Reformer">Craig Reformer</option>
         <option value="Craig Circuito">Craig Circuito</option>
         <option value="Pedro Goyena">Pedro Goyena</option>
       </select>
 
       <div id="diasSemana">
-  <label>Lunes: <input type="time" id="hora-Lunes" step="3600"></label><br>
-  <label>Martes: <input type="time" id="hora-Martes" step="3600"></label><br>
-  <label>Miércoles: <input type="time" id="hora-Miércoles" step="3600"></label><br>
-  <label>Jueves: <input type="time" id="hora-Jueves" step="3600"></label><br>
-  <label>Viernes: <input type="time" id="hora-Viernes" step="3600"></label><br>
-  <label id="campoSabado">Sábado: <input type="time" id="hora-Sábado" step="3600"></label><br>
-
-
-</div>
-
+        <label>Lunes:
+          <select id="hora-Lunes"></select>
+          <select id="sede-Lunes"></select>
+        </label><br>
+        <label>Martes:
+          <select id="hora-Martes"></select>
+          <select id="sede-Martes"></select>
+        </label><br>
+        <label>Miércoles:
+          <select id="hora-Miércoles"></select>
+          <select id="sede-Miércoles"></select>
+        </label><br>
+        <label>Jueves:
+          <select id="hora-Jueves"></select>
+          <select id="sede-Jueves"></select>
+        </label><br>
+        <label>Viernes:
+          <select id="hora-Viernes"></select>
+          <select id="sede-Viernes"></select>
+        </label><br>
+        <label id="campoSabado" style="display: none;">Sábado:
+          <select id="hora-Sábado"></select>
+          <select id="sede-Sábado"></select>
+        </label>
+      </div>
     </div>
 
     <div id="formUnica" style="display:none;">
@@ -308,107 +340,89 @@
       <label>Horario:</label>
       <select id="horaUnica"></select>
       <label>Sede:</label>
-      <select id="sedeUnica"></select>
+      <select id="sedeUnica">
+        <option value="Craig Reformer">Craig Reformer</option>
+        <option value="Craig Circuito">Craig Circuito</option>
+        <option value="Pedro Goyena">Pedro Goyena</option>
+      </select>
     </div>
 
     <button onclick="guardarClase()">Guardar Clase</button>
-    <button onclick="cerrarFormulario()">Cancelar</button>
   </div>
+</div>
 
 <script>
-let semanaOffset = 0;
-
-function cambiarSemana(d) {
-  semanaOffset += d;
-  renderizarAgenda();
+function mostrarFormulario() {
+  document.getElementById('formularioClase').style.display = 'flex';
+  armarSelectsHorarioYsedes();
 }
 
-async function renderizarAgenda() {
-  const sede = document.getElementById('selectorSede').value;
-  const hoy = new Date();
-  hoy.setDate(hoy.getDate() + semanaOffset * 7);
-  const dia = hoy.getDay();
-  const lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
-
-  const dias = sede === 'goyena'
-    ? ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
-    : ['Lunes','Martes','Miércoles','Jueves','Viernes'];
-
-  const horas = sede === 'goyena'
-    ? Array.from({length: 14}, (_, i) => `${(8 + i).toString().padStart(2,'0')}:00`)
-    : Array.from({length: 12}, (_, i) => `${(9 + i).toString().padStart(2,'0')}:00`);
-
-  const thead = document.getElementById('theadAgenda');
-  const tbody = document.getElementById('tbodyAgenda');
-  thead.innerHTML = '';
-  tbody.innerHTML = '';
-
-  // encabezado con mes y año
-  const fechaStr = lunes.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
-  document.getElementById('tituloSemana').innerText = `${fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1)}`;
-
-  const encabezadoDias = dias.map((d, i) => {
-    const f = new Date(lunes);
-    f.setDate(lunes.getDate() + i);
-    return `<th>${d} ${f.getDate()}</th>`;
-  }).join('');
-
-  thead.innerHTML = `<tr><th class='hora'>Hora</th>${encabezadoDias}</tr>`;
-
-  const filas = horas.map(h => [`<td class='hora'>${h}</td>`].concat(dias.map(() => '<td></td>')));
-  for (let fila of filas) tbody.innerHTML += `<tr>${fila.join('')}</tr>`;
-
-  // cargar clases desde backend
-  const desde = new Date(lunes);
-  const hasta = new Date(lunes);
-  hasta.setDate(hasta.getDate() + dias.length - 1);
-
-  const desdeStr = desde.toISOString().split('T')[0];
-  const hastaStr = hasta.toISOString().split('T')[0];
-
-  try {
-    const res = await fetch(`/clases?desde=${desdeStr}&hasta=${hastaStr}`);
-    const clases = await res.json();
-
-    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
-      const fecha = new Date(clase.fecha);
-      const hora = clase.hora.slice(0, 5);
-      const diaSemana = (fecha.getDay() + 6) % 7; // lunes = 0
-      if (diaSemana >= dias.length) return;
-
-      const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => tr.children[0].textContent === hora);
-      if (!fila) return;
-
-   
-      const celda = fila.children[diaSemana + 1];
-      celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
-    });
-
-  } catch (err) {
-    console.error('Error al cargar clases:', err);
-  }
-}
-
-function mostrarFormulario() {	
-  document.getElementById('formularioClase').style.display = 'block';
-}
 function cerrarFormulario() {
   document.getElementById('formularioClase').style.display = 'none';
 }
+
 function alternarUnica() {
-  const esUnica = document.getElementById('esUnica').checked;
+  const esUnica = document.getElementById('esUnica').checked || document.getElementById('esPrueba').checked;
   document.getElementById('formRecurrente').style.display = esUnica ? 'none' : 'block';
   document.getElementById('formUnica').style.display = esUnica ? 'block' : 'none';
 }
 
-// Mostrar u ocultar el campo de Sábado según la sede seleccionada
+function actualizarSedesPorDia() {
+  const sede = document.getElementById('sedeRecurrente').value;
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  dias.forEach(dia => {
+    const select = document.getElementById(`sede-${dia}`);
+    if (select) select.value = sede;
+  });
+}
+
+function armarSelectsHorarioYsedes() {
+  const horas = Array.from({ length: 14 }, (_, i) => `${(8 + i).toString().padStart(2, '0')}:00`);
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+  dias.forEach(dia => {
+    const horaSel = document.getElementById(`hora-${dia}`);
+    const sedeSel = document.getElementById(`sede-${dia}`);
+    if (horaSel) {
+      horaSel.innerHTML = horas.map(h => `<option value="${h}">${h}</option>`).join('');
+    }
+    if (sedeSel) {
+      sedeSel.innerHTML = `
+        <option value="Craig Reformer">Craig Reformer</option>
+        <option value="Craig Circuito">Craig Circuito</option>
+        <option value="Pedro Goyena">Pedro Goyena</option>
+      `;
+    }
+  });
+
+  const horaUnica = document.getElementById('horaUnica');
+  if (horaUnica) horaUnica.innerHTML = horas.map(h => `<option value="${h}">${h}</option>`).join('');
+}
+
 const sedeRecurrenteSelect = document.getElementById('sedeRecurrente');
 sedeRecurrenteSelect.addEventListener('change', () => {
   const mostrar = sedeRecurrenteSelect.value === 'Pedro Goyena';
   document.getElementById('campoSabado').style.display = mostrar ? 'block' : 'none';
 });
 
+async function buscarAlumno() {
+  const texto = document.getElementById('busquedaAlumno').value.trim();
+  if (texto.length < 2) return;
+  try {
+    const res = await fetch(`/alumnos/buscar?q=${encodeURIComponent(texto)}`);
+    const alumnos = await res.json();
+    const select = document.getElementById('alumnoSeleccionado');
+    select.innerHTML = '';
+    alumnos.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.nombre} - N°${a.numero_alumno}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Error al buscar alumno:', err);
+  }
+}
 
 renderizarAgenda();
 </script>
