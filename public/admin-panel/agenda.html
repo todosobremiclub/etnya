@@ -327,6 +327,24 @@
         flex-direction: column;
       }
     }
+
+
+.checkbox-contenedor {
+  display: flex;
+  justify-content: flex-start;
+  gap: 30px;
+  margin: 15px 0;
+}
+
+.checkbox-contenedor label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #6d6d6d;
+  gap: 6px;
+}
+
+
   </style>
 </head>
 <body>
@@ -381,8 +399,12 @@
     <input type="text" id="busquedaAlumno" placeholder="Buscar alumno...">
     <select id="alumnoSeleccionado"></select>
 
-    <label><input type="checkbox" id="esPrueba"> Clase de Prueba</label>
-    <label><input type="checkbox" id="esUnica" onchange="alternarUnica()"> Clase por única vez</label>
+   <div class="checkbox-contenedor">
+  <label><input type="checkbox" id="esPrueba"> Clase de Prueba</label>
+  <label><input type="checkbox" id="esUnica" onchange="alternarUnica()"> Clase por única vez</label>
+</div>
+
+
 
     <div id="formRecurrente">
       <label>Sede:</label>
@@ -513,6 +535,31 @@ sedeRecurrenteSelect.addEventListener('change', () => {
   const mostrar = sedeRecurrenteSelect.value === 'Pedro Goyena';
   document.getElementById('campoSabado').style.display = mostrar ? 'block' : 'none';
 });
+
+// ✅ NUEVO: cargar alumnos en el formulario
+async function cargarAlumnos() {
+  try {
+    const res = await fetch('/alumnos');
+    const alumnos = await res.json();
+
+    const select = document.getElementById('alumnoSeleccionado');
+    select.innerHTML = '';
+    alumnos.forEach(alumno => {
+      const option = document.createElement('option');
+      option.value = alumno.id;
+      option.textContent = `${alumno.apellido}, ${alumno.nombre} - N°${alumno.numero_alumno}`;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error al cargar alumnos:', err);
+  }
+}
+
+// ✅ Modificado: mostrar formulario y cargar alumnos
+function mostrarFormulario() {
+  document.getElementById('formularioClase').style.display = 'flex';
+  cargarAlumnos();
+}
 
 
 renderizarAgenda();
