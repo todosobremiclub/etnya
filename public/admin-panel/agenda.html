@@ -455,16 +455,12 @@
 
 
   <label>Sede:</label>
-  <select id="sedeUnica">
-    <option value="Craig Reformer">Craig Reformer</option>
-    <option value="Craig Circuito">Craig Circuito</option>
-    <option value="Pedro Goyena">Pedro Goyena</option>
-  </select>
-
-<div style="text-align: right; margin-top: 20px;">
-  <button onclick="guardarClase()">Guardar Clase</button>
-  <button onclick="cerrarFormulario()">Cancelar</button>
-</div>
+<select id="sedeUnica">
+  <option value="Craig Reformer">Craig Reformer</option>
+  <option value="Craig Circuito">Craig Circuito</option>
+  <option value="Pedro Goyena">Pedro Goyena</option>
+</select>
+</div> <!-- 🔧 Cierra correctamente el div de formClaseUnica -->
 
 <!-- FORMULARIO: Clase de prueba -->
 <div id="formClasePrueba" style="display: none;">
@@ -498,6 +494,13 @@
     <option value="Pedro Goyena">Pedro Goyena</option>
   </select>
 </div>
+
+<!-- 🔽 Botones de acción (fuera de los formularios) -->
+<div style="text-align: right; margin-top: 20px;">
+  <button onclick="guardarClase()">Guardar Clase</button>
+  <button onclick="cerrarFormulario()">Cancelar</button>
+</div>
+
 
 
 <script>
