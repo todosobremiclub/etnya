@@ -628,7 +628,9 @@ async function cargarAlumnos() {
 function mostrarFormulario() {
   document.getElementById('formularioClase').style.display = 'flex';
   cargarAlumnos();
+  alternarUnica(); // ✅ Esto faltaba
 }
+
 
 
 renderizarAgenda();
