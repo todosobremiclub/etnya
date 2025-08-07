@@ -471,6 +471,8 @@ async function renderizarAgenda() {
   thead.innerHTML = '';
   tbody.innerHTML = '';
 
+
+
   // encabezado con mes y año
   const fechaStr = lunes.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
   document.getElementById('tituloSemana').innerText = `${fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1)}`;
@@ -563,6 +565,17 @@ function mostrarFormulario() {
 
 
 renderizarAgenda();
+
+document.getElementById('busquedaAlumno').addEventListener('input', function() {
+  const texto = this.value.toLowerCase();
+  const select = document.getElementById('alumnoSeleccionado');
+
+  for (const option of select.options) {
+    const nombre = option.textContent.toLowerCase();
+    option.style.display = nombre.includes(texto) ? '' : 'none';
+  }
+});
+
 </script>
 </body>
 </html>
