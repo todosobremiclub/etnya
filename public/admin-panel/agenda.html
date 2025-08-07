@@ -578,7 +578,12 @@ async function renderizarAgenda() {
 
    
       const celda = fila.children[diaSemana + 1];
-      celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
+if (!celda) {
+  console.warn('No se encontró celda para:', clase.fecha, clase.hora, clase.nombre);
+  return;
+}
+celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
+
     });
 
   } catch (err) {
