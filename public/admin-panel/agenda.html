@@ -587,9 +587,15 @@ function alternarUnica() {
   const esUnica = document.getElementById('esUnica').checked;
   const esPrueba = document.getElementById('esPrueba').checked;
 
+  // Mostrar/ocultar formularios según checkboxes
   document.getElementById('formRecurrente').style.display = (!esUnica && !esPrueba) ? 'block' : 'none';
   document.getElementById('formClaseUnica').style.display = esUnica ? 'block' : 'none';
   document.getElementById('formClasePrueba').style.display = esPrueba ? 'block' : 'none';
+
+  // Mostrar/ocultar campos de alumno (solo para clase por única vez)
+  document.getElementById('busquedaAlumno').style.display = esUnica ? 'block' : 'none';
+  document.getElementById('alumnoSeleccionado').style.display = esUnica ? 'block' : 'none';
+}
 
   // Alumno solo visible si es clase por única vez
   document.getElementById('busquedaAlumno').style.display = esUnica ? 'block' : 'none';
