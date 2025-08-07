@@ -570,7 +570,8 @@ async function renderizarAgenda() {
     clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
       const fecha = new Date(clase.fecha);
       const hora = clase.hora.slice(0, 5);
-      const diaSemana = (fecha.getDay() + 6) % 7; // lunes = 0
+      const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
+const diaSemana = (fecha.getDay() + 6) % 7; // lunes = 0
       if (diaSemana >= dias.length) return;
 
       const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => tr.children[0].textContent === hora);
