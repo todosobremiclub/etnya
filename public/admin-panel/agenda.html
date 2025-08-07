@@ -568,7 +568,7 @@ async function renderizarAgenda() {
     const clases = await res.json();
 
     clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
-      const fecha = new Date(clase.fecha);
+      const fecha = new Date(clase.fecha + 'T00:00:00'); // Fuerza hora local sin desplazamiento
       const hora = clase.hora.slice(0, 5);
       const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
       if (diaSemana >= dias.length) return;
