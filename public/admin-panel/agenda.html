@@ -453,6 +453,12 @@
   <option value="20:00">20:00</option>
 </select>
 
+<label>Buscar alumno/a:</label>
+<input type="text" id="busquedaAlumnoRecurrente" placeholder="Buscar por nombre o apellido">
+
+<label>Alumno/a:</label>
+<select id="alumnoSeleccionadoRecurrente"></select>
+
 
   <label>Sede:</label>
 <select id="sedeUnica">
@@ -614,14 +620,21 @@ async function cargarAlumnos() {
     const res = await fetch('/alumnos');
     const alumnos = await res.json();
 
-    const select = document.getElementById('alumnoSeleccionado');
-    select.innerHTML = '';
+    const selectUnica = document.getElementById('alumnoSeleccionado');
+    const selectRecurrente = document.getElementById('alumnoSeleccionadoRecurrente');
+
+    selectUnica.innerHTML = '';
+    selectRecurrente.innerHTML = '';
+
     alumnos.forEach(alumno => {
       const option = document.createElement('option');
       option.value = alumno.id;
       option.textContent = `${alumno.apellido}, ${alumno.nombre} - N°${alumno.numero_alumno}`;
-      select.appendChild(option);
+
+      selectUnica.appendChild(option.cloneNode(true));
+      selectRecurrente.appendChild(option.cloneNode(true));
     });
+
   } catch (err) {
     console.error('Error al cargar alumnos:', err);
   }
@@ -736,6 +749,15 @@ document.getElementById('busquedaAlumno').addEventListener('input', function() {
 document.getElementById('esPrueba').addEventListener('change', alternarUnica);
 document.getElementById('esUnica').addEventListener('change', alternarUnica);
 
+document.getElementById('busquedaAlumnoRecurrente').addEventListener('input', function () {
+  const texto = this.value.toLowerCase();
+  const select = document.getElementById('alumnoSeleccionadoRecurrente');
+
+  for (const option of select.options) {
+    const nombre = option.textContent.toLowerCase();
+    option.style.display = nombre.includes(texto) ? '' : 'none';
+  }
+});
 
 
 </script>
