@@ -171,6 +171,70 @@ router.get('/detalle-modalidad', async (req, res) => {
   }
 });
 
+// 10. Recaudación por sede y mes pagado con monto esperado
+router.get('/recaudacion-por-sede', async (req, res) => {
+  try {
+    const pagos = await pool.query(`
+      SELECT 
+        TO_CHAR(p.mes_pagado, 'YYYY-MM') AS mes,
+        a.sede,
+        SUM(p.monto) AS total
+      FROM pagos p
+      JOIN alumnos a ON p.alumno_id = a.id
+      WHERE a.activo = true
+      GROUP BY mes, a.sede
+      ORDER BY mes DESC, a.sede
+    `);
+
+    const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
+    const alumnos = await pool.query(`
+      SELECT sede, tipo_clase
+      FROM alumnos
+      WHERE activo = true
+    `);
+
+    // Agrupar alumnos activos por sede y modalidad
+    const agrupado = {};
+    for (let a of alumnos.rows) {
+      const sede = a.sede;
+      const modalidad = a.tipo_clase;
+      if (!agrupado[sede]) agrupado[sede] = {};
+      if (!agrupado[sede][modalidad]) agrupado[sede][modalidad] = 0;
+      agrupado[sede][modalidad]++;
+    }
+
+    // Mapear precios por modalidad
+    const precios = {};
+    modalidades.rows.forEach(m => {
+      precios[m.modalidad] = parseFloat(m.precio) || 0;
+    });
+
+    // Calcular monto esperado por sede
+    const esperadosPorSede = {};
+    for (let sede in agrupado) {
+      let subtotal = 0;
+      for (let modalidad in agrupado[sede]) {
+        const cantidad = agrupado[sede][modalidad];
+        const precio = precios[modalidad] || 0;
+        subtotal += cantidad * precio;
+      }
+      esperadosPorSede[sede] = subtotal;
+    }
+
+    // Unir datos
+    const resultado = pagos.rows.map(p => ({
+      mes: p.mes,
+      sede: p.sede,
+      total: parseFloat(p.total),
+      esperado: esperadosPorSede[p.sede] || 0
+    }));
+
+    res.json(resultado);
+  } catch (err) {
+    console.error('Error en /recaudacion-por-sede:', err);
+    res.status(500).json({ error: 'Error al calcular recaudación por sede' });
+  }
+});
 
 
 

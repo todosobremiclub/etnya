@@ -240,7 +240,15 @@
   <div id="reporte-ingresos"></div>
   <div id="detalle-ingresos" style="margin-top: 20px;"></div>
 </div>
+<div class="bloque-reporte">
+  <h2>7. Recaudación por sede (mes pagado)</h2>
+  <div id="reporte-recaudacion-sede"></div>
 </div>
+
+
+</div>
+
+
   <script>
 
 if (localStorage.getItem('etnya_login') !== 'ok') {
@@ -604,6 +612,24 @@ function calcularMontoEsperadoPorMes() {
   return total; // mismo para todos los meses si no filtramos
 }
 
+async function cargarReporteRecaudacionPorSede() {
+  try {
+    const res = await fetch('/reportes/recaudacion-por-sede');
+    const data = await res.json();
+
+    const datosFormateados = data.map(row => ({
+      mes: formatearMesYYYYMM(row.mes),
+      sede: row.sede,
+      total: row.total,
+      esperado: row.esperado
+    }));
+
+    renderTabla('reporte-recaudacion-sede', ['Mes', 'Sede', 'Total', 'Esperado'], datosFormateados);
+  } catch (err) {
+    console.error('Error al cargar reporte por sede:', err);
+  }
+}
+
    window.onload = () => {
   actualizarTituloMesAnio();
   cargarReporteCuenta(mesActual, anioActual);
@@ -612,6 +638,8 @@ function calcularMontoEsperadoPorMes() {
   cargarReporteAlumnosSede();
   cargarReporteAlumnosModalidad();
   cargarReporteIngresos();
+  cargarReporteRecaudacionPorSede();
+
 
 };
 
