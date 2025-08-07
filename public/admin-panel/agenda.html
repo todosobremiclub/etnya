@@ -634,6 +634,93 @@ function mostrarFormulario() {
   alternarUnica(); // ✅ Esto faltaba
 }
 
+<script>
+function guardarClase() {
+  const esUnica = document.getElementById('esUnica').checked;
+  const esPrueba = document.getElementById('esPrueba').checked;
+
+  if (esUnica) {
+    const alumnoId = document.getElementById('alumnoSeleccionado').value;
+    const fecha = document.getElementById('fechaUnica').value;
+    const hora = document.getElementById('horaUnica').value;
+    const sede = document.getElementById('sedeUnica').value;
+
+    if (!alumnoId || !fecha || !hora || !sede) {
+      alert("Completá todos los campos para clase única.");
+      return;
+    }
+
+    const clase = {
+      alumno_id: alumnoId,
+      clases: [{ fecha, hora, sede }]
+    };
+
+    fetch('/clases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(clase)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Error al guardar');
+      return res.json();
+    })
+    .then(() => {
+      alert('Clase guardada');
+      cerrarFormulario();
+      renderizarAgenda();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Hubo un error al guardar la clase');
+    });
+  }
+
+  else if (esPrueba) {
+    const nombre = document.getElementById('nombreClasePrueba').value;
+    const fecha = document.getElementById('fechaPrueba').value;
+    const hora = document.getElementById('horaPrueba').value;
+    const sede = document.getElementById('sedePrueba').value;
+
+    if (!nombre || !fecha || !hora || !sede) {
+      alert("Completá todos los campos para clase de prueba.");
+      return;
+    }
+
+    const clase = {
+      alumno_id: null,
+      clases: [{
+        fecha,
+        hora,
+        sede,
+        nombre: nombre.trim()
+      }]
+    };
+
+    fetch('/clases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(clase)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Error al guardar clase de prueba');
+      return res.json();
+    })
+    .then(() => {
+      alert('Clase de prueba guardada');
+      cerrarFormulario();
+      renderizarAgenda();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Hubo un error al guardar la clase de prueba');
+    });
+  }
+
+  else {
+    alert("Seleccioná una opción: clase única o clase de prueba.");
+  }
+}
+</script>
 
 
 renderizarAgenda();
