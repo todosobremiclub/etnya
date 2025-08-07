@@ -571,7 +571,6 @@ async function renderizarAgenda() {
       const fecha = new Date(clase.fecha);
       const hora = clase.hora.slice(0, 5);
       const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
-const diaSemana = (fecha.getDay() + 6) % 7; // lunes = 0
       if (diaSemana >= dias.length) return;
 
       const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => tr.children[0].textContent === hora);
@@ -750,15 +749,6 @@ document.getElementById('busquedaAlumno').addEventListener('input', function() {
 document.getElementById('esPrueba').addEventListener('change', alternarUnica);
 document.getElementById('esUnica').addEventListener('change', alternarUnica);
 
-document.getElementById('busquedaAlumnoRecurrente').addEventListener('input', function () {
-  const texto = this.value.toLowerCase();
-  const select = document.getElementById('alumnoSeleccionadoRecurrente');
-
-  for (const option of select.options) {
-    const nombre = option.textContent.toLowerCase();
-    option.style.display = nombre.includes(texto) ? '' : 'none';
-  }
-});
 
 
 </script>
