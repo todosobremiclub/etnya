@@ -399,10 +399,18 @@
     <input type="text" id="busquedaAlumno" placeholder="Buscar alumno...">
     <select id="alumnoSeleccionado"></select>
 
-   <div class="checkbox-contenedor">
-  <label><input type="checkbox" id="esPrueba"> Clase de Prueba</label>
-  <label><input type="checkbox" id="esUnica" onchange="alternarUnica()"> Clase por única vez</label>
+   <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 15px;">
+  <label style="display: flex; align-items: center; gap: 6px;">
+    <input type="checkbox" id="esPrueba">
+    Clase de Prueba
+  </label>
+  <label style="display: flex; align-items: center; gap: 6px;">
+    <input type="checkbox" id="esUnica" onchange="alternarUnica()">
+    Clase por única vez
+  </label>
 </div>
+
+
 
 
 
@@ -424,22 +432,41 @@
       </div>
     </div>
 
-    <div id="formUnica" style="display:none;">
-      <label>Fecha exacta:</label>
-      <input type="date" id="fechaUnica">
-      <label>Horario:</label>
-      <select id="horaUnica"></select>
-      <label>Sede:</label>
-      <select id="sedeUnica"></select>
-    </div>
+    <div id="formClaseUnica" style="display: none;">
+  <label>Fecha exacta:</label>
+  <input type="date" id="fechaUnica">
 
-    <div style="text-align: right; margin-top: 20px;">
-      <button onclick="guardarClase()">Guardar Clase</button>
-      <button onclick="cerrarFormulario()">Cancelar</button>
-    </div>
-  </div>
+  <label>Horario:</label>
+  <select id="horaUnica"></select>
+
+  <label>Sede:</label>
+  <select id="sedeUnica">
+    <option value="Craig Reformer">Craig Reformer</option>
+    <option value="Craig Circuito">Craig Circuito</option>
+    <option value="Pedro Goyena">Pedro Goyena</option>
+  </select>
 </div>
 
+<div style="text-align: right; margin-top: 20px;">
+  <button onclick="guardarClase()">Guardar Clase</button>
+  <button onclick="cerrarFormulario()">Cancelar</button>
+</div>
+
+<!-- FORMULARIO: Clase de prueba -->
+<div id="formClasePrueba" style="display: none;">
+  <label>Nombre de la clase:</label>
+  <input type="text" id="nombreClasePrueba" placeholder="Ej: Invitación especial">
+
+  <label>Fecha:</label>
+  <input type="date" id="fechaPrueba">
+
+  <label>Sede:</label>
+  <select id="sedePrueba">
+    <option value="Craig Reformer">Craig Reformer</option>
+    <option value="Craig Circuito">Craig Circuito</option>
+    <option value="Pedro Goyena">Pedro Goyena</option>
+  </select>
+</div>
 
 
 <script>
@@ -527,8 +554,15 @@ function cerrarFormulario() {
 }
 function alternarUnica() {
   const esUnica = document.getElementById('esUnica').checked;
-  document.getElementById('formRecurrente').style.display = esUnica ? 'none' : 'block';
-  document.getElementById('formUnica').style.display = esUnica ? 'block' : 'none';
+  const esPrueba = document.getElementById('esPrueba').checked;
+
+  document.getElementById('formRecurrente').style.display = (!esUnica && !esPrueba) ? 'block' : 'none';
+  document.getElementById('formClaseUnica').style.display = esUnica ? 'block' : 'none';
+  document.getElementById('formClasePrueba').style.display = esPrueba ? 'block' : 'none';
+
+  // Alumno solo visible si es clase por única vez
+  document.getElementById('busquedaAlumno').style.display = esUnica ? 'block' : 'none';
+  document.getElementById('alumnoSeleccionado').style.display = esUnica ? 'block' : 'none';
 }
 
 // Mostrar u ocultar el campo de Sábado según la sede seleccionada
@@ -575,6 +609,11 @@ document.getElementById('busquedaAlumno').addEventListener('input', function() {
     option.style.display = nombre.includes(texto) ? '' : 'none';
   }
 });
+
+document.getElementById('esPrueba').addEventListener('change', alternarUnica);
+document.getElementById('esUnica').addEventListener('change', alternarUnica);
+
+
 
 </script>
 </body>
