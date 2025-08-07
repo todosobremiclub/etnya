@@ -567,7 +567,8 @@ async function renderizarAgenda() {
     const res = await fetch(`/clases?desde=${desdeStr}&hasta=${hastaStr}`);
     const clases = await res.json();
 
-    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
+    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {const horaObj = new Date(`2000-01-01T${clase.hora}`);
+      const hora = horaObj.toTimeString().slice(0,5); // garantiza formato HH:MM
       const fecha = new Date(clase.fecha + 'T00:00:00'); // Fuerza hora local sin desplazamiento
       const hora = clase.hora.slice(0, 5);
       const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
