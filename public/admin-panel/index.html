@@ -386,6 +386,90 @@ button:hover {
   }
 }
 
+/* ===== Ficha mejorada ===== */
+.ficha-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  width: 92%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+.ficha-header {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5c7cf;
+}
+
+.ficha-avatar {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: #f1e6ea;
+  display: grid; place-items: center;
+  font-size: 28px; color: #91586d;
+  border: 2px solid #e5c7cf;
+}
+
+.ficha-titulo {
+  margin: 0;
+  color: #91586d;
+  line-height: 1.1;
+}
+.ficha-sub { margin: 2px 0 0; color:#6d6d6d; font-size: 13px; }
+
+.ficha-close {
+  border: none; background: none; cursor: pointer;
+  font-size: 24px; color:#91586d;
+}
+
+.ficha-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 8px 20px;
+  margin: 16px 0 6px;
+}
+.ficha-item {
+  background:#faf7f8; border:1px solid #f0e1e6; border-radius:8px;
+  padding:10px 12px; font-size:13px;
+}
+.ficha-item b{ color:#714a58; }
+
+.chips { display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0; }
+.chip {
+  padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600;
+  background:#f1e6ea; color:#6d3e4e; border:1px solid #e5c7cf;
+}
+.chip.success{ background:#e7f5ea; color:#2e7d32; border-color:#cfe9d5; }
+.chip.danger{ background:#fdeaea; color:#c62828; border-color:#f5caca; }
+
+.accordion-title{
+  margin:14px 0 6px; cursor:pointer; display:flex; align-items:center; gap:8px;
+  color:#6d3e4e;
+}
+.accordion-title:hover{ text-decoration:underline; }
+
+.adjuntos-lista p{
+  background:#f7eef1; padding:8px; border-radius:6px; border-left:4px solid #b48a99;
+  font-size:13px; margin:6px 0;
+}
+
+.adj-thumb{
+  width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #e5c7cf;
+  margin-right:8px;
+}
+.adj-row{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
+
+@media (max-width: 640px){
+  .ficha-header{ grid-template-columns: 56px 1fr auto; }
+  .ficha-grid{ grid-template-columns: 1fr; }
+}
 
 
 </style>
@@ -597,33 +681,41 @@ function abrirFichaAlumno(id) {
   const alumno = alumnosGlobal.find(a => a.id === id);
   if (!alumno) return;
 
-  const cont = document.getElementById('fichaContenido');
-  cont.innerHTML = `
-    <p><strong>Número:</strong> ${alumno.numero_alumno}</p>
-    <p><strong>Nombre:</strong> ${alumno.nombre} ${alumno.apellido}</p>
-    <p><strong>Teléfono:</strong> ${alumno.telefono || ''}</p>
-    <p><strong>Contacto:</strong> ${alumno.contacto_nombre || ''} - ${alumno.contacto_telefono || ''}</p>
-    <p><strong>Fecha nacimiento:</strong> ${formatearFecha(alumno.fecha_nacimiento)}</p>
-    <p><strong>Inicio:</strong> ${formatearFecha(alumno.fecha_inicio)}</p>
-    <p><strong>Tipo clase:</strong> ${alumno.tipo_clase || ''}</p>
-    <hr>
-    <h3 style="cursor:pointer;" onclick="toggleObservaciones()">📝 Observaciones <span id="observacionesFlecha">▼</span></h3>
-<div id="observacionesPanel" style="display: none; margin-top: 10px;">
-  <div id="observacionesLista">Cargando...</div>
-  <textarea id="nuevaObservacion" rows="2" style="width: 100%;"></textarea>
-  <button onclick="guardarObservacion(${alumno.id})">Agregar</button>
-</div>
+  window._fichaAlumnoId = id;
 
+  // Header
+  const avatar = document.getElementById('fichaAvatar');
+  avatar.textContent = (alumno.nombre?.[0] || 'A') + (alumno.apellido?.[0] || '');
+  document.getElementById('fichaTitulo').textContent = `${alumno.nombre} ${alumno.apellido}`;
+  document.getElementById('fichaSub').textContent =
+    `N° ${String(alumno.numero_alumno).padStart(2,'0')} · ${alumno.tipo_clase || '—'}`;
 
-    <hr>
-    <h3>Adjuntos</h3>
-    <div id="adjuntosLista">Cargando...</div>
-    <input type="file" id="archivoAdjunto" accept="image/*" capture="environment">
-    <button onclick="subirAdjunto(${alumno.id})">Subir archivo</button>
+  // Chips (estado de pago + sede)
+  const chips = document.getElementById('fichaChips');
+  const estado = calcularEstadoPago(alumno) === 'al_dia'
+    ? '<span class="chip success">🟢 Al día</span>'
+    : '<span class="chip danger">🔴 En mora</span>';
+  const sede = `<span class="chip">🧘‍♀️ ${alumno.sede || 'S/D'}</span>`;
+  chips.innerHTML = `${estado} ${sede}`;
+
+  // Grid de datos
+  const grid = document.getElementById('fichaGrid');
+  const fechaNac = alumno.fecha_nacimiento ? formatearFecha(alumno.fecha_nacimiento) : '';
+  const inicio = alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : '';
+
+  grid.innerHTML = `
+    <div class="ficha-item"><b>Teléfono:</b> ${alumno.telefono || '-'}</div>
+    <div class="ficha-item"><b>Contacto:</b> ${alumno.contacto_nombre || '-'} ${alumno.contacto_telefono ? ' - ' + alumno.contacto_telefono : ''}</div>
+    <div class="ficha-item"><b>Fecha nacimiento:</b> ${fechaNac || '-'}</div>
+    <div class="ficha-item"><b>Inicio:</b> ${inicio || '-'}</div>
+    <div class="ficha-item"><b>Edad:</b> ${alumno.edad ?? '-'}</div>
+    <div class="ficha-item"><b>Tipo de clase:</b> ${alumno.tipo_clase || '-'}</div>
   `;
 
+  // Mostrar modal
   document.getElementById('modalFicha').style.display = 'flex';
 
+  // Cargar observaciones y adjuntos
   cargarObservaciones(id);
   cargarAdjuntos(id);
 }
@@ -689,17 +781,21 @@ async function cargarAdjuntos(id) {
       return;
     }
 
-    div.innerHTML = adjuntos.map(a => `
-      <p>
+   div.innerHTML = adjuntos.map(a => {
+  const esImg = /\.(png|jpe?g|webp|gif)$/i.test(a.nombre_archivo);
+  const icono = esImg ? `<img src="${a.url}" class="adj-thumb">` : '📄';
+  return `
+    <div class="adj-row">
+      <div style="display:flex; align-items:center; gap:8px;">
+        ${icono}
         <a href="${a.url}" target="_blank">${a.nombre_archivo}</a>
-        (${new Date(a.fecha).toLocaleDateString()})
-        <button onclick="eliminarAdjunto(${id}, '${a.nombre_archivo}')" style="float: right; background-color: transparent; color: #91586d;">🗑️</button>
-      </p>
-    `).join('');
-  } catch {
-    div.innerHTML = '<p>Error al cargar archivos.</p>';
-  }
-}
+        <small>(${new Date(a.fecha).toLocaleDateString('es-AR')})</small>
+      </div>
+      <button onclick="eliminarAdjunto(${id}, '${a.nombre_archivo}')" style="background:none; color:#91586d;">🗑️</button>
+    </div>
+  `;
+}).join('');
+
 
 async function eliminarAdjunto(idAlumno, nombreArchivo) {
   if (!confirm('¿Eliminar este archivo?')) return;
@@ -1095,46 +1191,38 @@ function descargarExcel() {
 </script>
 <!-- 🔍 Modal de ficha de alumno -->
 <div id="modalFicha" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
+  display:none; position:fixed; inset:0;
+  background: rgba(0,0,0,.45); z-index:9999;
+  justify-content:center; align-items:center;
 ">
-  <div style="
-    background: white;
-    padding: 24px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-  ">
-    <button onclick="cerrarModalFicha()" style="
-      position: absolute;
-      top: 10px; right: 10px;
-      border: none; background: none;
-      font-size: 20px; cursor: pointer;
-    ">✖</button>
+  <div class="ficha-modal">
+    <div class="ficha-header">
+      <div class="ficha-avatar" id="fichaAvatar">🧘‍♀️</div>
+      <div>
+        <h2 class="ficha-titulo" id="fichaTitulo">Ficha del Alumno</h2>
+        <p class="ficha-sub" id="fichaSub"></p>
+        <div class="chips" id="fichaChips"></div>
+      </div>
+      <button class="ficha-close" onclick="cerrarModalFicha()">✖</button>
+    </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-  <h2 id="fichaTitulo" style="margin: 0; color: #91586d;">Ficha del Alumno</h2>
-  <button onclick="cerrarModalFicha()" style="
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #91586d;
-    cursor: pointer;
-    margin-left: 10px;
-  ">✖</button>
-</div>
-<hr style="border: none; border-top: 2px solid #e5c7cf; margin: 10px 0;">
+    <div class="ficha-grid" id="fichaGrid"></div>
 
-    <div id="fichaContenido"></div>
+    <h3 class="accordion-title" onclick="toggleObservaciones()">
+      📝 Observaciones <span id="observacionesFlecha">▼</span>
+    </h3>
+    <div id="observacionesPanel" style="display:none;">
+      <div id="observacionesLista">Cargando...</div>
+      <textarea id="nuevaObservacion" rows="2" style="width:100%;"></textarea>
+      <button onclick="guardarObservacion(window._fichaAlumnoId)">Agregar</button>
+    </div>
+
+    <h3 style="margin:14px 0 6px;">📎 Adjuntos</h3>
+    <div id="adjuntosLista" class="adjuntos-lista">Cargando...</div>
+    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+      <input type="file" id="archivoAdjunto" accept="image/*,application/pdf">
+      <button onclick="subirAdjunto(window._fichaAlumnoId)">Subir archivo</button>
+    </div>
   </div>
 </div>
 
