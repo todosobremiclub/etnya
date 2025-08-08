@@ -1194,6 +1194,7 @@ function descargarExcel() {
 
 </script>
 <!-- 🔍 Modal de ficha de alumno -->
+<!-- 🔍 Modal de ficha de alumno -->
 <div id="modalFicha" style="
   display:none; position:fixed; inset:0;
   background: rgba(0,0,0,.45); z-index:9999;
@@ -1209,7 +1210,6 @@ function descargarExcel() {
       </div>
       <button class="ficha-close" onclick="cerrarModalFicha()">✖</button>
     </div>
- </div>
 
     <div class="ficha-grid" id="fichaGrid"></div>
 
@@ -1228,8 +1228,8 @@ function descargarExcel() {
       <input type="file" id="archivoAdjunto" accept="image/*,application/pdf">
       <button onclick="subirAdjunto(window._fichaAlumnoId)">Subir archivo</button>
     </div>
-  </div>
-</div>
+  </div><!-- /.ficha-modal -->
+</div><!-- /#modalFicha -->
 
 
 </body>
