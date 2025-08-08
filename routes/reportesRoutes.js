@@ -176,16 +176,17 @@ router.get('/recaudacion-por-sede', async (req, res) => {
   try {
     // 1. Obtener montos recaudados por sede y mes
     const pagos = await pool.query(`
-      SELECT 
-        TO_CHAR(p.mes_pagado, 'YYYY-MM') AS mes,
-        a.sede,
-        SUM(p.monto) AS total
-      FROM pagos p
-      JOIN alumnos a ON p.alumno_id = a.id
-      WHERE a.activo = true
-      GROUP BY mes, a.sede
-      ORDER BY mes DESC, a.sede
-    `);
+  SELECT 
+    p.mes_pagado AS mes,
+    a.sede,
+    SUM(p.monto) AS total
+  FROM pagos p
+  JOIN alumnos a ON p.alumno_id = a.id
+  WHERE a.activo = true
+  GROUP BY p.mes_pagado, a.sede
+  ORDER BY mes DESC, a.sede
+`);
+
 
     // 2. Obtener modalidades con sus precios
     const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
