@@ -573,11 +573,18 @@ async function renderizarAgenda() {
   const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
   if (diaSemana >= dias.length) return;
 
-  const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => {
+  const filasTabla = Array.from(tbody.querySelectorAll('tr'));
+const fila = filasTabla.find(tr => {
   const textoCelda = tr.children[0]?.textContent.trim();
-  return textoCelda.trim() === hora.trim();
-
+  return textoCelda === hora;
 });
+
+if (!fila) {
+  console.warn('No se encontró celda para:', clase.fecha, hora, clase.nombre);
+  console.log('Horas en la tabla:', filasTabla.map(tr => tr.children[0]?.textContent.trim()));
+  return;
+}
+
 
 
   if (!fila) return;
