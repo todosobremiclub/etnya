@@ -574,9 +574,11 @@ async function renderizarAgenda() {
   if (diaSemana >= dias.length) return;
 
   const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => {
-    const textoCelda = tr.children[0]?.textContent.trim();
-    return textoCelda === hora;
-  });
+  const textoCelda = tr.children[0]?.textContent.trim();
+  return textoCelda.trim() === hora.trim();
+
+});
+
 
   if (!fila) return;
 
