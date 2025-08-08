@@ -472,7 +472,6 @@ button:hover {
 }
 
 
-
 </style>
 
 
@@ -943,8 +942,8 @@ console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
     if (!textoCompleto.includes(filtroTexto)) return;
     if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
 
-   const numeroSeguro = (alumno.numero_alumno ?? '').toString().padStart(2, '0');
-    const sedeCorta    = alumno.sede === 'Craig' ? 'C' : (alumno.sede === 'Goyena' ? 'G' : '-');
+    const numero = alumno.numero_alumno.toString().padStart(2, '0');
+    const sede = alumno.sede === 'Craig' ? 'C' : 'G';
     const estadoPago = calcularEstadoPago(alumno);
     const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
 
@@ -1195,7 +1194,6 @@ function descargarExcel() {
 
 </script>
 <!-- 🔍 Modal de ficha de alumno -->
-<!-- 🔍 Modal de ficha de alumno -->
 <div id="modalFicha" style="
   display:none; position:fixed; inset:0;
   background: rgba(0,0,0,.45); z-index:9999;
@@ -1211,6 +1209,7 @@ function descargarExcel() {
       </div>
       <button class="ficha-close" onclick="cerrarModalFicha()">✖</button>
     </div>
+ </div>
 
     <div class="ficha-grid" id="fichaGrid"></div>
 
@@ -1229,8 +1228,8 @@ function descargarExcel() {
       <input type="file" id="archivoAdjunto" accept="image/*,application/pdf">
       <button onclick="subirAdjunto(window._fichaAlumnoId)">Subir archivo</button>
     </div>
-  </div><!-- /.ficha-modal -->
-</div><!-- /#modalFicha -->
+  </div>
+</div>
 
 
 </body>
