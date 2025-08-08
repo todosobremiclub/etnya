@@ -567,29 +567,28 @@ async function renderizarAgenda() {
     const res = await fetch(`/clases?desde=${desdeStr}&hasta=${hastaStr}`);
     const clases = await res.json();
 
-    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {const horaObj = new Date(`2000-01-01T${clase.hora}`);
-      const hora = horaObj.toTimeString().slice(0,5); // garantiza formato HH:MM
-      const fecha = new Date(clase.fecha + 'T00:00:00'); // Fuerza hora local sin desplazamiento
-      const hora = clase.hora.slice(0, 5);
-      const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
-      if (diaSemana >= dias.length) return;
+    clases.filter(c => c.sede.toLowerCase().includes(sede.replace('_',' '))).forEach(clase => {
+  const hora = clase.hora.slice(0, 5); // ✅ conservamos solo esta
+  const fecha = new Date(clase.fecha + 'T00:00:00'); // Fuerza hora local sin desplazamiento
+  const diaSemana = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
+  if (diaSemana >= dias.length) return;
 
-      const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => {
-  const textoCelda = tr.children[0]?.textContent.trim();
-  return textoCelda === hora;
+  const fila = Array.from(tbody.querySelectorAll('tr')).find(tr => {
+    const textoCelda = tr.children[0]?.textContent.trim();
+    return textoCelda === hora;
+  });
+
+  if (!fila) return;
+
+  const celda = fila.children[diaSemana + 1];
+  if (!celda) {
+    console.warn('No se encontró celda para:', clase.fecha, clase.hora, clase.nombre);
+    return;
+  }
+
+  celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
 });
 
-      if (!fila) return;
-
-   
-      const celda = fila.children[diaSemana + 1];
-if (!celda) {
-  console.warn('No se encontró celda para:', clase.fecha, clase.hora, clase.nombre);
-  return;
-}
-celda.innerHTML += `<div>${clase.nombre} - N°${clase.numero_alumno}</div>`;
-
-    });
 
   } catch (err) {
     console.error('Error al cargar clases:', err);
@@ -742,7 +741,7 @@ function guardarClase() {
     alert("Seleccioná una opción: clase única o clase de prueba.");
   }
 }
-
+		
 
 renderizarAgenda();
 
