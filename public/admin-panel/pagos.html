@@ -387,88 +387,78 @@ $(document).ready(() => {
 
 
 
- async function cargarPagos() {
+async function cargarPagos() {
   const res = await fetch('/pagos');
   const pagos = await res.json();
   const tbody = document.getElementById("tbodyPagos");
   tbody.innerHTML = '';
 
-  const pagosAgrupados = {};
+  // Agrupar por sede y luego por alumno
+  const pagosPorSede = {};
 
   pagos.forEach(p => {
     const alumno = alumnos.find(a => a.id === p.alumno_id);
     if (!alumno) return;
 
-    const key = `${alumno.numero_alumno} - ${alumno.apellido}, ${alumno.nombre}`;
-    if (!pagosAgrupados[key]) pagosAgrupados[key] = [];
-    pagosAgrupados[key].push({ ...p, alumno });
+    const sede = alumno.sede || 'Sin Sede';
+    if (!pagosPorSede[sede]) pagosPorSede[sede] = {};
+
+    const nombreCompleto = `${alumno.numero_alumno} - ${alumno.apellido}, ${alumno.nombre}`;
+    if (!pagosPorSede[sede][nombreCompleto]) pagosPorSede[sede][nombreCompleto] = [];
+
+    pagosPorSede[sede][nombreCompleto].push({ ...p, alumno });
   });
 
-document.getElementById("buscadorPagos").addEventListener("input", function () {
-  const filtro = this.value.toLowerCase().trim();
+  let sedeIndex = 0;
 
-  document.querySelectorAll("#tbodyPagos tr").forEach(tr => {
-    const texto = tr.textContent.toLowerCase();
-    const visible = texto.includes(filtro);
-    tr.style.display = visible ? "" : "none";
+  for (const sede in pagosPorSede) {
+    const sedeId = `sede-${sedeIndex++}`;
 
-    // Si es título de grupo, mostrarlo si alguno de sus hijos matchea
-    if (tr.querySelector('td[colspan="6"]')) {
-      const grupoId = tr.querySelector('td').getAttribute('onclick')?.match(/'(.*?)'/)?.[1];
-      const hijos = document.querySelectorAll(`.${grupoId}`);
-      const algunoVisible = Array.from(hijos).some(h =>
-        h.textContent.toLowerCase().includes(filtro)
-      );
-      tr.style.display = algunoVisible ? "" : "none";
+    // Fila de sede
+    const filaSede = document.createElement("tr");
+    filaSede.innerHTML = `<td colspan="7" style="background-color: #d1bfc5; font-weight: bold; font-size: 16px;">🏫 ${sede}</td>`;
+    tbody.appendChild(filaSede);
+
+    let grupoIndex = 0;
+
+    for (const alumnoNombre in pagosPorSede[sede]) {
+      const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
+
+      const filaTitulo = document.createElement("tr");
+      filaTitulo.style.cursor = "pointer";
+      filaTitulo.style.backgroundColor = "#f3d6dd";
+      filaTitulo.style.fontWeight = "bold";
+      filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
+      tbody.appendChild(filaTitulo);
+
+      pagosPorSede[sede][alumnoNombre].forEach(p => {
+        const tr = document.createElement("tr");
+        tr.classList.add(grupoId);
+        tr.style.display = 'none';
+
+        const [año, mes] = p.mes_pagado.split('-');
+        const mesFormateado = `${mes}/${año}`;
+
+        const tipo = tiposClase.find(t =>
+          normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
+        );
+
+        tr.innerHTML = `
+          <td>${p.alumno.numero_alumno}</td>
+          <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+          <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
+          <td>${mesFormateado}</td>
+          <td>$${parseFloat(p.monto).toFixed(2)}</td>
+          <td>
+            ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+            <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
+          </td>
+          <td>${p.cuenta || '-'}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
     }
-  });
-});
-
-
-  let grupoIndex = 0;
-
-  for (const nombreAlumno in pagosAgrupados) {
-    const grupoId = `grupo-${grupoIndex++}`;
-
-    // Fila principal clickeable (título)
-    const filaTitulo = document.createElement("tr");
-    filaTitulo.style.cursor = "pointer";
-    filaTitulo.style.backgroundColor = "#f3d6dd";
-    filaTitulo.style.fontWeight = "bold";
-    filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${nombreAlumno}</td>`;
-    tbody.appendChild(filaTitulo);
-
-    // Filas de pagos del grupo (inicialmente ocultas)
-    pagosAgrupados[nombreAlumno].forEach(p => {
-      const tr = document.createElement("tr");
-      tr.classList.add(grupoId);
-      tr.style.display = 'none';
-
-      // Convertir fecha mes
-      const [año, mes] = p.mes_pagado.split('-');
-      const mesFormateado = `${mes}/${año}`;
-
-      // Buscar modalidad
-      const tipo = tiposClase.find(t =>
-        normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
-      );
-
-     tr.innerHTML = `
-  <td>${p.alumno.numero_alumno}</td>
-  <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-  <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-  <td>${mesFormateado}</td>
-  <td>$${parseFloat(p.monto).toFixed(2)}</td>
-  <td>
-    ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-    <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
-  </td>
-  <td>${p.cuenta || '-'}</td>
-`;
-
-tbody.appendChild(tr);
-
-    });
   }
 }
 
