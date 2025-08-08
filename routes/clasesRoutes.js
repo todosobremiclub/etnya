@@ -6,7 +6,7 @@ const pool = require('../db');
 router.post('/', async (req, res) => {
   const { alumno_id, clases } = req.body;
 
-  if (!alumno_id || !Array.isArray(clases) || clases.length === 0) {
+  if (!Array.isArray(clases) || clases.length === 0) {
     return res.status(400).json({ error: 'Datos incompletos' });
   }
 
