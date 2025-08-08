@@ -782,21 +782,25 @@ async function cargarAdjuntos(id) {
       return;
     }
 
-   div.innerHTML = adjuntos.map(a => {
-  const esImg = /\.(png|jpe?g|webp|gif)$/i.test(a.nombre_archivo);
-  const icono = esImg ? `<img src="${a.url}" class="adj-thumb">` : '📄';
-  return `
-    <div class="adj-row">
-      <div style="display:flex; align-items:center; gap:8px;">
-        ${icono}
-        <a href="${a.url}" target="_blank">${a.nombre_archivo}</a>
-        <small>(${new Date(a.fecha).toLocaleDateString('es-AR')})</small>
-      </div>
-      <button onclick="eliminarAdjunto(${id}, '${a.nombre_archivo}')" style="background:none; color:#91586d;">🗑️</button>
-    </div>
-  `;
-}).join('');
-
+    div.innerHTML = adjuntos.map(a => {
+      const esImg = /\.(png|jpe?g|webp|gif)$/i.test(a.nombre_archivo);
+      const icono = esImg ? `<img src="${a.url}" class="adj-thumb">` : '📄';
+      return `
+        <div class="adj-row">
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${icono}
+            <a href="${a.url}" target="_blank">${a.nombre_archivo}</a>
+            <small>(${new Date(a.fecha).toLocaleDateString('es-AR')})</small>
+          </div>
+          <button onclick="eliminarAdjunto(${id}, '${a.nombre_archivo}')" style="background:none; color:#91586d;">🗑️</button>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error al cargar adjuntos:', err);
+    div.innerHTML = '<p>Error al cargar archivos adjuntos.</p>';
+  }
+} 
 
 async function eliminarAdjunto(idAlumno, nombreArchivo) {
   if (!confirm('¿Eliminar este archivo?')) return;
@@ -1205,6 +1209,7 @@ function descargarExcel() {
       </div>
       <button class="ficha-close" onclick="cerrarModalFicha()">✖</button>
     </div>
+ </div>
 
     <div class="ficha-grid" id="fichaGrid"></div>
 
@@ -1224,6 +1229,7 @@ function descargarExcel() {
       <button onclick="subirAdjunto(window._fichaAlumnoId)">Subir archivo</button>
     </div>
   </div>
+</div>
 
 
 </body>
