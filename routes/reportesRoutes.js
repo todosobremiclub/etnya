@@ -171,9 +171,10 @@ router.get('/detalle-modalidad', async (req, res) => {
   }
 });
 
-// 10. Recaudación por sede y mes pagado con monto esperado
+/// 10. Recaudación por sede y mes pagado con monto esperado
 router.get('/recaudacion-por-sede', async (req, res) => {
   try {
+    // 1. Obtener montos recaudados por sede y mes
     const pagos = await pool.query(`
       SELECT 
         TO_CHAR(p.mes_pagado, 'YYYY-MM') AS mes,
@@ -186,30 +187,38 @@ router.get('/recaudacion-por-sede', async (req, res) => {
       ORDER BY mes DESC, a.sede
     `);
 
+    // 2. Obtener modalidades con sus precios
     const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
+
+    // 3. Obtener alumnos activos con sede y tipo de clase
     const alumnos = await pool.query(`
       SELECT sede, tipo_clase
       FROM alumnos
       WHERE activo = true
     `);
 
-    // Agrupar alumnos activos por sede y modalidad
-    const agrupado = {};
+    // 4. Agrupar alumnos por sede y modalidad
+    const agrupado = {}; // { 'Craig Reformer': { 'Reformer': 4, ... }, ... }
+
     for (let a of alumnos.rows) {
       const sede = a.sede;
       const modalidad = a.tipo_clase;
+
+      if (!sede || !modalidad) continue;
+
       if (!agrupado[sede]) agrupado[sede] = {};
       if (!agrupado[sede][modalidad]) agrupado[sede][modalidad] = 0;
+
       agrupado[sede][modalidad]++;
     }
 
-    // Mapear precios por modalidad
+    // 5. Mapear precios por modalidad
     const precios = {};
-    modalidades.rows.forEach(m => {
+    for (let m of modalidades.rows) {
       precios[m.modalidad] = parseFloat(m.precio) || 0;
-    });
+    }
 
-    // Calcular monto esperado por sede
+    // 6. Calcular monto esperado por sede
     const esperadosPorSede = {};
     for (let sede in agrupado) {
       let subtotal = 0;
@@ -221,7 +230,7 @@ router.get('/recaudacion-por-sede', async (req, res) => {
       esperadosPorSede[sede] = subtotal;
     }
 
-    // Unir datos
+    // 7. Construir resultado final
     const resultado = pagos.rows.map(p => ({
       mes: p.mes,
       sede: p.sede,
@@ -235,6 +244,7 @@ router.get('/recaudacion-por-sede', async (req, res) => {
     res.status(500).json({ error: 'Error al calcular recaudación por sede' });
   }
 });
+
 
 
 
