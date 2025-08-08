@@ -412,55 +412,61 @@ async function cargarPagos() {
   let sedeIndex = 0;
 
   for (const sede in pagosPorSede) {
-    const sedeId = `sede-${sedeIndex++}`;
+  const sedeId = `sede-${sedeIndex++}`;
 
-    // Fila de sede
-    const filaSede = document.createElement("tr");
-    filaSede.innerHTML = `<td colspan="7" style="background-color: #d1bfc5; font-weight: bold; font-size: 16px;">🏫 ${sede}</td>`;
-    tbody.appendChild(filaSede);
+  // Fila de sede EXPANDIBLE
+  const filaSede = document.createElement("tr");
+  filaSede.style.cursor = "pointer";
+  filaSede.style.backgroundColor = "#d1bfc5";
+  filaSede.style.fontWeight = "bold";
+  filaSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🏫 ${sede}</td>`;
+  tbody.appendChild(filaSede);
 
-    let grupoIndex = 0;
+  let grupoIndex = 0;
 
-    for (const alumnoNombre in pagosPorSede[sede]) {
-      const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
+  for (const alumnoNombre in pagosPorSede[sede]) {
+    const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
 
-      const filaTitulo = document.createElement("tr");
-      filaTitulo.style.cursor = "pointer";
-      filaTitulo.style.backgroundColor = "#f3d6dd";
-      filaTitulo.style.fontWeight = "bold";
-      filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
-      tbody.appendChild(filaTitulo);
+    const filaTitulo = document.createElement("tr");
+    filaTitulo.style.cursor = "pointer";
+    filaTitulo.style.backgroundColor = "#f3d6dd";
+    filaTitulo.style.fontWeight = "bold";
+    filaTitulo.classList.add(sedeId);  // <== vincular al grupo de sede
+    filaTitulo.style.display = 'none';
+    filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
+    tbody.appendChild(filaTitulo);
 
-      pagosPorSede[sede][alumnoNombre].forEach(p => {
-        const tr = document.createElement("tr");
-        tr.classList.add(grupoId);
-        tr.style.display = 'none';
+    pagosPorSede[sede][alumnoNombre].forEach(p => {
+      const tr = document.createElement("tr");
+      tr.classList.add(grupoId);
+      tr.classList.add(sedeId); // <== también vincular a sede
+      tr.style.display = 'none';
 
-        const [año, mes] = p.mes_pagado.split('-');
-        const mesFormateado = `${mes}/${año}`;
+      const [año, mes] = p.mes_pagado.split('-');
+      const mesFormateado = `${mes}/${año}`;
 
-        const tipo = tiposClase.find(t =>
-          normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
-        );
+      const tipo = tiposClase.find(t =>
+        normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
+      );
 
-        tr.innerHTML = `
-          <td>${p.alumno.numero_alumno}</td>
-          <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-          <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-          <td>${mesFormateado}</td>
-          <td>$${parseFloat(p.monto).toFixed(2)}</td>
-          <td>
-            ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-            <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
-          </td>
-          <td>${p.cuenta || '-'}</td>
-        `;
+      tr.innerHTML = `
+        <td>${p.alumno.numero_alumno}</td>
+        <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+        <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
+        <td>${mesFormateado}</td>
+        <td>$${parseFloat(p.monto).toFixed(2)}</td>
+        <td>
+          ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+          <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
+        </td>
+        <td>${p.cuenta || '-'}</td>
+      `;
 
-        tbody.appendChild(tr);
-      });
-    }
+      tbody.appendChild(tr);
+    });
   }
 }
+
 
 
 
@@ -569,6 +575,14 @@ function toggleMenu() {
 function cerrarFormularioPago() {
   document.getElementById("formularioPago").style.display = "none";
 }
+
+function toggleSede(sedeId) {
+  const filas = document.querySelectorAll(`.${sedeId}`);
+  filas.forEach(f => {
+    f.style.display = (f.style.display === 'none') ? '' : 'none';
+  });
+}
+
 
 
 </script>
