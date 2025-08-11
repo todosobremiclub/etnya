@@ -312,6 +312,7 @@ function normalizarTexto(texto) {
 
   const alumnos = [];
   let tiposClase = [];
+  let pagosGlobal = [];
 
 
 
@@ -387,15 +388,33 @@ $(document).ready(() => {
 
 
 
+<script>
 async function cargarPagos() {
   const res = await fetch('/pagos');
-  const pagos = await res.json();
+  pagosGlobal = await res.json();           // guardo todo
+  const q = document.getElementById('buscadorPagos')?.value || '';
+  renderPagos(q);                           // render con filtro actual
+}
+
+function renderPagos(query = '') {
   const tbody = document.getElementById("tbodyPagos");
   tbody.innerHTML = '';
 
+  const term = normalizarTexto(query);
+  // filtrar por nro, apellido o nombre
+  const pagos = pagosGlobal.filter(p => {
+    const a = alumnos.find(x => x.id === p.alumno_id);
+    if (!a) return false;
+    if (!term) return true;
+    const nro = String(a.numero_alumno || '');
+    const ape = normalizarTexto(a.apellido || '');
+    const nom = normalizarTexto(a.nombre || '');
+    return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
+           normalizarTexto(`${ape} ${nom}`).includes(term);
+  });
+
   // Agrupar por sede y luego por alumno
   const pagosPorSede = {};
-
   pagos.forEach(p => {
     const alumno = alumnos.find(a => a.id === p.alumno_id);
     if (!alumno) return;
@@ -410,65 +429,58 @@ async function cargarPagos() {
   });
 
   let sedeIndex = 0;
-
   for (const sede in pagosPorSede) {
-  const sedeId = `sede-${sedeIndex++}`;
+    const sedeId = `sede-${sedeIndex++}`;
+    const filaSede = document.createElement("tr");
+    filaSede.style.cursor = "pointer";
+    filaSede.style.backgroundColor = "#d1bfc5";
+    filaSede.style.fontWeight = "bold";
+    filaSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🧘‍♀️ ${sede}</td>`;
+    tbody.appendChild(filaSede);
 
-  // Fila de sede EXPANDIBLE
-  const filaSede = document.createElement("tr");
-  filaSede.style.cursor = "pointer";
-  filaSede.style.backgroundColor = "#d1bfc5";
-  filaSede.style.fontWeight = "bold";
-  filaSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🧘‍♀️ ${sede}</td>`;
+    let grupoIndex = 0;
+    for (const alumnoNombre in pagosPorSede[sede]) {
+      const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
 
-  tbody.appendChild(filaSede);
+      const filaTitulo = document.createElement("tr");
+      filaTitulo.style.cursor = "pointer";
+      filaTitulo.style.backgroundColor = "#f3d6dd";
+      filaTitulo.style.fontWeight = "bold";
+      filaTitulo.classList.add(sedeId);
+      filaTitulo.style.display = 'none';
+      filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
+      tbody.appendChild(filaTitulo);
 
-  let grupoIndex = 0;
+      pagosPorSede[sede][alumnoNombre].forEach(p => {
+        const tr = document.createElement("tr");
+        tr.classList.add(grupoId);
+        tr.classList.add(sedeId);
+        tr.style.display = 'none';
 
-  for (const alumnoNombre in pagosPorSede[sede]) {
-    const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
+        const [año, mes] = p.mes_pagado.split('-');
+        const mesFormateado = `${mes}/${año}`;
+        const tipo = tiposClase.find(t =>
+          normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
+        );
 
-    const filaTitulo = document.createElement("tr");
-    filaTitulo.style.cursor = "pointer";
-    filaTitulo.style.backgroundColor = "#f3d6dd";
-    filaTitulo.style.fontWeight = "bold";
-    filaTitulo.classList.add(sedeId);  // <== vincular al grupo de sede
-    filaTitulo.style.display = 'none';
-    filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
-    tbody.appendChild(filaTitulo);
-
-    pagosPorSede[sede][alumnoNombre].forEach(p => {
-      const tr = document.createElement("tr");
-      tr.classList.add(grupoId);
-      tr.classList.add(sedeId); // <== también vincular a sede
-      tr.style.display = 'none';
-
-      const [año, mes] = p.mes_pagado.split('-');
-      const mesFormateado = `${mes}/${año}`;
-
-      const tipo = tiposClase.find(t =>
-        normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
-      );
-
-      tr.innerHTML = `
-        <td>${p.alumno.numero_alumno}</td>
-        <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-        <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-        <td>${mesFormateado}</td>
-        <td>$${parseFloat(p.monto).toFixed(2)}</td>
-        <td>
-          ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-          <button onclick="eliminarPago(${p.id})" style="margin-left: 10px; background: transparent; border: none; cursor: pointer;">🗑️</button>
-        </td>
-        <td>${p.cuenta || '-'}</td>
-      `;
-
-      tbody.appendChild(tr);
-    });
-   }
- }
-
+        tr.innerHTML = `
+          <td>${p.alumno.numero_alumno}</td>
+          <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
+          <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
+          <td>${mesFormateado}</td>
+          <td>$${parseFloat(p.monto).toFixed(2)}</td>
+          <td>
+            ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+            <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
+          </td>
+          <td>${p.cuenta || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  }
 }
+</script>
 
 
 
@@ -510,6 +522,10 @@ async function cargarPagos() {
 
     document.getElementById("modalidad").value = alumno.tipo_clase || '';
     document.getElementById("monto").value = tipo?.precio || '';
+  });
+
+document.getElementById('buscadorPagos').addEventListener('input', (e) => {
+    renderPagos(e.target.value);
   });
 
   alumnoSelect.dispatchEvent(new Event('change'));
