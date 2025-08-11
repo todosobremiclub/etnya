@@ -6,194 +6,488 @@
   <title>Agenda</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #cce1d6;
-      color: #6d6d6d;
-    }
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 200px;
-      height: 100vh;
-      background-color: #91586d;
-      padding-top: 60px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      z-index: 1000;
-    }
-    .sidebar a {
-      display: block;
-      padding: 10px 16px;
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      font-size: 13px;
-    }
-    .sidebar a:hover {
-      background-color: #6d3e4e;
-    }
-    main {
-      margin-left: 200px;
-      padding: 16px;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .header img {
-      height: 40px;
-    }
-    h1 {
-      color: #91586d;
-      margin: 0;
-      text-align: center;
-      font-size: 20px;
-    }
-    .selector-sede-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .selector-sede-container select {
-      padding: 6px 12px;
-      font-size: 14px;
-      border-radius: 20px;
-      border: 1px solid #aaa;
-      background-color: #fff;
-    }
-    table.calendario {
-      width: 100%;
-      max-width: 1100px;
-      margin: auto;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    th, td {
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-      vertical-align: top;
-    }
-    th {
-      background-color: #b48a99;
-      color: white;
-    }
-    .hora {
-      background: #eee;
-      font-weight: bold;
-      width: 80px;
-    }
+    /* ====== Base (copiado del look & feel de configuracion.html) ====== */
+    body { margin: 0; font-family: 'Inter', sans-serif; background-color: #cce1d6; color: #6d6d6d; }
+    .sidebar { position: fixed; top: 0; left: 0; width: 200px; height: 100vh; background-color: #91586d; padding-top: 60px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); z-index: 1000; }
+    .sidebar a { display: block; padding: 10px 16px; color: white; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px; }
+    .sidebar a:hover { background-color: #6d3e4e; }
+    main { margin-left: 200px; padding: 16px; }
+    .header { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 16px; }
+    .header img { height: 40px; }
+    h1, h2 { color: #91586d; margin: 0 0 12px; text-align: center; font-size: 20px; }
+
+    #menuToggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 1100; background-color: #91586d; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 18px; cursor: pointer; }
+
     @media (max-width: 768px) {
-      .sidebar {
-        display: none;
-        width: 100%;
-        height: auto;
-        position: absolute;
-        top: 50px;
-        left: 0;
-      }
-      .sidebar.mostrar {
-        display: block;
-      }
-      #menuToggle {
-        display: block;
-      }
-      main {
-        margin-left: 0;
-        padding: 20px;
-      }
-      .header {
-        flex-direction: column;
-      }
-      table.calendario {
-        font-size: 11px;
-      }
-      .selector-sede-container {
-        flex-direction: column;
-      }
+      #menuToggle { display: block; }
+      .sidebar { display: none; width: 100%; height: auto; position: absolute; top: 50px; left: 0; }
+      .sidebar.mostrar { display: block; }
+      main { margin-left: 0; padding: 10px; }
+      .header { flex-direction: column; }
+      h1, h2 { font-size: 18px; }
     }
+
+    /* ====== Controles superiores ====== */
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .sede-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sede-tabs button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .sede-tabs button.active { background-color: #91586d; }
+    .week-nav { display: flex; align-items: center; gap: 8px; }
+    .week-nav button { background-color: #b48a99; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .week-label { font-weight: 600; color: #91586d; min-width: 160px; text-align: center; }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .actions button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+    /* ====== Grilla ====== */
+    .agenda-wrap { background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); overflow: hidden; }
+    .agenda { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .agenda th, .agenda td { border-bottom: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; padding: 6px; vertical-align: top; }
+    .agenda th:last-child, .agenda td:last-child { border-right: none; }
+    .agenda th { background-color: #b48a99; color: #fff; font-size: 13px; position: sticky; top: 0; z-index: 2; }
+    .agenda .col-hora { width: 70px; background: #f7f7f7; font-weight: 600; text-align: center; position: sticky; left: 0; z-index: 1; }
+    .slot { min-height: 70px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .tag { background: #cce1d6; border: 1px solid #94b8a3; border-radius: 6px; padding: 4px 6px; font-size: 12px; text-align: center; }
+    .tag.full { background: #ffd5d5; border-color: #ff9b9b; }
+    .tag small { display: block; font-size: 10px; color: #666; }
+
+    /* ====== Modal Registrar ====== */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 1200; }
+    .modal { width: min(900px, 95vw); background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 16px; }
+    .modal h3 { margin: 0 0 10px; color: #91586d; text-align: center; }
+    .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal label { font-size: 13px; font-weight: 600; color: #6d6d6d; }
+    .modal input[type="text"], .modal input[type="date"], .modal select, .modal textarea { width: 100%; padding: 8px; border: 1px solid #94b8a3; border-radius: 6px; background: #f9f9f9; font-size: 13px; }
+    .modal .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { padding: 6px 10px; background: #cce1d6; border: 1px solid #94b8a3; border-radius: 999px; cursor: pointer; user-select: none; font-size: 12px; }
+    .chip.selected { background: #b48a99; border-color: #91586d; color: #fff; }
+    .modal .footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    .modal .footer button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .switches { display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 8px; }
+
+    @media (max-width: 768px) {
+      .modal .row { grid-template-columns: 1fr; }
+      .slot { grid-template-columns: repeat(1, 1fr); }
+    }
+
+    .legend { margin: 8px 0; font-size: 12px; color: #6d6d6d; display: flex; gap: 12px; justify-content: flex-end; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .legend .i-free { background: #cce1d6; border: 1px solid #94b8a3; }
+    .legend .i-full { background: #ffd5d5; border: 1px solid #ff9b9b; }
   </style>
 </head>
 <body>
-<!-- Botón menú hamburguesa -->
-<button id="menuToggle" onclick="document.querySelector('.sidebar').classList.toggle('mostrar')">☰</button>
+  <!-- Botón menú hamburguesa -->
+  <button id="menuToggle" onclick="toggleMenu()">☰</button>
 
-<!-- Sidebar -->
-<div class="sidebar">
-  <a href="index.html">📋 Alumnas/os</a>
-  <a href="pagos.html">💳 Pagos</a>
-  <a href="gastos.html">🧾 Gastos</a>
-  <a href="agenda.html">📅 Agenda</a>
-  <a href="configuracion.html">⚙️ Configuración</a>
-  <a href="reportes.html">📈 Reportes</a>
-  <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
-    🚪 Cerrar sesión
-  </button>
-</div>
-
-<main>
-  <div class="header">
-    <img src="logo.jpeg" alt="Logo">
-    <h1>Agenda Semanal Etnya</h1>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="index.html">📋 Alumnas/os</a>
+    <a href="pagos.html">💳 Pagos</a>
+    <a href="gastos.html">🧾 Gastos</a>
+    <a href="agenda.html">📅 Agenda</a>
+    <a href="configuracion.html">⚙️ Configuración</a>
+    <a href="reportes.html">📈 Reportes</a>
+    <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
+      🚪 Cerrar sesión
+    </button>
   </div>
 
-  <div class="selector-sede-container">
-    <label for="selectorSede">Seleccionar sede:</label>
-    <select id="selectorSede" onchange="updateExcelEmbed()">
-      <option value="craig_reformer">Craig Reformer</option>
-      <option value="craig_circuito">Craig Circuito</option>
-      <option value="goyena">Pedro Goyena</option>
-    </select>
+  <main>
+    <div class="header">
+      <img src="logo.jpeg" alt="Logo">
+      <h1>Agenda de Clases</h1>
+    </div>
+
+    <div class="topbar">
+      <div class="sede-tabs">
+        <button id="tabReformer" class="active" onclick="cambiarSede('Craig Reformer')">Craig Reformer</button>
+        <button id="tabCircuito" onclick="cambiarSede('Craig Circuito')">Craig Circuito</button>
+        <button id="tabGoyena" onclick="cambiarSede('Pedro Goyena')">Pedro Goyena</button>
+      </div>
+      <div class="week-nav">
+        <button onclick="moverSemana(-1)">◀</button>
+        <div class="week-label" id="labelMes"></div>
+        <button onclick="moverSemana(1)">▶</button>
+      </div>
+      <div class="actions">
+        <button onclick="abrirModal()">+ Registrar clase</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i class="i-free"></i> cupos disponibles</span>
+      <span><i class="i-full"></i> cupo completo</span>
+    </div>
+
+    <div class="agenda-wrap">
+      <table class="agenda" id="tablaAgenda">
+        <!-- generado por JS -->
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal Registrar Clase -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3>Registrar clase</h3>
+      <div class="switches">
+        <label><input type="checkbox" id="chkUnica" onchange="toggleModo('unica')"> Clase por única vez</label>
+        <label><input type="checkbox" id="chkPrueba" onchange="toggleModo('prueba')"> Clase de prueba</label>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Buscar alumna/o</label>
+          <input type="text" id="buscadorAlumno" placeholder="Ingresá nombre o número" oninput="filtrarAlumnos()">
+          <select id="selectAlumno" size="6" style="margin-top:6px;"></select>
+        </div>
+        <div>
+          <label>Sede principal</label>
+          <select id="selectSede" onchange="refrescarDiasYHoras()">
+            <option>Craig Reformer</option>
+            <option>Craig Circuito</option>
+            <option>Pedro Goyena</option>
+          </select>
+
+          <!-- Recurrente (por defecto) -->
+          <div id="boxRecurrente" style="margin-top:10px;">
+            <label>Días (según sede)</label>
+            <div class="chips" id="chipsDias"></div>
+            <div style="margin-top:10px;">
+              <label>Hora para todos los días</label>
+              <select id="selectHoraGeneral"></select>
+            </div>
+            <div id="perDia" style="margin-top:10px;"></div>
+            <small>Se generarán las clases seleccionadas desde la semana visible hasta fin de año.</small>
+          </div>
+
+          <!-- Única vez -->
+          <div id="boxUnica" style="display:none; margin-top:10px;">
+            <label>Fecha única</label>
+            <input type="date" id="fechaUnica">
+            <div style="margin-top:10px;">
+              <label>Hora</label>
+              <select id="horaUnica"></select>
+            </div>
+          </div>
+
+          <!-- Prueba -->
+          <div id="boxPrueba" style="display:none; margin-top:10px;">
+            <label>Motivo/nota de prueba</label>
+            <textarea id="notaPrueba" rows="3" placeholder="Escribí una breve nota..."></textarea>
+            <div style="margin-top:10px;" class="row">
+              <div>
+                <label>Fecha</label>
+                <input type="date" id="fechaPrueba">
+              </div>
+              <div>
+                <label>Hora</label>
+                <select id="horaPrueba"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button onclick="cerrarModal()">Cancelar</button>
+        <button onclick="guardarClase()">Guardar</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Excel embebido -->
-  <iframe id="iframeExcel" style="width:100%; height:75vh; border:0; border-radius:8px;"></iframe>
-  <div id="excelNoConfig" style="display:none; text-align:center; color:#6d6d6d; padding:20px;">
-    No hay una planilla configurada para esta sede.
-  </div>
-</main>
-
-<script>
-  const SHEETS = {
-    craig_reformer: "https://docs.google.com/spreadsheets/d/1qn3UVfwVfkX7m_bvjzawHT5w0wTSLYBErQGsuZX5Jc8/preview?gid=1841986160",
-    craig_circuito: "", // agregar URL cuando la tengas
-    goyena: ""          // agregar URL cuando la tengas
-  };
-
-  function updateExcelEmbed() {
-    const sedeSel = document.getElementById('selectorSede').value;
-    const url = SHEETS[sedeSel] || "";
-    const iframe = document.getElementById('iframeExcel');
-    const aviso = document.getElementById('excelNoConfig');
-
-    if (url) {
-      iframe.style.display = 'block';
-      aviso.style.display = 'none';
-      iframe.src = url;
-    } else {
-      iframe.style.display = 'none';
-      aviso.style.display = 'block';
-      iframe.removeAttribute('src');
+  <script>
+    // ====== Estado global ======
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      window.location.href = 'login.html';
     }
-  }
 
-  window.addEventListener('load', updateExcelEmbed);
+    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
-  function cerrarSesion() {
-    localStorage.removeItem('etnya_login');
-    window.location.href = 'login.html';
-  }
-</script>
+    const SEDES = {
+      'Craig Reformer': { dias: [1,2,3,4,5], desde: 9, hasta: 20 }, // lun-vie 09-20
+      'Craig Circuito' : { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
+      'Pedro Goyena'   : { dias: [1,2,3,4,5,6], desde: 8, hasta: 21 } // lun-sáb 08-21
+    };
+
+    let sedeSeleccionada = 'Craig Reformer';
+    let semanaInicio = getLunes(new Date());
+    let alumnos = [];
+    let clasesSemana = []; // cache de clases cargadas
+
+    function toggleMenu(){ document.querySelector('.sidebar').classList.toggle('mostrar'); }
+    function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href = 'login.html'; }
+
+    // ====== Utilidades de fechas ======
+    function getLunes(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+    function addDays(date, n){ const d = new Date(date); d.setDate(d.getDate()+n); return d; }
+    function ymd(d){ return d.toISOString().slice(0,10); }
+    function humanHour(h){ return String(h).padStart(2,'0')+':00'; }
+
+    function rangoHoras(sede){ const {desde, hasta} = SEDES[sede]; const arr=[]; for(let h=desde; h<=hasta; h++){ arr.push(humanHour(h)); } return arr; }
+    function diasHabilitados(sede){ return SEDES[sede].dias; }
+
+    function actualizarHeader(){
+      const finSemana = addDays(semanaInicio, 6);
+      const label = document.getElementById('labelMes');
+      // Mostrar Mes y Año del lunes de la semana visible
+      label.textContent = MESES[semanaInicio.getMonth()] + ' ' + semanaInicio.getFullYear();
+    }
+
+    function moverSemana(delta){ semanaInicio = addDays(semanaInicio, 7*delta); cargarSemana(); }
+    function cambiarSede(s){ sedeSeleccionada = s; document.getElementById('tabReformer').classList.toggle('active', s==='Craig Reformer'); document.getElementById('tabCircuito').classList.toggle('active', s==='Craig Circuito'); document.getElementById('tabGoyena').classList.toggle('active', s==='Pedro Goyena'); cargarSemana(); }
+
+    // ====== Render de grilla ======
+    function construirTablaBase(){
+      const tabla = document.getElementById('tablaAgenda');
+      tabla.innerHTML='';
+
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      const thHora = document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
+
+      const dias = diasHabilitados(sedeSeleccionada);
+      const lunes = semanaInicio;
+      for (let i=0;i<dias.length;i++){
+        const dow = dias[i];
+        const fecha = addDays(lunes, dow-1); // 1=Lun
+        const th = document.createElement('th');
+        th.dataset.fecha = ymd(fecha);
+        th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
+        trh.appendChild(th);
+      }
+      thead.appendChild(trh);
+
+      const tbody = document.createElement('tbody');
+      const horas = rangoHoras(sedeSeleccionada);
+      horas.forEach(hh=>{
+        const tr = document.createElement('tr');
+        const tdHora = document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent = hh; tr.appendChild(tdHora);
+        dias.forEach(dow=>{
+          const fecha = ymd(addDays(semanaInicio, dow-1));
+          const td = document.createElement('td');
+          td.className='slot';
+          td.dataset.fecha = fecha;
+          td.dataset.hora = hh; // mantener hora como texto puro
+          td.dataset.sede = sedeSeleccionada; // para pintar
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      tabla.appendChild(thead);
+      tabla.appendChild(tbody);
+    }
+
+    // ====== Carga desde backend ======
+    async function cargarAlumnos(){
+      const res = await fetch('/alumnos');
+      const data = await res.json();
+      alumnos = data.map(a=>({ id:a.id, nombre:a.nombre, numero: a.numero_alumno }));
+      // inicializar lista del modal
+      poblarListaAlumnos();
+    }
+
+    function poblarListaAlumnos(filtro=''){
+      const sel = document.getElementById('selectAlumno');
+      sel.innerHTML='';
+      const texto = filtro.trim().toLowerCase();
+      let list = alumnos;
+      if (texto) {
+        list = alumnos.filter(a=>
+          String(a.numero).padStart(2,'0').includes(texto) ||
+          (a.nombre && a.nombre.toLowerCase().includes(texto))
+        );
+      }
+      list.slice(0,200).forEach(a=>{
+        const opt = document.createElement('option');
+        opt.value = a.id; opt.textContent = `${String(a.numero).padStart(2,'0')} - ${a.nombre}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function filtrarAlumnos(){ const val = document.getElementById('buscadorAlumno').value; poblarListaAlumnos(val); }
+
+    async function cargarClasesSemana(){
+      const desde = ymd(semanaInicio);
+      const dias = diasHabilitados(sedeSeleccionada);
+      const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
+      const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
+      clasesSemana = await res.json();
+    }
+
+    function pintarClases(){
+      // Limpiar slots
+      document.querySelectorAll('.slot').forEach(td=>{ td.innerHTML=''; });
+      // Agrupar por fecha/hora
+      const mapa = new Map();
+      for (const c of clasesSemana){
+        const key = `${c.fecha}|${c.hora}`; if (!mapa.has(key)) mapa.set(key, []); mapa.get(key).push(c);
+      }
+      document.querySelectorAll('.slot').forEach(td=>{
+        const fecha = td.dataset.fecha; const hora = td.dataset.hora;
+        const key = `${fecha}|${hora}`;
+        const arr = mapa.get(key)||[];
+        arr.slice(0,6).forEach(cl=>{
+          const tag = document.createElement('div'); tag.className='tag';
+          tag.textContent = `${cl.numero_alumno ? String(cl.numero_alumno).padStart(2,'0') : ''} ${cl.nombre ?? ''}`.trim();
+          if (!tag.textContent) tag.textContent = 'Alumno';
+          td.appendChild(tag);
+        });
+        if (arr.length >= 6){
+          const full = document.createElement('div'); full.className='tag full'; full.textContent = '+ cupo completo'; td.appendChild(full);
+        }
+      });
+    }
+
+    async function cargarSemana(){
+      actualizarHeader();
+      construirTablaBase();
+      await cargarClasesSemana();
+      pintarClases();
+    }
+
+    // ====== Modal ======
+    function abrirModal(){
+      document.getElementById('overlay').style.display='flex';
+      document.getElementById('buscadorAlumno').value='';
+      poblarListaAlumnos('');
+      document.getElementById('selectSede').value = sedeSeleccionada;
+      document.getElementById('chkUnica').checked = false;
+      document.getElementById('chkPrueba').checked = false;
+      document.getElementById('boxRecurrente').style.display = '';
+      document.getElementById('boxUnica').style.display = 'none';
+      document.getElementById('boxPrueba').style.display = 'none';
+      refrescarDiasYHoras();
+    }
+    function cerrarModal(){ document.getElementById('overlay').style.display='none'; }
+
+    function toggleModo(modo){
+      const chkU = document.getElementById('chkUnica');
+      const chkP = document.getElementById('chkPrueba');
+      if (modo==='unica' && chkU.checked) chkP.checked = false;
+      if (modo==='prueba' && chkP.checked) chkU.checked = false;
+      const unica = chkU.checked; const prueba = chkP.checked;
+      document.getElementById('boxRecurrente').style.display = (!unica && !prueba) ? '' : 'none';
+      document.getElementById('boxUnica').style.display = unica ? '' : 'none';
+      document.getElementById('boxPrueba').style.display = prueba ? '' : 'none';
+      refrescarDiasYHoras();
+    }
+
+    function refrescarDiasYHoras(){
+      const sede = document.getElementById('selectSede').value;
+      const dias = diasHabilitados(sede);
+      const contDias = document.getElementById('chipsDias');
+      contDias.innerHTML = '';
+      dias.forEach(d=>{
+        const chip = document.createElement('div'); chip.className='chip'; chip.dataset.dow=d; chip.textContent = DIAS[d]; chip.onclick=()=> chip.classList.toggle('selected'); contDias.appendChild(chip);
+      });
+      const horas = rangoHoras(sede);
+      const selGen = document.getElementById('selectHoraGeneral'); selGen.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selGen.appendChild(o); });
+
+      // Per-day overrides (sede por día y hora por día)
+      const perDia = document.getElementById('perDia'); perDia.innerHTML='';
+      dias.forEach(d=>{
+        const wrap = document.createElement('div'); wrap.style.marginTop='6px';
+        const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
+        const selHora = document.createElement('select'); rangoHoras(sede).forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selHora.appendChild(o); }); selHora.value = horas[0];
+        const selSede = document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); }); selSede.value = sede;
+        wrap.appendChild(label); wrap.appendChild(selHora);
+        const sp = document.createElement('span'); sp.textContent='  '; wrap.appendChild(sp);
+        wrap.appendChild(selSede);
+        wrap.dataset.dow = d;
+        perDia.appendChild(wrap);
+      });
+
+      // Única vez & Prueba horas
+      const hu = document.getElementById('horaUnica'); hu.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hu.appendChild(o); });
+      const hp = document.getElementById('horaPrueba'); hp.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hp.appendChild(o); });
+    }
+
+    function fechasHastaFinDeAnio(dow){
+      // Genera fechas desde la semana visible (semanaInicio) para un día de la semana (1..6) hasta el 31/12/año actual.
+      const hoy = new Date();
+      const year = semanaInicio.getFullYear();
+      const fin = new Date(year, 11, 31);
+      let first = addDays(semanaInicio, dow-1);
+      // Si la primera fecha ya pasó, empezar la próxima semana para ese dow
+      const ahora = new Date(); ahora.setHours(0,0,0,0);
+      if (first < ahora) first = addDays(first, 7);
+      const out=[];
+      for (let d=first; d<=fin; d=addDays(d, 7)) out.push(ymd(d));
+      return out;
+    }
+
+    function cupoDisponible(fecha, hora, sede){
+      const arr = clasesSemana.filter(c=> c.fecha===fecha && c.hora===hora && c.sede===sede);
+      return Math.max(0, 6 - arr.length);
+    }
+
+    async function guardarClase(){
+      const sel = document.getElementById('selectAlumno');
+      const alumno_id = parseInt(sel.value,10);
+      if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
+
+      const esUnica = document.getElementById('chkUnica').checked;
+      const esPrueba = document.getElementById('chkPrueba').checked;
+
+      const clases = [];
+
+      if (esUnica){
+        const fecha = document.getElementById('fechaUnica').value;
+        const hora  = document.getElementById('horaUnica').value;
+        if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+        if (cupoDisponible(fecha, hora, document.getElementById('selectSede').value) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
+        clases.push({ fecha, hora, sede: document.getElementById('selectSede').value, tipo:'unica' });
+      } else if (esPrueba){
+        const fecha = document.getElementById('fechaPrueba').value;
+        const hora  = document.getElementById('horaPrueba').value;
+        if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+        if (cupoDisponible(fecha, hora, document.getElementById('selectSede').value) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
+        const nota = document.getElementById('notaPrueba').value.trim();
+        clases.push({ fecha, hora, sede: document.getElementById('selectSede').value, tipo:'prueba', nota });
+      } else {
+        // Recurrente
+        const sedeBase = document.getElementById('selectSede').value;
+        // días elegidos
+        const seleccionados = Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=> parseInt(ch.dataset.dow,10));
+        if (seleccionados.length===0){ alert('Seleccioná al menos un día'); return; }
+        // por cada día, tomar override de hora/sede
+        for (const d of seleccionados){
+          const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
+          const hora = row ? row.querySelector('select').value : document.getElementById('selectHoraGeneral').value;
+          const selects = row ? row.querySelectorAll('select') : null;
+          const sede = selects ? selects[1].value : sedeBase;
+          const fechas = fechasHastaFinDeAnio(d);
+          for (const f of fechas){
+            if (cupoDisponible(f, hora, sede) <= 0) continue; // saltear celdas llenas
+            clases.push({ fecha: f, hora, sede, tipo:'normal' });
+          }
+        }
+        if (clases.length===0){ alert('No hay cupos disponibles en las selecciones.'); return; }
+      }
+
+      try {
+        const res = await fetch('/clases', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ alumno_id, clases })
+        });
+        if (!res.ok) throw new Error('Error al guardar');
+        cerrarModal();
+        await cargarSemana();
+        alert('Clases registradas');
+      } catch (e){
+        console.error(e); alert('No se pudo guardar.');
+      }
+    }
+
+    // ====== Init ======
+    window.onload = async () => {
+      await cargarAlumnos();
+      await cargarSemana();
+    }
+  </script>
 </body>
 </html>
