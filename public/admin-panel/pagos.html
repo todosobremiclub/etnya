@@ -399,8 +399,9 @@ function renderPagos(query = '') {
   tbody.innerHTML = '';
 
   const term = normalizarTexto(query);
-  // filtrar por nro, apellido o nombre
-  const pagos = pagosGlobal.filter(p => {
+  // filtrar por nro, apellido o nombre y luego ordenar
+const pagos = pagosGlobal
+  .filter(p => {
     const a = alumnos.find(x => x.id === p.alumno_id);
     if (!a) return false;
     if (!term) return true;
@@ -409,7 +410,13 @@ function renderPagos(query = '') {
     const nom = normalizarTexto(a.nombre || '');
     return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
            normalizarTexto(`${ape} ${nom}`).includes(term);
+  })
+  .sort((p1, p2) => {
+    const a1 = alumnos.find(x => x.id === p1.alumno_id);
+    const a2 = alumnos.find(x => x.id === p2.alumno_id);
+    return (a1?.numero_alumno || 0) - (a2?.numero_alumno || 0);
   });
+
 
   // Agrupar por sede y luego por alumno
   const pagosPorSede = {};
