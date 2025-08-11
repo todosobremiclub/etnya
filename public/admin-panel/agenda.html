@@ -52,7 +52,16 @@
 
     /* ====== Modal Registrar ====== */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 1200; }
-    .modal { width: min(900px, 95vw); background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 16px; }
+    .modal {
+  width: min(900px, 95vw);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  padding: 16px;
+  max-height: 90vh;      /* 🔹 límite de alto */
+  overflow-y: auto;      /* 🔹 scroll interno */
+}
+
     .modal h3 { margin: 0 0 10px; color: #91586d; text-align: center; }
     .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .modal label { font-size: 13px; font-weight: 600; color: #6d6d6d; }
