@@ -6,681 +6,321 @@
   <title>Reportes</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #cce1d6;
-      color: #333;
+    body{margin:0;font-family:'Inter',sans-serif;background-color:#cce1d6;color:#333}
+    .sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background-color:#91586d;padding-top:60px;box-shadow:2px 0 5px rgba(0,0,0,.1)}
+    .sidebar a{display:flex;align-items:center;gap:10px;padding:10px 16px;color:#fff;text-decoration:none;font-weight:bold;border-bottom:1px solid rgba(255,255,255,.1)}
+    .sidebar a:hover{background-color:rgba(255,255,255,.1)}
+    .sidebar a.active{background-color:rgba(0,0,0,.1)}
+    .contenido{margin-left:210px;padding:20px}
+    h2{margin-top:40px;color:#555}
+    .bloque-reporte{background:#fff;padding:16px;border-radius:8px;margin-bottom:30px;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+
+    /* Tabla base */
+    table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+    th,td{padding:8px;border-bottom:1px solid #ccc;text-align:left}
+    th{background-color:#eee}
+
+    /* Botonera de reportes */
+    .report-switcher{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 18px}
+    .report-btn{border:none;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;background:#e9dbe0;color:#6b3b4b;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+    .report-btn:hover{filter:brightness(0.98)}
+    .report-btn.active{background:#91586d;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
+    /* Header */
+    .header-wrap{margin-left:200px}
+    .header{display:flex;align-items:center;justify-content:center;padding:20px 0;transform:translateX(-10px)}
+    .header img{height:60px;margin-right:16px}
+    .header h2{margin:0;font-size:28px;color:#91586d}
+
+    /* Hamburguesa + responsive */
+    .hamburguesa{display:none;position:fixed;top:10px;left:10px;z-index:2000;font-size:26px;background:transparent;color:white;border:none;cursor:pointer}
+    @media (max-width:768px){
+      .hamburguesa{display:block}
+      .sidebar{display:none;position:fixed;top:0;left:0;width:100%;background-color:#91586d;z-index:1500;flex-direction:column;height:auto;padding-top:0}
+      .sidebar.mostrar{display:flex}
+      .sidebar a,.sidebar button{flex:1 0 50%;text-align:center;border-bottom:1px solid rgba(255,255,255,.1)}
+      .contenido{margin-left:0;padding:70px 16px 16px}
+      .header-wrap{margin-left:0}
+      table{display:block;width:100%;overflow-x:auto;white-space:nowrap}
+      th,td{font-size:13px}
     }
-
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 200px;
-      height: 100vh;
-      background-color: #91586d;
-      padding-top: 60px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    }
-
-    .sidebar a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.sidebar a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar a.active {
-  background-color: rgba(0,0,0,0.1);
-}
-
-
-    .contenido {
-      margin-left: 210px;
-      padding: 20px;
-    }
-
-    h2 {
-      margin-top: 40px;
-      color: #555;
-    }
-
-    .bloque-reporte {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #ccc;
-      text-align: left;
-    }
-
-    th {
-      background-color: #eee;
-    }
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    padding-top: 0;
-  }
-
-  .sidebar a, .sidebar button {
-    flex: 1 0 50%;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .contenido {
-    margin-left: 0;
-    padding: 16px;
-  }
-
-  .bloque-reporte {
-    padding: 12px;
-    margin-bottom: 20px;
-  }
-
-  table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  th, td {
-    font-size: 13px;
-  }
-}
-
-.hamburguesa {
-  display: none;
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 2000;
-  font-size: 26px;
-  background: transparent;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .hamburguesa {
-    display: block;
-  }
-
-  .sidebar {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #91586d;
-    z-index: 1500;
-    flex-direction: column;
-  }
-
-  .sidebar.mostrar {
-    display: flex;
-  }
-
-  .contenido {
-    margin-left: 0;
-    padding: 70px 16px 16px;
-  }
-}
-
-
   </style>
 </head>
 <body>
 
-<div style="margin-left: 200px;">
-  <div style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 0;
-    transform: translateX(-10px);
-  ">
-    <img src="logo.jpeg" alt="Logo" style="height: 60px; margin-right: 16px;">
-    <h2 style="margin: 0; font-size: 28px; color: #91586d;">Reportes Etnya</h2>
+<div class="header-wrap">
+  <div class="header">
+    <img src="logo.jpeg" alt="Logo">
+    <h2>Reportes Etnya</h2>
+  </div>
+
+  <!-- BOTONERA DE REPORTES -->
+  <div class="report-switcher">
+    <button class="report-btn" data-report="cuenta"             onclick="mostrarReporte('cuenta')">Monto por cuenta</button>
+    <button class="report-btn" data-report="mes-pagado"         onclick="mostrarReporte('mes-pagado')">Monto por mes pagado</button>
+    <button class="report-btn" data-report="fecha-pago"         onclick="mostrarReporte('fecha-pago')">Monto por fecha de pago</button>
+    <button class="report-btn" data-report="alumnos-sede"       onclick="mostrarReporte('alumnos-sede')">Alumnos por sede</button>
+    <button class="report-btn" data-report="alumnos-modalidad"  onclick="mostrarReporte('alumnos-modalidad')">Alumnos por modalidad</button>
+    <button class="report-btn" data-report="ingresos"           onclick="mostrarReporte('ingresos')">Ingresos por mes/año</button>
+    <button class="report-btn" data-report="recaudacion-sede"   onclick="mostrarReporte('recaudacion-sede')">Recaudación por sede</button>
   </div>
 </div>
-
 
 <button id="toggleMenu" class="hamburguesa">☰</button>
 
-  
- <!-- Sidebar -->
-  <div class="sidebar">
-    <a href="index.html">📋 Alumnas/os</a>
-    <a href="pagos.html">💳 Pagos</a>
-    <a href="gastos.html">🧾 Gastos</a>
-    <a href="agenda.html">📅 Agenda</a>
-    <a href="configuracion.html">⚙️ Configuración</a>
-    <a href="reportes.html">📈 Reportes</a>
-    <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
-      🚪 Cerrar sesión
-    </button>
+<!-- Sidebar -->
+<div class="sidebar">
+  <a href="index.html">📋 Alumnas/os</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="gastos.html">🧾 Gastos</a>
+  <a href="agenda.html">📅 Agenda</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="reportes.html">📈 Reportes</a>
+  <button onclick="cerrarSesion()" style="width:100%;text-align:left;padding:10px 16px;background:transparent;border:none;color:#fff;font-weight:bold;font-size:13px;cursor:pointer;border-top:1px solid rgba(255,255,255,.1)">🚪 Cerrar sesión</button>
+</div>
+
+<div class="contenido">
+  <!-- 1 -->
+  <div class="bloque-reporte" data-report="cuenta">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+      <span>1. Monto por cuenta</span>
+    </h2>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <button onclick="cambiarMes(-1)">◀</button>
+      <div id="mes-anio-cuenta" style="font-weight:bold;"></div>
+      <button onclick="cambiarMes(1)">▶</button>
+    </div>
+    <div id="reporte-cuenta"></div>
   </div>
 
-
-
-  <div class="contenido">
-    
-
-    <div class="bloque-reporte">
-  <h2 style="display: flex; justify-content: space-between; align-items: center;">
-    <span>1. Monto por cuenta</span>
-  </h2>
-
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-    <button onclick="cambiarMes(-1)">◀</button>
-    <div id="mes-anio-cuenta" style="font-weight: bold;"></div>
-    <button onclick="cambiarMes(1)">▶</button>
+  <!-- 2 -->
+  <div class="bloque-reporte" data-report="mes-pagado">
+    <h2>2. Monto por mes pagado</h2>
+    <div id="reporte-mes-pagado"></div>
   </div>
 
-  <div id="reporte-cuenta"></div>
+  <!-- 3 -->
+  <div class="bloque-reporte" data-report="fecha-pago">
+    <h2>3. Monto por fecha de pago</h2>
+    <div id="reporte-fecha-pago"></div>
+  </div>
+
+  <!-- 4 -->
+  <div class="bloque-reporte" data-report="alumnos-sede">
+    <h2>4. Alumnos por sede</h2>
+    <div id="reporte-alumnos-sede"></div>
+  </div>
+
+  <!-- 5 -->
+  <div class="bloque-reporte" data-report="alumnos-modalidad">
+    <h2>5. Alumnos por modalidad</h2>
+    <div id="reporte-alumnos-modalidad"></div>
+  </div>
+
+  <!-- 6 -->
+  <div class="bloque-reporte" data-report="ingresos">
+    <h2>6. Ingresos por mes/año</h2>
+    <div id="reporte-ingresos"></div>
+    <div id="detalle-ingresos" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- 7 -->
+  <div class="bloque-reporte" data-report="recaudacion-sede">
+    <h2>7. Recaudación por sede (mes pagado)</h2>
+    <div id="reporte-recaudacion-sede"></div>
+  </div>
 </div>
 
+<script>
+  if (localStorage.getItem('etnya_login') !== 'ok') { window.location.href = 'login.html'; }
+  function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href='login.html'; }
 
-
-
-    <div class="bloque-reporte">
-      <h2>2. Monto por mes pagado</h2>
-      <div id="reporte-mes-pagado"></div>
-    </div>
-
-    <div class="bloque-reporte">
-      <h2>3. Monto por fecha de pago</h2>
-      <div id="reporte-fecha-pago"></div>
-    </div>
-
-   
-    <div class="bloque-reporte">
-      <h2>4. Alumnos por sede</h2>
-      <div id="reporte-alumnos-sede"></div>
-    </div>
-
-    <div class="bloque-reporte">
-      <h2>5. Alumnos por modalidad</h2>
-      <div id="reporte-alumnos-modalidad"></div>
-    </div>
-  
-	
-<div class="bloque-reporte">
-  <h2>6. Ingresos por mes/año</h2>
-  <div id="reporte-ingresos"></div>
-  <div id="detalle-ingresos" style="margin-top: 20px;"></div>
-</div>
-<div class="bloque-reporte">
-  <h2>7. Recaudación por sede (mes pagado)</h2>
-  <div id="reporte-recaudacion-sede"></div>
-</div>
-
-
-</div>
-
-
-  <script>
-
-if (localStorage.getItem('etnya_login') !== 'ok') {
-    window.location.href = 'login.html';
-  }
-
-  function cerrarSesion() {
-    localStorage.removeItem('etnya_login');
-    window.location.href = 'login.html';
-  }
-
-
-    // Generador de tabla básica
-  function renderTabla(idContenedor, columnas, datos) {
-  const contenedor = document.getElementById(idContenedor);
-  contenedor.innerHTML = '';
-
-  if (!datos.length) {
-    contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
-    return;
-  }
-
-  const tabla = document.createElement('table');
-  const thead = document.createElement('thead');
-  const tbody = document.createElement('tbody');
-
-  const filaEncabezado = document.createElement('tr');
-  columnas.forEach(col => {
-    const th = document.createElement('th');
-    th.textContent = col;
-    filaEncabezado.appendChild(th);
-  });
-  thead.appendChild(filaEncabezado);
-
-  const camposMonetarios = ['total', 'monto supervisora', 'monto supervisora 2', 'esperado'];
-
-
-  datos.forEach(row => {
-    const tr = document.createElement('tr');
-    columnas.forEach(col => {
-      const td = document.createElement('td');
-      let clave = col.toLowerCase();
-      let valor = row[clave] ?? row[col] ?? '-';
-
-      if (camposMonetarios.includes(clave)) {
-        const numero = parseFloat(valor);
-        if (!isNaN(numero)) {
-          valor = `$ ${Math.round(numero).toLocaleString('es-AR')}`;
-        }
-      }
-
-      td.textContent = valor;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-
-  tabla.appendChild(thead);
-  tabla.appendChild(tbody);
-  contenedor.appendChild(tabla);
-}
-
-
-
-    async function cargarReporteCuenta(mes = null, anio = null) {
-  try {
-    let url = '/reportes/por-cuenta';
-    if (mes && anio) {
-      url = `/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`;
-    }
-    const res = await fetch(url);
-    const data = await res.json();
-    renderTabla('reporte-cuenta', ['Cuenta', 'Total'], data);
-  } catch (error) {
-    console.error('Error al cargar reporte de cuenta:', error);
-  }
-}
-
-
-async function cargarReporteMesPagado() {
-  try {
-    const [resAlumnos, resTipos, resReporte] = await Promise.all([
-      fetch('/alumnos'),
-      fetch('/tipos-clase'),
-      fetch('/reportes/por-mes-pagado')
-    ]);
-
-    const dataAlumnos = await resAlumnos.json();
-    const dataTipos = await resTipos.json();
-    const dataReporte = await resReporte.json();
-
-    window.alumnos = dataAlumnos;
-    window.tiposClase = dataTipos;
-
-    const montoEsperado = calcularMontoEsperadoPorMes();
-
-    const datosConEsperado = dataReporte.map(row => ({
-  mes: formatearMesYYYYMM(row.mes),
-  total: row.total,
-  esperado: montoEsperado
-}));
-
-
-    renderTabla('reporte-mes-pagado', ['Mes', 'Total', 'Esperado'], datosConEsperado);
-  } catch (error) {
-    console.error('Error al cargar reporte por mes pagado:', error);
-  }
-}
-
-async function cargarReporteFechaPago() {
-  try {
-    const res = await fetch('/reportes/por-fecha-pago');
-    const data = await res.json();
-    renderTabla('reporte-fecha-pago', ['Mes', 'Total'], data);
-  } catch (error) {
-    console.error('Error al cargar reporte por fecha de pago:', error);
-  }
-}
-
-async function cargarReporteAlumnosSede() {
-  try {
-    const res = await fetch('/reportes/alumnos-por-sede');
-    const data = await res.json();
-    renderTabla('reporte-alumnos-sede', ['Sede', 'Cantidad'], data);
-  } catch (error) {
-    console.error('Error al cargar reporte de alumnos por sede:', error);
-  }
-}
-
-async function cargarReporteAlumnosModalidad() {
-  try {
-    const res = await fetch('/reportes/alumnos-por-modalidad');
-    const data = await res.json();
-
-    const contenedor = document.getElementById('reporte-alumnos-modalidad');
-    contenedor.innerHTML = '';
-
-    const tabla = document.createElement('table');
-    const thead = tabla.createTHead();
-    thead.innerHTML = '<tr><th>Modalidad</th><th>Cantidad</th></tr>';
-    const tbody = document.createElement('tbody');
-
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
-            onclick="verDetalleModalidad('${row.modalidad}')">${row.modalidad}</td>
-        <td>${row.cantidad}</td>
-      `;
+  /* Utilidad de tabla */
+  function renderTabla(idContenedor, columnas, datos){
+    const cont=document.getElementById(idContenedor); cont.innerHTML='';
+    if(!datos.length){ cont.innerHTML='<p>No hay datos disponibles.</p>'; return; }
+    const t=document.createElement('table'), thead=document.createElement('thead'), tbody=document.createElement('tbody');
+    const trh=document.createElement('tr');
+    columnas.forEach(c=>{ const th=document.createElement('th'); th.textContent=c; trh.appendChild(th); });
+    thead.appendChild(trh);
+    const monetarios=['total','monto supervisora','monto supervisora 2','esperado'];
+    datos.forEach(row=>{
+      const tr=document.createElement('tr');
+      columnas.forEach(col=>{
+        const td=document.createElement('td');
+        let k=col.toLowerCase(); let v=row[k] ?? row[col] ?? '-';
+        if(monetarios.includes(k)){ const n=parseFloat(v); if(!isNaN(n)) v=`$ ${Math.round(n).toLocaleString('es-AR')}`; }
+        td.textContent=v; tr.appendChild(td);
+      });
       tbody.appendChild(tr);
     });
-
-    tabla.appendChild(tbody);
-    contenedor.appendChild(tabla);
-  } catch (error) {
-    console.error('Error al cargar reporte de alumnos por modalidad:', error);
+    t.appendChild(thead); t.appendChild(tbody); cont.appendChild(t);
   }
-}
 
-let mesActual = new Date().getMonth() + 1; // enero = 1
-let anioActual = new Date().getFullYear();
-
-const meses = [
-  '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
-
-function actualizarTituloMesAnio() {
-  const titulo = document.getElementById('mes-anio-cuenta');
-  titulo.textContent = `${meses[mesActual]} ${anioActual}`;
-}
-
-function cambiarMes(delta) {
-  mesActual += delta;
-  if (mesActual < 1) {
-    mesActual = 12;
-    anioActual -= 1;
-  } else if (mesActual > 12) {
-    mesActual = 1;
-    anioActual += 1;
+  /* Cargas de datos existentes */
+  async function cargarReporteCuenta(mes=null,anio=null){
+    try{
+      let url='/reportes/por-cuenta';
+      if(mes && anio) url=`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`;
+      const r=await fetch(url); const d=await r.json();
+      renderTabla('reporte-cuenta',['Cuenta','Total'],d);
+    }catch(e){ console.error('Error cuenta:',e); }
   }
-  actualizarTituloMesAnio();
-  cargarReporteCuenta(mesActual, anioActual);
-  cargarTotalAnual(); // 👈 agregado
-}
 
+  async function cargarReporteMesPagado(){
+    try{
+      const [ra,rt,rr]=await Promise.all([fetch('/alumnos'),fetch('/tipos-clase'),fetch('/reportes/por-mes-pagado')]);
+      const da=await ra.json(), dt=await rt.json(), dr=await rr.json();
+      window.alumnos=da; window.tiposClase=dt;
+      const esperado=calcularMontoEsperadoPorMes();
+      const datos=dr.map(row=>({ mes:formatearMesYYYYMM(row.mes), total:row.total, esperado }));
+      renderTabla('reporte-mes-pagado',['Mes','Total','Esperado'],datos);
+    }catch(e){ console.error('Error mes pagado:',e); }
+  }
 
-let mesMostrado = null;
+  async function cargarReporteFechaPago(){
+    try{ const r=await fetch('/reportes/por-fecha-pago'); const d=await r.json();
+      renderTabla('reporte-fecha-pago',['Mes','Total'],d);
+    }catch(e){ console.error('Error fecha pago:',e); }
+  }
 
-function formatearMesYYYYMM(yyyyMM) {
-  const [anio, mes] = yyyyMM.split('-');
-  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-  return `${meses[parseInt(mes) - 1]} ${anio}`;
-}
+  async function cargarReporteAlumnosSede(){
+    try{ const r=await fetch('/reportes/alumnos-por-sede'); const d=await r.json();
+      renderTabla('reporte-alumnos-sede',['Sede','Cantidad'],d);
+    }catch(e){ console.error('Error alumnos sede:',e); }
+  }
 
-async function cargarReporteIngresos() {
-  try {
-    const res = await fetch('/reportes/ingresos-por-mes');
-    const data = await res.json();
-    const contenedor = document.getElementById('reporte-ingresos');
-    contenedor.innerHTML = '';
+  async function cargarReporteAlumnosModalidad(){
+    try{
+      const r=await fetch('/reportes/alumnos-por-modalidad'); const data=await r.json();
+      const c=document.getElementById('reporte-alumnos-modalidad'); c.innerHTML='';
+      const t=document.createElement('table'); t.createTHead().innerHTML='<tr><th>Modalidad</th><th>Cantidad</th></tr>';
+      const tb=document.createElement('tbody');
+      data.forEach(row=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td style="cursor:pointer;color:#91586d;text-decoration:underline;" onclick="verDetalleModalidad('${row.modalidad}')">${row.modalidad}</td>
+          <td>${row.cantidad}</td>`;
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); c.appendChild(t);
+    }catch(e){ console.error('Error alumnos modalidad:',e); }
+  }
 
-    if (!data.length) {
-      contenedor.innerHTML = '<p>No hay datos disponibles.</p>';
-      return;
+  let mesActual=new Date().getMonth()+1, anioActual=new Date().getFullYear();
+  const mesesTxt=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  function actualizarTituloMesAnio(){ document.getElementById('mes-anio-cuenta').textContent = `${mesesTxt[mesActual]} ${anioActual}`; }
+  function cambiarMes(d){ mesActual+=d; if(mesActual<1){mesActual=12;anioActual--} else if(mesActual>12){mesActual=1;anioActual++}
+    actualizarTituloMesAnio(); cargarReporteCuenta(mesActual,anioActual); }
+
+  let mesMostrado=null;
+  function formatearMesYYYYMM(yyyyMM){ const [a,m]=yyyyMM.split('-'); const n=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][parseInt(m)-1]; return `${n} ${a}`; }
+
+  async function cargarReporteIngresos(){
+    try{
+      const r=await fetch('/reportes/ingresos-por-mes'); const data=await r.json();
+      const cont=document.getElementById('reporte-ingresos'); cont.innerHTML='';
+      if(!data.length){ cont.innerHTML='<p>No hay datos disponibles.</p>'; return; }
+      const porAnio={};
+      data.forEach(row=>{
+        const [anio]=row.mes.split('-'); const mesNombre=formatearMesYYYYMM(row.mes).split(' ')[0];
+        if(!porAnio[anio]) porAnio[anio]=[];
+        porAnio[anio].push({mes:mesNombre,mesCompleto:row.mes,cantidad:row.cantidad});
+      });
+      for(const anio of Object.keys(porAnio).sort((a,b)=>b-a)){
+        const bloque=document.createElement('div'); bloque.style.marginBottom='16px';
+        const titulo=document.createElement('div');
+        titulo.innerHTML=`<span class="flecha-anio">▶</span> ${anio}`;
+        Object.assign(titulo.style,{color:'#91586d',cursor:'pointer',fontSize:'15px',fontWeight:'600',margin:'6px 0'});
+        titulo.onmouseover=()=>titulo.style.textDecoration='underline';
+        titulo.onmouseout =()=>titulo.style.textDecoration='none';
+        const tabla=document.createElement('table');
+        tabla.innerHTML='<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
+        const tb=document.createElement('tbody');
+        porAnio[anio].forEach(r=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td style="cursor:pointer;color:#91586d;text-decoration:underline;" onclick="verDetalleIngresos('${r.mesCompleto}')">${r.mes}</td><td>${r.cantidad}</td>`;
+          tb.appendChild(tr);
+        });
+        tabla.appendChild(tb); tabla.style.display='none';
+        titulo.addEventListener('click',()=>{
+          const vis=tabla.style.display==='table';
+          tabla.style.display=vis?'none':'table';
+          titulo.querySelector('.flecha-anio').textContent=vis?'▶':'🔽';
+        });
+        bloque.appendChild(titulo); bloque.appendChild(tabla); cont.appendChild(bloque);
+      }
+    }catch(e){ console.error('Error ingresos:',e); }
+  }
+
+  async function verDetalleIngresos(mes){
+    mesMostrado=mes; document.getElementById('modalDetalleIngresos').style.display='flex';
+    document.getElementById('tituloDetalleIngreso').textContent=`Ingresos en ${formatearMesYYYYMM(mes)}`;
+    try{ const r=await fetch(`/reportes/detalle-ingresos?mes=${mes}`); const d=await r.json();
+      renderTabla('contenidoDetalleIngreso',['Número','Nombre','Apellido','Fecha ingreso'],d);
+    }catch(e){ console.error('Detalle ingresos:',e); document.getElementById('contenidoDetalleIngreso').innerHTML='<p>Error al cargar datos.</p>'; }
+  }
+  function cerrarDetalleIngresos(){ mesMostrado=null; document.getElementById('modalDetalleIngresos').style.display='none'; }
+
+  async function verDetalleModalidad(modalidad){
+    document.getElementById('modalDetalleIngresos').style.display='flex';
+    document.getElementById('tituloDetalleIngreso').textContent=`Alumnos en: ${modalidad}`;
+    try{ const r=await fetch(`/reportes/detalle-modalidad?modalidad=${encodeURIComponent(modalidad)}`); const d=await r.json();
+      renderTabla('contenidoDetalleIngreso',['Número','Nombre','Apellido'],d);
+    }catch(e){ console.error('Detalle modalidad:',e); document.getElementById('contenidoDetalleIngreso').innerHTML='<p>Error al cargar datos.</p>'; }
+  }
+
+  function calcularMontoEsperadoPorMes(){
+    const modalidadCantidad={}; let total=0;
+    if(!Array.isArray(alumnos)||!Array.isArray(tiposClase)) return 0;
+    alumnos.forEach(a=>{ if(!a.activo) return; const m=a.tipo_clase; if(!m) return; modalidadCantidad[m]=(modalidadCantidad[m]||0)+1; });
+    for(const m in modalidadCantidad){
+      const cant=modalidadCantidad[m];
+      const tipo=tiposClase.find(t=>t.modalidad.toLowerCase().trim()===m.toLowerCase().trim());
+      const precio=tipo?.precio||0; total+=cant*precio;
     }
-
-    const agrupadoPorAnio = {};
-    data.forEach(row => {
-      const [anio, mesNum] = row.mes.split('-');
-      const mesNombre = formatearMesYYYYMM(row.mes).split(' ')[0];
-
-      if (!agrupadoPorAnio[anio]) agrupadoPorAnio[anio] = [];
-      agrupadoPorAnio[anio].push({
-        mes: mesNombre,
-        mesCompleto: row.mes,
-        cantidad: row.cantidad
-      });
-    });
-
-    for (const anio of Object.keys(agrupadoPorAnio).sort((a, b) => b - a)) {
-      const bloque = document.createElement('div');
-      bloque.style.marginBottom = '16px';
-
-      const titulo = document.createElement('div');
-titulo.innerHTML = `<span class="flecha-anio">▶</span> ${anio}`;
-titulo.style.color = '#91586d';
-titulo.style.cursor = 'pointer';
-titulo.style.fontSize = '15px';
-titulo.style.fontWeight = '600';
-titulo.style.margin = '6px 0';
-
-titulo.onmouseover = () => titulo.style.textDecoration = 'underline';
-titulo.onmouseout = () => titulo.style.textDecoration = 'none';
-
-
-      const tabla = document.createElement('table');
-      tabla.innerHTML = '<thead><tr><th>Mes</th><th>Cantidad</th></tr></thead>';
-      const tbody = document.createElement('tbody');
-
-      agrupadoPorAnio[anio].forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="cursor:pointer; color:#91586d; text-decoration:underline;"
-              onclick="verDetalleIngresos('${row.mesCompleto}')">
-            ${row.mes}
-          </td>
-          <td>${row.cantidad}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      tabla.appendChild(tbody);
-      tabla.style.display = 'none';
-
-      titulo.addEventListener('click', () => {
-        const visible = tabla.style.display === 'table';
-        tabla.style.display = visible ? 'none' : 'table';
-        titulo.querySelector('.flecha-anio').textContent = visible ? '▶' : '🔽';
-      });
-
-      bloque.appendChild(titulo);
-      bloque.appendChild(tabla);
-      contenedor.appendChild(bloque);
-    }
-  } catch (err) {
-    console.error('Error al cargar reporte de ingresos:', err);
-  }
-}
-
-    
-
-async function verDetalleIngresos(mes) {
-  mesMostrado = mes;
-  document.getElementById('modalDetalleIngresos').style.display = 'flex';
-  document.getElementById('tituloDetalleIngreso').textContent = `Ingresos en ${formatearMesYYYYMM(mes)}`;
-
-  try {
-    const res = await fetch(`/reportes/detalle-ingresos?mes=${mes}`);
-    const data = await res.json();
-
-    renderTabla('contenidoDetalleIngreso', ['Número', 'Nombre', 'Apellido', 'Fecha ingreso'], data);
-  } catch (err) {
-    console.error('Error al cargar detalle de ingresos:', err);
-    document.getElementById('contenidoDetalleIngreso').innerHTML = '<p>Error al cargar datos.</p>';
-  }
-}
-
-function cerrarDetalleIngresos() {
-  mesMostrado = null;
-  document.getElementById('modalDetalleIngresos').style.display = 'none';
-}
-
-async function verDetalleModalidad(modalidad) {
-  document.getElementById('modalDetalleIngresos').style.display = 'flex';
-  document.getElementById('tituloDetalleIngreso').textContent = `Alumnos en: ${modalidad}`;
-
-  try {
-    const res = await fetch(`/reportes/detalle-modalidad?modalidad=${encodeURIComponent(modalidad)}`);
-    const data = await res.json();
-
-    renderTabla('contenidoDetalleIngreso', ['Número', 'Nombre', 'Apellido'], data);
-  } catch (err) {
-    console.error('Error al cargar detalle de modalidad:', err);
-    document.getElementById('contenidoDetalleIngreso').innerHTML = '<p>Error al cargar datos.</p>';
-  }
-}
-
-function calcularMontoEsperadoMensual() {
-  const modalidadCantidad = {};
-  let total = 0;
-
-  if (!Array.isArray(alumnos) || !Array.isArray(tiposClase)) return 0;
-
-  alumnos.forEach(a => {
-    if (!a.activo) return;
-    const modalidad = a.tipo_clase;
-    if (!modalidad) return;
-
-    modalidadCantidad[modalidad] = (modalidadCantidad[modalidad] || 0) + 1;
-  });
-
-  for (const modalidad in modalidadCantidad) {
-    const cantidad = modalidadCantidad[modalidad];
-    const tipo = tiposClase.find(t =>
-      t.modalidad.toLowerCase().trim() === modalidad.toLowerCase().trim()
-    );
-    const precio = tipo?.precio || 0;
-    total += cantidad * precio;
+    return total;
   }
 
-  return total;
-}
-
-function calcularMontoEsperadoPorMes() {
-  const modalidadCantidad = {};
-  let total = 0;
-
-  if (!Array.isArray(alumnos) || !Array.isArray(tiposClase)) return 0;
-
-  alumnos.forEach(a => {
-    if (!a.activo) return;
-    const modalidad = a.tipo_clase;
-    if (!modalidad) return;
-
-    modalidadCantidad[modalidad] = (modalidadCantidad[modalidad] || 0) + 1;
-  });
-
-  const esperadoPorMes = {};
-
-  for (const modalidad in modalidadCantidad) {
-    const cantidad = modalidadCantidad[modalidad];
-    const tipo = tiposClase.find(t =>
-      t.modalidad.toLowerCase().trim() === modalidad.toLowerCase().trim()
-    );
-    const precio = tipo?.precio || 0;
-    const subtotal = cantidad * precio;
-    total += subtotal;
+  async function cargarReporteRecaudacionPorSede(){
+    try{
+      const r=await fetch('/reportes/recaudacion-por-sede'); const d=await r.json();
+      const datos=d.map(row=>({mes:formatearMesYYYYMM(row.mes),sede:row.sede,total:row.total,esperado:row.esperado}));
+      renderTabla('reporte-recaudacion-sede',['Mes','Sede','Total','Esperado'],datos);
+    }catch(e){ console.error('Error recaudación sede:',e); }
   }
 
-  return total; // mismo para todos los meses si no filtramos
-}
-
-async function cargarReporteRecaudacionPorSede() {
-  try {
-    const res = await fetch('/reportes/recaudacion-por-sede');
-    const data = await res.json();
-
-    const datosFormateados = data.map(row => ({
-      mes: formatearMesYYYYMM(row.mes),
-      sede: row.sede,
-      total: row.total,
-      esperado: row.esperado
-    }));
-
-    renderTabla('reporte-recaudacion-sede', ['Mes', 'Sede', 'Total', 'Esperado'], datosFormateados);
-  } catch (err) {
-    console.error('Error al cargar reporte por sede:', err);
+  /* Botonera: mostrar/ocultar */
+  const REPORTES=['cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede'];
+  function mostrarReporte(rep){
+    document.querySelectorAll('.bloque-reporte').forEach(b=>b.style.display=(b.dataset.report===rep)?'block':'none');
+    document.querySelectorAll('.report-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.report===rep));
+    localStorage.setItem('reporte_activo', rep);
   }
-}
 
-   window.onload = () => {
-  actualizarTituloMesAnio();
-  cargarReporteCuenta(mesActual, anioActual);
-  cargarReporteMesPagado();
-  cargarReporteFechaPago();
-  cargarReporteAlumnosSede();
-  cargarReporteAlumnosModalidad();
-  cargarReporteIngresos();
-  cargarReporteRecaudacionPorSede();
+  // Cargas iniciales y selección por defecto
+  window.onload=()=>{
+    actualizarTituloMesAnio();
+    cargarReporteCuenta(mesActual,anioActual);
+    cargarReporteMesPagado();
+    cargarReporteFechaPago();
+    cargarReporteAlumnosSede();
+    cargarReporteAlumnosModalidad();
+    cargarReporteIngresos();
+    cargarReporteRecaudacionPorSede();
 
+    const repGuardado=localStorage.getItem('reporte_activo') || 'cuenta';
+    mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'cuenta');
+  };
 
-};
+  document.getElementById('toggleMenu').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('mostrar'));
+</script>
 
-
-
-document.getElementById("toggleMenu").addEventListener("click", () => {
-  document.querySelector(".sidebar").classList.toggle("mostrar");
-});
-
-
-
-  </script>
-
-<div id="modalDetalleIngresos" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-">
-  <div style="
-    background: white;
-    padding: 24px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 700px;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-  ">
-    <button onclick="cerrarDetalleIngresos()" style="
-      position: absolute;
-      top: 10px; right: 10px;
-      border: none; background: none;
-      font-size: 20px; cursor: pointer;
-    ">✖</button>
-
-    <h3 id="tituloDetalleIngreso" style="color: #91586d; margin-top: 0;"></h3>
+<!-- Modal reutilizable -->
+<div id="modalDetalleIngresos" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center;">
+  <div style="background:#fff;padding:24px;border-radius:10px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="cerrarDetalleIngresos()" style="position:absolute;top:10px;right:10px;border:none;background:none;font-size:20px;cursor:pointer">✖</button>
+    <h3 id="tituloDetalleIngreso" style="color:#91586d;margin-top:0;"></h3>
     <div id="contenidoDetalleIngreso"></div>
   </div>
 </div>
