@@ -173,6 +173,13 @@
           <small>Se generarán las clases seleccionadas desde la semana visible hasta fin de año.</small>
         </div>
 
+        <!-- Situación actual -->
+<div id="boxSituacion" style="margin-top:10px;border-top:1px dashed #e0e0e0;padding-top:8px;">
+  <label>Situación actual (desde la semana visible)</label>
+  <div id="situacionActual" class="chips"></div>
+</div>
+
+
         <!-- Única -->
         <div id="boxUnica" style="display:none;margin-top:10px;">
           <label>Fecha única</label>
@@ -234,6 +241,15 @@ function diasHabilitados(s){return SEDES[s].dias}
 
 function normTime(t){ return t && t.length===5 ? t+':00' : t; }   // '10:00' -> '10:00:00'
 function normDate(d){ return d && d.length>=10 ? d.slice(0,10) : d; } // '2025-08-19T...' -> '2025-08-19'
+
+
+let clasesAlumnoActual = [];  // clases futuras del alumno seleccionado
+
+function dowNumFromYMD(ymd){
+  const d = new Date(ymd + 'T00:00:00');
+  const w = d.getDay();      // 0..6  (0=Dom)
+  return w === 0 ? 7 : w;    // 1..7  (1=Lun)
+}
 
 
 // ===== Header / navegación =====
@@ -326,6 +342,49 @@ async function cargarClasesSemana(){
     }))
     .filter(c => c.sede === sedeSeleccionada); // <- filtro final por sede
 }
+
+async function cargarSituacionAlumno(alumnoId){
+  const cont = document.getElementById('situacionActual');
+  if (!alumnoId){
+    clasesAlumnoActual = [];
+    if (cont) cont.innerHTML = '';
+    return;
+  }
+
+  const desde = ymd(semanaInicio);
+  const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
+
+  const res  = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
+  const data = await res.json();
+
+  // normalizar y quedarnos con futuras
+  clasesAlumnoActual = (data || [])
+    .map(c => ({ ...c, fecha: normDate(c.fecha), hora: normTime(c.hora), sede: (c.sede||'').trim() }))
+    .filter(c => c.fecha >= desde);
+
+  // render en chips agrupados por patrón (día/hora/sede)
+  if (!cont) return;
+  cont.innerHTML = '';
+  if (clasesAlumnoActual.length === 0){
+    cont.textContent = 'Sin clases futuras.';
+    return;
+  }
+
+  const mapa = new Map(); // key: dow|hora|sede  -> cantidad
+  for (const c of clasesAlumnoActual){
+    const key = `${dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
+    mapa.set(key, (mapa.get(key) || 0) + 1);
+  }
+
+  for (const [key, cant] of mapa.entries()){
+    const [dow, hora, sede] = key.split('|');
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = `${DIAS[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
+    cont.appendChild(chip);
+  }
+}
+
 
 /* ===== Pintar ===== */
 function pintarClases(){
@@ -560,6 +619,10 @@ window.abrirModal = function (){
   boxPrueba.style.display = 'none';
   selectSede.value = '';
   refrescarDiasYHoras();
+// limpiar/resumir situación cuando abrís
+const idSel = parseInt(selectAlumno.value, 10) || 0;
+cargarSituacionAlumno(idSel);
+
 };
 
 window.cerrarModal = function (){
@@ -579,6 +642,12 @@ window.toggleModo = function (modo){
 
   refrescarDiasYHoras();
 };
+
+selectAlumno.addEventListener('change', () => {
+  const id = parseInt(selectAlumno.value, 10) || 0;
+  cargarSituacionAlumno(id);
+});
+
 
 
 /* ===== Init ===== */
