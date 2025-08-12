@@ -391,38 +391,65 @@
   function cupoDisponible(fecha,hora,sede){const arr=clasesSemana.filter(c=>c.fecha===fecha&&c.hora===hora&&c.sede===sede);return Math.max(0,6-arr.length)}
 
   function guardarClase(){
-    const sel=selectAlumno; const alumno_id=parseInt(sel.value,10); if(!alumno_id){alert('Seleccioná una alumna/o');return}
-    const esUnica=chkUnica.checked, esPrueba=chkPrueba.checked; const clases=[];
-    if(esUnica){
-      const sede=selectSede.value; if(!sede){alert('Seleccioná una sede');return}
-      const fecha=fechaUnica.value, hora=horaUnica.value; if(!fecha||!hora){alert('Completá fecha y hora');return}
-      if(cupoDisponible(fecha,hora,sede)<=0){alert('Cupo completo');return}
-      clases.push({fecha,hora,sede,tipo:'unica'});
-    }else if(esPrueba){
-      const sede=selectSede.value; if(!sede){alert('Seleccioná una sede');return}
-      const fecha=fechaPrueba.value, hora=horaPrueba.value; if(!fecha||!hora){alert('Completá fecha y hora');return}
-      if(cupoDisponible(fecha,hora,sede)<=0){alert('Cupo completo');return}
-      const nota=notaPrueba.value.trim(); clases.push({fecha,hora,sede,tipo:'prueba',nota});
-    }else{
-      const sedeBase=selectSede.value; if(!sedeBase){alert('Seleccioná una sede');return}
-      const seleccionados=selectedDOWs(); if(seleccionados.length===0){alert('Seleccioná al menos un día');return}
-      for(const d of seleccionados){
-        const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
-        const selects=row?row.querySelectorAll('select'):null;
-        const hora=selects&&selects[0]?selects[0].value:''; const sede=selects&&selects[1]?selects[1].value:sedeBase;
-        if(!hora){alert('Completá la hora');return}
-        for(const f of fechasHastaFinDeAnio(d)){ if(cupoDisponible(f,hora,sede)<=0) continue; clases.push({fecha:f,hora,sede,tipo:'normal'}) }
+  const sel = selectAlumno;
+  const alumno_id = parseInt(sel.value, 10);
+  if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
+
+  const esUnica  = chkUnica.checked;
+  const esPrueba = chkPrueba.checked;
+  const clases = [];
+
+  if (esUnica){
+    const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
+    const fecha = fechaUnica.value;
+    const hora  = horaUnica.value;
+    if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+    if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
+    clases.push({ fecha, hora, sede });           // <- sin tipo/nota
+  } else if (esPrueba){
+    const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
+    const fecha = fechaPrueba.value;
+    const hora  = horaPrueba.value;
+    if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+    if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
+    // const nota = notaPrueba.value.trim();      // si después agregás columna, la usamos
+    clases.push({ fecha, hora, sede });           // <- sin tipo/nota
+  } else {
+    const sedeBase = selectSede.value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
+    const seleccionados = selectedDOWs(); if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
+
+    for (const d of seleccionados){
+      const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
+      const selects = row ? row.querySelectorAll('select') : null;
+      const hora = selects && selects[0] ? selects[0].value : '';
+      const sede = selects && selects[1] ? selects[1].value : sedeBase;
+      if (!hora){ alert('Completá la hora'); return; }
+
+      for (const f of fechasHastaFinDeAnio(d)){
+        if (cupoDisponible(f, hora, sede) <= 0) continue;
+        clases.push({ fecha: f, hora, sede });    // <- sin tipo
       }
-      if(clases.length===0){alert('No hay cupos disponibles');return}
     }
-    (async()=>{
-      try{
-        const res=await fetch('/clases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({alumno_id,clases})});
-        if(!res.ok) throw new Error('Error al guardar');
-        cerrarModal(); await cargarSemana(); alert('Clases registradas');
-      }catch(e){console.error(e);alert('No se pudo guardar')}
-    })();
+    if (clases.length === 0){ alert('No hay cupos disponibles'); return; }
   }
+
+  (async ()=>{
+    try{
+      const res = await fetch('/clases', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ alumno_id, clases })
+      });
+      if (!res.ok) throw new Error('Error al guardar');
+      cerrarModal();
+      await cargarSemana();
+      alert('Clases registradas');
+    }catch(e){
+      console.error(e);
+      alert('No se pudo guardar');
+    }
+  })();
+}
 
   // ====== Init ======
   window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
