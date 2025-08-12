@@ -46,13 +46,24 @@
     .agenda th { background-color: #b48a99; color: #fff; font-size: 13px; position: sticky; top: 0; z-index: 2; }
     .agenda .col-hora { width: 70px; background: #f7f7f7; font-weight: 600; text-align: center; position: sticky; left: 0; z-index: 1; }
    /* Celda de horario: un solo cuadro dividido en 2 mitades */
-.slot{
-  min-height: 110px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;  /* dos mitades iguales */
-  gap: 0;
+.slot {
+  display: flex;
+  flex-direction: column;
+  height: 110px; /* mismo alto que ahora */
   padding: 0;
+}
+
+.subslot {
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
   box-sizing: border-box;
+}
+.subslot:last-child {
+  border-bottom: none;
 }
 
 .slot .half{
@@ -297,20 +308,19 @@
  // ====== Grilla ======
 function construirTablaBase(){
   const tabla = document.getElementById('tablaAgenda');
-  tabla.innerHTML = '';
+  tabla.innerHTML='';
 
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
   const thHora = document.createElement('th');
-  thHora.className = 'col-hora';
-  thHora.textContent = 'Hora';
+  thHora.className='col-hora';
+  thHora.textContent='Hora';
   trh.appendChild(thHora);
 
   const dias = diasHabilitados(sedeSeleccionada);
   const lunes = semanaInicio;
-
   for (const dow of dias){
-    const fecha = addDays(lunes, dow - 1);
+    const fecha = addDays(lunes, dow-1);
     const th = document.createElement('th');
     th.dataset.fecha = ymd(fecha);
     th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
@@ -321,24 +331,35 @@ function construirTablaBase(){
   const tbody = document.createElement('tbody');
   const horas = rangoHoras(sedeSeleccionada);
 
-  horas.forEach(hh => {
+  horas.forEach(hh=>{
     const tr = document.createElement('tr');
 
     const tdHora = document.createElement('td');
-    tdHora.className = 'col-hora';
+    tdHora.className='col-hora';
     tdHora.textContent = hh;
     tr.appendChild(tdHora);
 
-    dias.forEach(dow => {
-      const fecha = ymd(addDays(semanaInicio, dow - 1));
+    dias.forEach(dow=>{
+      const fecha = ymd(addDays(semanaInicio, dow-1));
+
+      // === Celda principal ===
       const td = document.createElement('td');
-      td.className = 'slot';
+      td.className='slot';
       td.dataset.fecha = fecha;
-      td.dataset.hora  = hh;                // HH:MM (texto)
+      td.dataset.hora  = hh;
       td.dataset.sede  = sedeSeleccionada;
 
-      // 🔸 Dos mitades (izquierda/derecha) para 3+3
-      td.innerHTML = '<div class="half"></div><div class="half"></div>';
+      // === Crear dos mitades ===
+      const mitad1 = document.createElement('div');
+      mitad1.className = 'subslot';
+      mitad1.dataset.max = 3;
+
+      const mitad2 = document.createElement('div');
+      mitad2.className = 'subslot';
+      mitad2.dataset.max = 3;
+
+      td.appendChild(mitad1);
+      td.appendChild(mitad2);
 
       tr.appendChild(td);
     });
