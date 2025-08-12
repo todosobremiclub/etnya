@@ -212,6 +212,9 @@ function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h
 function diasHabilitados(s){return SEDES[s].dias}
 // ⚠️ Normalizar: '10:00' -> '10:00:00'
 function normTime(t){ return t && t.length===5 ? t+':00' : t }
+function normTime(t){ return t && t.length===5 ? t+':00' : t; }   // '10:00' -> '10:00:00'
+function normDate(d){ return d && d.length>=10 ? d.slice(0,10) : d; } // '2025-08-19T...' -> '2025-08-19'
+
 
 // ===== Header / navegación =====
 function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
@@ -291,7 +294,8 @@ async function cargarClasesSemana(){
   const dias=diasHabilitados(sedeSeleccionada);
   const hasta=ymd(addDays(semanaInicio,Math.max(...dias)));
   const res=await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-  clasesSemana=await res.json();
+  const data=await res.json();
+  clasesSemana = data.map(c=>({ ...c, fecha: normDate(c.fecha), hora: normTime(c.hora) }));
 }
 
 /* ===== Pintar ===== */
@@ -301,7 +305,7 @@ function pintarClases(){
   // agrupar por fecha|hora (normalizada)
   const mapa=new Map();
   for(const c of clasesSemana){
-    const key=`${c.fecha}|${normTime(c.hora)}`;
+    const key = `${c.fecha}|${c.hora}`; // ya vienen normalizados
     if(!mapa.has(key)) mapa.set(key,[]);
     mapa.get(key).push(c);
   }
