@@ -53,18 +53,23 @@
 }
     .half.left{border-right:1px solid #e0e0e0}
   .tag{
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box; /* 100% incluye padding + border */
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f3fbf7;
-  border: 1px solid #94b8a3;
-  box-shadow: 0 1px 0 rgba(0,0,0,.03);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display:block;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;              /* un poco menos de padding */
+  border-radius:10px;
+  background:#f3fbf7;
+  border:1px solid #94b8a3;
+  box-shadow:0 1px 0 rgba(0,0,0,.03);
+
+  /* — cambios clave — */
+  font-size:11px;               /* más chico */
+  line-height:1.2;
+  white-space:normal;           /* permite salto de línea */
+  overflow:visible;             /* sin recorte */
+  text-overflow:clip;           /* sin '...' */
+  word-break:break-word;        /* por si un nombre es muy largo */
 }
 
 .tag.full{
