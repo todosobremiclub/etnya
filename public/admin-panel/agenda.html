@@ -251,6 +251,10 @@ function dowNumFromYMD(ymd){
   return w === 0 ? 7 : w;    // 1..7  (1=Lun)
 }
 
+// clave para comparar patrones (día de semana + hora + sede)
+function groupKey(dow, hora, sede){
+  return `${dow}|${normTime(hora)}|${(sede||'').trim()}`;
+}
 
 // ===== Header / navegación =====
 function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
@@ -570,40 +574,98 @@ function guardarClase(){
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
     clases.push({ fecha, hora, sede });
-  } else {
-    const sedeBase = selectSede.value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
-    const seleccionados = selectedDOWs(); if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
+ // === Recurrente (reemplazo inteligente) ===
+} else {
+  const sedeBase = selectSede.value; 
+  if(!sedeBase){ alert('Seleccioná una sede'); return; }
 
-    for (const d of seleccionados){
-      const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
-      const selects = row ? row.querySelectorAll('select') : null;
-      const hora = normTime(selects && selects[0] ? selects[0].value : '');
-      const sede = selects && selects[1] ? selects[1].value : sedeBase;
-      if (!hora){ alert('Completá la hora'); return; }
+  const seleccionados = selectedDOWs(); 
+  if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
 
-      for (const f of fechasHastaFinDeAnio(d)){
-        if (cupoDisponible(f, hora, sede) <= 0) continue;
-        clases.push({ fecha: f, hora, sede });
-      }
-    }
-    if (clases.length === 0){ alert('No hay cupos disponibles'); return; }
+  // 1) NUEVOS patrones elegidos (dow/hora/sede)
+  const nuevos = []; // [{dow,hora,sede}]
+  for (const d of seleccionados){
+    const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
+    const selects = row ? row.querySelectorAll('select') : null;
+    const hora = normTime(selects && selects[0] ? selects[0].value : '');
+    const sede = ((selects && selects[1]) ? selects[1].value : sedeBase).trim();
+    if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
+    nuevos.push({ dow:d, hora, sede });
   }
 
+  // 2) PATRONES ACTUALES del alumno (desde la semana visible)
+  const actualesSet = new Set();
+  for (const c of clasesAlumnoActual){
+    actualesSet.add(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede));
+  }
+
+  // 3) Patrones a ELIMINAR = actuales - nuevos
+  const nuevosSet = new Set(nuevos.map(p => groupKey(p.dow, p.hora, p.sede)));
+  const patronesAEliminar = [...actualesSet].filter(k => !nuevosSet.has(k));
+
+  // IDs a eliminar (todas las futuras del alumno que coincidan con esos patrones)
+  const idsAEliminar = clasesAlumnoActual
+    .filter(c => patronesAEliminar.includes(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede)))
+    .map(c => c.id);
+
+  // 4) Construir INSERCIONES nuevas (todas las fechas hacia fin de año)
+  const clases = [];
+  for (const p of nuevos){
+    for (const f of fechasHastaFinDeAnio(p.dow)){
+      // si querés respetar cupos en la semana visible, dejá esta línea:
+      if (cupoDisponible(f, p.hora, p.sede) <= 0) continue;
+      clases.push({ fecha:f, hora:p.hora, sede:p.sede });
+    }
+  }
+
+  if (clases.length===0 && idsAEliminar.length===0){
+    alert('No hay cambios para aplicar.');
+    return;
+  }
+
+  // 5) Ejecutar: primero DELETE, luego INSERT
   (async ()=>{
     try{
-      const res = await fetch('/clases', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ alumno_id, clases })
-      });
-      if (!res.ok) throw new Error('Error al guardar');
+      if (idsAEliminar.length){
+        // Intento 1: DELETE /clases con body {ids}
+        let del = await fetch('/clases', {
+          method:'DELETE',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ ids: idsAEliminar })
+        });
+        // Fallback si tu backend usa otro endpoint:
+        if (del.status === 404){
+          del = await fetch('/clases/bulk-delete', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ ids: idsAEliminar })
+          });
+        }
+        if (!del.ok) throw new Error('No se pudieron borrar las clases anteriores');
+      }
+
+      if (clases.length){
+        const res = await fetch('/clases', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ alumno_id, clases })
+        });
+        if (!res.ok) throw new Error('No se pudieron crear las clases nuevas');
+      }
+
       cerrarModal();
-      await cargarSemana();
-      alert('Clases registradas');
+      await cargarSemana();                   // refresca la grilla
+      await cargarSituacionAlumno(alumno_id); // refresca el resumen en el modal si lo volvés a abrir
+      alert('Cambios aplicados');
     }catch(e){
       console.error(e);
-      alert('No se pudo guardar');
+      alert(e.message || 'Error al guardar cambios');
     }
+  })();
+
+  return; // 👈 importante: no sigas con el flujo viejo
+}
+
   })();
 }
 
