@@ -552,14 +552,15 @@ function fechasHastaFinDeAnio(dow){
 
 /* ===== Guardar ===== */
 function guardarClase(){
-  const sel = selectAlumno;
-  const alumno_id = parseInt(sel.value, 10);
+  const alumno_id = parseInt(selectAlumno.value, 10);
   if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
 
   const esUnica  = chkUnica.checked;
   const esPrueba = chkPrueba.checked;
-  const clases = [];
 
+  let clases = [];
+
+  // === Única vez ===
   if (esUnica){
     const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaUnica.value;
@@ -567,105 +568,124 @@ function guardarClase(){
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
     clases.push({ fecha, hora, sede });
-  } else if (esPrueba){
+  }
+
+  // === Prueba ===
+  else if (esPrueba){
     const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaPrueba.value;
     const hora  = normTime(horaPrueba.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
     clases.push({ fecha, hora, sede });
- // === Recurrente (reemplazo inteligente) ===
-} else {
-  const sedeBase = selectSede.value; 
-  if(!sedeBase){ alert('Seleccioná una sede'); return; }
-
-  const seleccionados = selectedDOWs(); 
-  if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
-
-  // 1) NUEVOS patrones elegidos (dow/hora/sede)
-  const nuevos = []; // [{dow,hora,sede}]
-  for (const d of seleccionados){
-    const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
-    const selects = row ? row.querySelectorAll('select') : null;
-    const hora = normTime(selects && selects[0] ? selects[0].value : '');
-    const sede = ((selects && selects[1]) ? selects[1].value : sedeBase).trim();
-    if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
-    nuevos.push({ dow:d, hora, sede });
   }
 
-  // 2) PATRONES ACTUALES del alumno (desde la semana visible)
-  const actualesSet = new Set();
-  for (const c of clasesAlumnoActual){
-    actualesSet.add(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede));
-  }
+  // === Recurrente (reemplazo inteligente) ===
+  else {
+    const sedeBase = selectSede.value; 
+    if(!sedeBase){ alert('Seleccioná una sede'); return; }
 
-  // 3) Patrones a ELIMINAR = actuales - nuevos
-  const nuevosSet = new Set(nuevos.map(p => groupKey(p.dow, p.hora, p.sede)));
-  const patronesAEliminar = [...actualesSet].filter(k => !nuevosSet.has(k));
+    const seleccionados = selectedDOWs(); 
+    if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
 
-  // IDs a eliminar (todas las futuras del alumno que coincidan con esos patrones)
-  const idsAEliminar = clasesAlumnoActual
-    .filter(c => patronesAEliminar.includes(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede)))
-    .map(c => c.id);
-
-  // 4) Construir INSERCIONES nuevas (todas las fechas hacia fin de año)
-  const clases = [];
-  for (const p of nuevos){
-    for (const f of fechasHastaFinDeAnio(p.dow)){
-      // si querés respetar cupos en la semana visible, dejá esta línea:
-      if (cupoDisponible(f, p.hora, p.sede) <= 0) continue;
-      clases.push({ fecha:f, hora:p.hora, sede:p.sede });
+    // 1) NUEVOS patrones elegidos (dow/hora/sede)
+    const nuevos = []; // [{dow,hora,sede}]
+    for (const d of seleccionados){
+      const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
+      const selects = row ? row.querySelectorAll('select') : null;
+      const hora = normTime(selects && selects[0] ? selects[0].value : '');
+      const sede = ((selects && selects[1]) ? selects[1].value : sedeBase).trim();
+      if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
+      nuevos.push({ dow:d, hora, sede });
     }
-  }
 
-  if (clases.length===0 && idsAEliminar.length===0){
-    alert('No hay cambios para aplicar.');
-    return;
-  }
+    // 2) PATRONES ACTUALES del alumno (desde la semana visible)
+    const actualesSet = new Set();
+    for (const c of clasesAlumnoActual){
+      actualesSet.add(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede));
+    }
 
-  // 5) Ejecutar: primero DELETE, luego INSERT
-  (async ()=>{
-    try{
-      if (idsAEliminar.length){
-        // Intento 1: DELETE /clases con body {ids}
-        let del = await fetch('/clases', {
-          method:'DELETE',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ ids: idsAEliminar })
-        });
-        // Fallback si tu backend usa otro endpoint:
-        if (del.status === 404){
-          del = await fetch('/clases/bulk-delete', {
-            method:'POST',
+    // 3) Patrones a ELIMINAR = actuales - nuevos
+    const nuevosSet = new Set(nuevos.map(p => groupKey(p.dow, p.hora, p.sede)));
+    const patronesAEliminar = [...actualesSet].filter(k => !nuevosSet.has(k));
+
+    // IDs a eliminar (todas las futuras del alumno que coincidan con esos patrones)
+    const idsAEliminar = clasesAlumnoActual
+      .filter(c => patronesAEliminar.includes(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede)))
+      .map(c => c.id);
+
+    // 4) Construir INSERCIONES nuevas (todas las fechas hacia fin de año)
+    const clasesNuevas = [];
+    for (const p of nuevos){
+      for (const f of fechasHastaFinDeAnio(p.dow)){
+        if (cupoDisponible(f, p.hora, p.sede) <= 0) continue;
+        clasesNuevas.push({ fecha:f, hora:p.hora, sede:p.sede });
+      }
+    }
+
+    if (clasesNuevas.length===0 && idsAEliminar.length===0){
+      alert('No hay cambios para aplicar.');
+      return;
+    }
+
+    // 5) Ejecutar: primero DELETE, luego INSERT
+    (async ()=>{
+      try{
+        if (idsAEliminar.length){
+          let del = await fetch('/clases', {
+            method:'DELETE',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ ids: idsAEliminar })
           });
+          if (del.status === 404){
+            del = await fetch('/clases/bulk-delete', {
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ ids: idsAEliminar })
+            });
+          }
+          if (!del.ok) throw new Error('No se pudieron borrar las clases anteriores');
         }
-        if (!del.ok) throw new Error('No se pudieron borrar las clases anteriores');
-      }
 
-      if (clases.length){
-        const res = await fetch('/clases', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ alumno_id, clases })
-        });
-        if (!res.ok) throw new Error('No se pudieron crear las clases nuevas');
-      }
+        if (clasesNuevas.length){
+          const res = await fetch('/clases', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ alumno_id, clases: clasesNuevas })
+          });
+          if (!res.ok) throw new Error('No se pudieron crear las clases nuevas');
+        }
 
+        cerrarModal();
+        await cargarSemana();
+        await cargarSituacionAlumno(alumno_id);
+        alert('Cambios aplicados');
+      }catch(e){
+        console.error(e);
+        alert(e.message || 'Error al guardar cambios');
+      }
+    })();
+
+    return; // no continuar con flujo de única/prueba
+  }
+
+  // === Guardado para Única/Prueba ===
+  (async ()=>{
+    try{
+      const res = await fetch('/clases', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ alumno_id, clases })
+      });
+      if (!res.ok) throw new Error('Error al guardar');
       cerrarModal();
-      await cargarSemana();                   // refresca la grilla
-      await cargarSituacionAlumno(alumno_id); // refresca el resumen en el modal si lo volvés a abrir
-      alert('Cambios aplicados');
+      await cargarSemana();
+      await cargarSituacionAlumno(alumno_id);
+      alert('Clases registradas');
     }catch(e){
       console.error(e);
-      alert(e.message || 'Error al guardar cambios');
+      alert('No se pudo guardar');
     }
-  })();
-
-  return; // 👈 importante: no sigas con el flujo viejo
-}
-
   })();
 }
 
