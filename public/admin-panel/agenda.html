@@ -390,6 +390,22 @@ function cupoDisponible(fecha,hora,sede){
   return Math.max(0,6-arr.length);
 }
 
+// Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta fin de año
+// para el día de la semana indicado (1=Lun ... 7=Dom)
+function fechasHastaFinDeAnio(dow){
+  const fin = new Date(semanaInicio.getFullYear(), 11, 31);
+  let first = addDays(semanaInicio, dow - 1);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  if (first < hoy) first = addDays(first, 7);
+
+  const out = [];
+  for (let d = first; d <= fin; d = addDays(d, 7)) {
+    out.push(ymd(d));
+  }
+  return out;
+}
+
+
 /* ===== Guardar ===== */
 function guardarClase(){
   const sel = selectAlumno;
