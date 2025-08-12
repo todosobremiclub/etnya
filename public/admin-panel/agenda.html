@@ -377,50 +377,89 @@ function applySedeToSelectedDays(){
   });
 }
 function applyHoraToSelectedDays(){
-  const h=selectHoraGeneral.value;if(!h)return;
-  selectedDOWs().forEach(d=>{
-    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
-    if(row){const sel=row.querySelector('select'); if(sel) sel.value=h;}
+  const horaGen = document.getElementById('selectHoraGeneral').value;
+  const seleccionados = selectedDOWs();
+  if (!horaGen || seleccionados.length === 0) return; // <-- si no hay días, no hace nada
+
+  seleccionados.forEach(d=>{
+    const row = Array.from(document.querySelectorAll('#perDia > div'))
+      .find(el => parseInt(el.dataset.dow,10) === d);
+    if (!row) return;
+    const selHora = row.querySelector('select'); // primer select (hora)
+    if (selHora) selHora.value = horaGen;
   });
 }
 function onSedeChange(){refrescarDiasYHoras();applySedeToSelectedDays();applyHoraToSelectedDays()}
 
 function refrescarDiasYHoras(){
-  const sede=selectSede.value, cont=chipsDias, selGen=selectHoraGeneral, perDia=perDiaDiv;
-  cont.innerHTML=''; selGen.innerHTML='<option value="">Seleccionar hora...</option>'; perDia.innerHTML='';
-  if(!sede){
-    horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';
-    horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';
-    return;
-  }
-  const dias=diasHabilitados(sede);
-  dias.forEach(d=>{const chip=document.createElement('div');chip.className='chip';chip.dataset.dow=d;chip.textContent=DIAS[d];chip.onclick=()=>{chip.classList.toggle('selected');applySedeToSelectedDays();applyHoraToSelectedDays();};cont.appendChild(chip)});
+  const sede = selectSede.value, cont = chipsDias, selGen = selectHoraGeneral, perDia = perDiaDiv;
 
-  const horas=rangoHoras(sede);
-  // Hora general (value normalizado)
+  // reset de contenedores
+  cont.innerHTML = '';
+  selGen.innerHTML = '<option value="">Seleccionar hora...</option>';
+  perDia.innerHTML = '';
+
+  if (!sede){
+    horaUnica.innerHTML  = '<option value="">Seleccionar hora...</option>';
+    horaPrueba.innerHTML = '<option value="">Seleccionar hora...</option>';
+    return;
+
+  // chips de días
+  const dias = diasHabilitados(sede);
+  dias.forEach(d=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.dow = d;
+    chip.textContent = DIAS[d];
+    chip.onclick = ()=>{
+      chip.classList.toggle('selected');
+      applySedeToSelectedDays();   // sede: como ya la tenías
+      applyHoraToSelectedDays();   // hora: SOLO aplica si hay días seleccionados
+    };
+    cont.appendChild(chip);
+  });
+
+  // opciones de hora general (value normalizado)
+  const horas = rangoHoras(sede);
   horas.forEach(h=>{
-    const o=document.createElement('option');
+    const o = document.createElement('option');
     o.value = normTime(h);
     o.textContent = h;
     selGen.appendChild(o);
   });
 
-  // Por día
+  // filas por día (hora + sede por fila)
   dias.forEach(d=>{
-    const wrap=document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
-    const label=document.createElement('label'); label.textContent=`${DIAS[d]}: `; label.style.marginRight='6px';
-    const selHora=document.createElement('select'); const defH=document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
-    horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; selHora.appendChild(o)});
-    const selSede=document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{const o=document.createElement('option');o.textContent=s;selSede.appendChild(o)}); selSede.value=sede;
-    wrap.appendChild(label); wrap.appendChild(selHora); wrap.appendChild(document.createTextNode(' ')); wrap.appendChild(selSede); perDia.appendChild(wrap);
+    const wrap  = document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow = d;
+    const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight = '6px';
+
+    const selHora = document.createElement('select');
+    const defH = document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
+    horas.forEach(h=>{ const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; selHora.appendChild(o); });
+
+    const selSede = document.createElement('select');
+    ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); });
+    selSede.value = sede;
+
+    wrap.appendChild(label);
+    wrap.appendChild(selHora);
+    wrap.appendChild(document.createTextNode(' '));
+    wrap.appendChild(selSede);
+    perDia.appendChild(wrap);
   });
 
   // Única / Prueba
-  horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';
-  horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaUnica.appendChild(o)});
-  horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';
-  horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaPrueba.appendChild(o)});
-}
+  horaUnica.innerHTML  = '<option value="">Seleccionar hora...</option>';
+  horas.forEach(h=>{ const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaUnica.appendChild(o); });
+  horaPrueba.innerHTML = '<option value="">Seleccionar hora...</option>';
+  horas.forEach(h=>{ const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaPrueba.appendChild(o); });
+
+// Propagar sede según selección (como antes)
+  applySedeToSelectedDays();
+
+// 🔑 Propagar HORA GENERAL solo si hay días seleccionados
+  const hGen = selectHoraGeneral.value;
+  if (hGen && selectedDOWs().length) applyHoraToSelectedDays();
 
 /* ===== Lógica de cupo ===== */
 function cupoDisponible(fecha,hora,sede){
@@ -555,6 +594,7 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   const boxPrueba=document.getElementById('boxPrueba');
   const selectSede=document.getElementById('selectSede');
   const selectHoraGeneral=document.getElementById('selectHoraGeneral');
+  selectHoraGeneral.addEventListener('change', applyHoraToSelectedDays);
   const chipsDias=document.getElementById('chipsDias');
   const perDiaDiv=document.getElementById('perDia');
   const fechaUnica=document.getElementById('fechaUnica');
