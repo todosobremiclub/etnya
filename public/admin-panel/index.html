@@ -863,33 +863,30 @@ async function cargarAlumnos() {
     const res = await fetch('/alumnos');
     alumnosGlobal = await res.json();
 
-    for (let alumno of alumnosGlobal) {
+    // marcar becados antes de primer render
+    const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
+    alumnosGlobal.forEach(a => { a.becado = becadosSet.has(String(a.id)); });
+
+    // 1) primer render sin íconos (no bloquea la UI)
+    renderizarAlumnos();
+
+    // 2) pedir extras en paralelo para todos
+    await Promise.all(alumnosGlobal.map(async (alumno) => {
       try {
         const [obsRes, adjRes] = await Promise.all([
           fetch(`/alumnos/${alumno.id}/observaciones`),
           fetch(`/alumnos/${alumno.id}/adjuntos`)
         ]);
-
-        const observaciones = await obsRes.json();
-        const adjuntos = await adjRes.json();
-
-        alumno.tiene_observaciones = observaciones.length > 0;
-        alumno.tiene_adjuntos = adjuntos.length > 0;
-      } catch (error) {
-        console.warn(`Error al obtener info extra de alumno ${alumno.id}`, error);
+        const [observaciones, adjuntos] = await Promise.all([obsRes.json(), adjRes.json()]);
+        alumno.tiene_observaciones = Array.isArray(observaciones) && observaciones.length > 0;
+        alumno.tiene_adjuntos = Array.isArray(adjuntos) && adjuntos.length > 0;
+      } catch (e) {
         alumno.tiene_observaciones = false;
         alumno.tiene_adjuntos = false;
       }
-    }
+    }));
 
-    // ✅ ESTO es lo que se queda
-    const becadosSet = new Set(becados.map(b => String(b.alumno_id)));
-    alumnosGlobal.forEach(a => {
-      const esBecado = becadosSet.has(String(a.id));
-      a.becado = esBecado;
-      console.log(`${a.apellido} (id=${a.id}) - becado: ${esBecado}`);
-    });
-
+    // 3) segundo render ya con los íconos
     renderizarAlumnos();
 
   } catch (err) {
@@ -1106,34 +1103,59 @@ form.sede.value = alumno.sede;
     }
   });
 
+const TIPOS_CACHE_KEY = 'tipos-clase-cache-v1';
+
 async function cargarOpcionesTipoClase() {
+  const select = document.getElementById('tipoClaseSelect');
+  select.disabled = true;
+  select.innerHTML = '<option>Cargando modalidades...</option>';
+
   try {
-    const res = await fetch('/tipos-clase');
-    const tipos = await res.json();
-    const select = document.getElementById('tipoClaseSelect');
+    let tipos = null;
+    const cache = sessionStorage.getItem(TIPOS_CACHE_KEY);
+    if (cache) {
+      tipos = JSON.parse(cache);
+    } else {
+      const res = await fetchConRetry('/tipos-clase', 2, 5000);
+      tipos = await res.json();
+      sessionStorage.setItem(TIPOS_CACHE_KEY, JSON.stringify(tipos));
+    }
+
     select.innerHTML = '<option value="" disabled selected hidden>Tipo de clase</option>';
     tipos.forEach(t => {
-      const option = document.createElement('option');
-      option.value = t.modalidad;
-      option.textContent = t.modalidad;
-      select.appendChild(option);
+      const opt = document.createElement('option');
+      opt.value = t.modalidad;
+      opt.textContent = t.modalidad;
+      select.appendChild(opt);
     });
   } catch (err) {
     console.error('Error al cargar tipos de clase:', err);
+    select.innerHTML = '<option value="" disabled>Error cargando tipos</option>';
+  } finally {
+    select.disabled = false;
   }
 }
 
 async function cargarOpcionesFiltroClase() {
+  const select = document.getElementById('filtroClase');
+  select.innerHTML = '<option value="">Todas las clases</option>';
+
   try {
-    const res = await fetch('/tipos-clase');
-    const tipos = await res.json();
-    const select = document.getElementById('filtroClase');
-    select.innerHTML = '<option value="">Todas las clases</option>';
+    let tipos = null;
+    const cache = sessionStorage.getItem(TIPOS_CACHE_KEY);
+    if (cache) {
+      tipos = JSON.parse(cache);
+    } else {
+      const res = await fetchConRetry('/tipos-clase', 2, 5000);
+      tipos = await res.json();
+      sessionStorage.setItem(TIPOS_CACHE_KEY, JSON.stringify(tipos));
+    }
+
     tipos.forEach(t => {
-      const option = document.createElement('option');
-      option.value = t.modalidad;
-      option.textContent = t.modalidad;
-      select.appendChild(option);
+      const opt = document.createElement('option');
+      opt.value = t.modalidad;
+      opt.textContent = t.modalidad;
+      select.appendChild(opt);
     });
   } catch (err) {
     console.error('Error al cargar filtro de clases:', err);
