@@ -231,7 +231,7 @@ function humanHour(h){return String(h).padStart(2,'0')+':00'} // muestra HH:MM
 function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h<=hasta;h++)a.push(humanHour(h));return a}
 function diasHabilitados(s){return SEDES[s].dias}
 // ⚠️ Normalizar: '10:00' -> '10:00:00'
-function normTime(t){ return t && t.length===5 ? t+':00' : t }
+
 function normTime(t){ return t && t.length===5 ? t+':00' : t; }   // '10:00' -> '10:00:00'
 function normDate(d){ return d && d.length>=10 ? d.slice(0,10) : d; } // '2025-08-19T...' -> '2025-08-19'
 
@@ -394,7 +394,7 @@ function onSedeChange(){refrescarDiasYHoras();applySedeToSelectedDays();applyHor
 function refrescarDiasYHoras(){
   const sede = selectSede.value, cont = chipsDias, selGen = selectHoraGeneral, perDia = perDiaDiv;
 
-  // reset de contenedores
+  // reset
   cont.innerHTML = '';
   selGen.innerHTML = '<option value="">Seleccionar hora...</option>';
   perDia.innerHTML = '';
@@ -402,7 +402,8 @@ function refrescarDiasYHoras(){
   if (!sede){
     horaUnica.innerHTML  = '<option value="">Seleccionar hora...</option>';
     horaPrueba.innerHTML = '<option value="">Seleccionar hora...</option>';
-    return;
+    return;                    // ✅ cerramos el if acá
+  }
 
   // chips de días
   const dias = diasHabilitados(sede);
@@ -413,13 +414,13 @@ function refrescarDiasYHoras(){
     chip.textContent = DIAS[d];
     chip.onclick = ()=>{
       chip.classList.toggle('selected');
-      applySedeToSelectedDays();   // sede: como ya la tenías
-      applyHoraToSelectedDays();   // hora: SOLO aplica si hay días seleccionados
+      applySedeToSelectedDays();
+      applyHoraToSelectedDays(); // solo aplica si hay días seleccionados
     };
     cont.appendChild(chip);
   });
 
-  // opciones de hora general (value normalizado)
+  // opciones de hora general
   const horas = rangoHoras(sede);
   horas.forEach(h=>{
     const o = document.createElement('option');
@@ -428,10 +429,10 @@ function refrescarDiasYHoras(){
     selGen.appendChild(o);
   });
 
-  // filas por día (hora + sede por fila)
+  // filas por día (hora + sede editables)
   dias.forEach(d=>{
     const wrap  = document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow = d;
-    const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight = '6px';
+    const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
 
     const selHora = document.createElement('select');
     const defH = document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
@@ -454,12 +455,14 @@ function refrescarDiasYHoras(){
   horaPrueba.innerHTML = '<option value="">Seleccionar hora...</option>';
   horas.forEach(h=>{ const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaPrueba.appendChild(o); });
 
-// Propagar sede según selección (como antes)
+  // Propagar sede a días seleccionados (si hay)
   applySedeToSelectedDays();
 
-// 🔑 Propagar HORA GENERAL solo si hay días seleccionados
+  // Propagar hora general SOLO si hay días seleccionados
   const hGen = selectHoraGeneral.value;
   if (hGen && selectedDOWs().length) applyHoraToSelectedDays();
+}
+
 
 /* ===== Lógica de cupo ===== */
 function cupoDisponible(fecha,hora,sede){
