@@ -52,7 +52,16 @@
 
     /* ====== Modal Registrar ====== */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 1200; }
-    .modal { width: min(900px, 95vw); background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 16px; }
+    .modal {
+  width: min(900px, 95vw);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  padding: 16px;
+  max-height: 90vh;       /* evita desborde */
+  overflow-y: auto;       /* scroll interno */
+}
+
     .modal h3 { margin: 0 0 10px; color: #91586d; text-align: center; }
     .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .modal label { font-size: 13px; font-weight: 600; color: #6d6d6d; }
@@ -201,392 +210,313 @@
   </div>
 
   <script>
-    // ====== Estado global ======
-    if (localStorage.getItem('etnya_login') !== 'ok') {
-      window.location.href = 'login.html';
+  // ====== Estado global ======
+  if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+  }
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  const SEDES = {
+    'Craig Reformer': { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
+    'Craig Circuito': { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
+    'Pedro Goyena'  : { dias: [1,2,3,4,5,6], desde: 8, hasta: 21 }
+  };
+
+  let sedeSeleccionada = 'Craig Reformer';
+  let semanaInicio = getLunes(new Date());
+  let alumnos = [];
+  let clasesSemana = [];
+
+  function toggleMenu(){ document.querySelector('.sidebar').classList.toggle('mostrar'); }
+  function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href = 'login.html'; }
+
+  // ====== Fechas ======
+  function getLunes(date){ const d=new Date(date); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+  function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+  function ymd(d){ return d.toISOString().slice(0,10); }
+  function humanHour(h){ return String(h).padStart(2,'0') + ':00'; }
+  function rangoHoras(sede){ const {desde,hasta}=SEDES[sede]; const a=[]; for(let h=desde; h<=hasta; h++) a.push(humanHour(h)); return a; }
+  function diasHabilitados(sede){ return SEDES[sede].dias; }
+
+  function actualizarHeader(){
+    const label = document.getElementById('labelMes');
+    label.textContent = MESES[semanaInicio.getMonth()] + ' ' + semanaInicio.getFullYear();
+  }
+
+  function moverSemana(delta){ semanaInicio = addDays(semanaInicio, 7*delta); cargarSemana(); }
+  function cambiarSede(s){
+    sedeSeleccionada = s;
+    document.getElementById('tabReformer').classList.toggle('active', s==='Craig Reformer');
+    document.getElementById('tabCircuito').classList.toggle('active', s==='Craig Circuito');
+    document.getElementById('tabGoyena').classList.toggle('active', s==='Pedro Goyena');
+    cargarSemana();
+  }
+
+  // ====== Grilla ======
+  function construirTablaBase(){
+    const tabla = document.getElementById('tablaAgenda');
+    tabla.innerHTML='';
+
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    const thHora = document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
+
+    const dias = diasHabilitados(sedeSeleccionada);
+    const lunes = semanaInicio;
+    for (const dow of dias){
+      const fecha = addDays(lunes, dow-1);
+      const th = document.createElement('th');
+      th.dataset.fecha = ymd(fecha);
+      th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
+      trh.appendChild(th);
     }
+    thead.appendChild(trh);
 
-    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-
-    const SEDES = {
-      'Craig Reformer': { dias: [1,2,3,4,5], desde: 9, hasta: 20 }, // lun-vie 09-20
-      'Craig Circuito' : { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
-      'Pedro Goyena'   : { dias: [1,2,3,4,5,6], desde: 8, hasta: 21 } // lun-sáb 08-21
-    };
-
-    let sedeSeleccionada = 'Craig Reformer';
-    let semanaInicio = getLunes(new Date());
-    let alumnos = [];
-    let clasesSemana = []; // cache de clases cargadas
-
-    function toggleMenu(){ document.querySelector('.sidebar').classList.toggle('mostrar'); }
-    function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href = 'login.html'; }
-
-    // ====== Utilidades de fechas ======
-    function getLunes(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
-    function addDays(date, n){ const d = new Date(date); d.setDate(d.getDate()+n); return d; }
-    function ymd(d){ return d.toISOString().slice(0,10); }
-    function humanHour(h){ return String(h).padStart(2,'0')+':00'; }
-
-    function rangoHoras(sede){ const {desde, hasta} = SEDES[sede]; const arr=[]; for(let h=desde; h<=hasta; h++){ arr.push(humanHour(h)); } return arr; }
-    function diasHabilitados(sede){ return SEDES[sede].dias; }
-
-    function actualizarHeader(){
-      const finSemana = addDays(semanaInicio, 6);
-      const label = document.getElementById('labelMes');
-      // Mostrar Mes y Año del lunes de la semana visible
-      label.textContent = MESES[semanaInicio.getMonth()] + ' ' + semanaInicio.getFullYear();
-    }
-
-    function moverSemana(delta){ semanaInicio = addDays(semanaInicio, 7*delta); cargarSemana(); }
-    function cambiarSede(s){ sedeSeleccionada = s; document.getElementById('tabReformer').classList.toggle('active', s==='Craig Reformer'); document.getElementById('tabCircuito').classList.toggle('active', s==='Craig Circuito'); document.getElementById('tabGoyena').classList.toggle('active', s==='Pedro Goyena'); cargarSemana(); }
-
-    // ====== Render de grilla ======
-    function construirTablaBase(){
-      const tabla = document.getElementById('tablaAgenda');
-      tabla.innerHTML='';
-
-      const thead = document.createElement('thead');
-      const trh = document.createElement('tr');
-      const thHora = document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
-
-      const dias = diasHabilitados(sedeSeleccionada);
-      const lunes = semanaInicio;
-      for (let i=0;i<dias.length;i++){
-        const dow = dias[i];
-        const fecha = addDays(lunes, dow-1); // 1=Lun
-        const th = document.createElement('th');
-        th.dataset.fecha = ymd(fecha);
-        th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
-        trh.appendChild(th);
-      }
-      thead.appendChild(trh);
-
-      const tbody = document.createElement('tbody');
-      const horas = rangoHoras(sedeSeleccionada);
-      horas.forEach(hh=>{
-        const tr = document.createElement('tr');
-        const tdHora = document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent = hh; tr.appendChild(tdHora);
-        dias.forEach(dow=>{
-          const fecha = ymd(addDays(semanaInicio, dow-1));
-          const td = document.createElement('td');
-          td.className='slot';
-          td.dataset.fecha = fecha;
-          td.dataset.hora = hh; // mantener hora como texto puro
-          td.dataset.sede = sedeSeleccionada; // para pintar
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
+    const tbody = document.createElement('tbody');
+    const horas = rangoHoras(sedeSeleccionada);
+    horas.forEach(hh=>{
+      const tr = document.createElement('tr');
+      const tdHora = document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent = hh; tr.appendChild(tdHora);
+      dias.forEach(dow=>{
+        const fecha = ymd(addDays(semanaInicio, dow-1));
+        const td = document.createElement('td');
+        td.className='slot';
+        td.dataset.fecha = fecha;
+        td.dataset.hora  = hh;       // texto HH:MM, sin TZ
+        td.dataset.sede  = sedeSeleccionada;
+        tr.appendChild(td);
       });
-
-      tabla.appendChild(thead);
-      tabla.appendChild(tbody);
-    }
-
-    // ====== Carga desde backend ======
-    async function cargarAlumnos(){
-      const res = await fetch('/alumnos');
-      const data = await res.json();
-      alumnos = data.map(a=>({ id:a.id, nombre:a.nombre, apellido:a.apellido, numero: a.numero_alumno }));
-      // inicializar lista del modal
-      poblarListaAlumnos();
-    }
-
-    function poblarListaAlumnos(filtro=''){
-      const sel = document.getElementById('selectAlumno');
-      sel.innerHTML='';
-      const texto = filtro.trim().toLowerCase();
-      if (!texto) { return; }
-      const list = alumnos.filter(a=>{
-        const padded = String(a.numero).padStart(2,'0');
-        const label = `${padded} - ${a.apellido || ''}, ${a.nombre || ''}`.toLowerCase();
-        return padded.includes(texto) || label.includes(texto);
-      });
-      list.slice(0,200).forEach(a=>{
-        const opt = document.createElement('option');
-        opt.value = a.id;
-        const padded = String(a.numero).padStart(2,'0');
-        opt.textContent = `${padded} - ${a.apellido || ''}, ${a.nombre || ''}`;
-        sel.appendChild(opt);
-      });
-    }
-      list.slice(0,200).forEach(a=>{
-        const opt = document.createElement('option');
-        opt.value = a.id; opt.textContent = `${String(a.numero).padStart(2,'0')} - ${a.nombre}`;
-        sel.appendChild(opt);
-      });
-    }
-
-    function filtrarAlumnos(){ const val = document.getElementById('buscadorAlumno').value; poblarListaAlumnos(val); }
-
-    async function cargarClasesSemana(){
-      const desde = ymd(semanaInicio);
-      const dias = diasHabilitados(sedeSeleccionada);
-      const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
-      const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-      clasesSemana = await res.json();
-    }
-
-    function pintarClases(){
-      // Limpiar slots
-      document.querySelectorAll('.slot').forEach(td=>{ td.innerHTML=''; });
-      // Agrupar por fecha/hora
-      const mapa = new Map();
-      for (const c of clasesSemana){
-        const key = `${c.fecha}|${c.hora}`; if (!mapa.has(key)) mapa.set(key, []); mapa.get(key).push(c);
-      }
-      document.querySelectorAll('.slot').forEach(td=>{
-        const fecha = td.dataset.fecha; const hora = td.dataset.hora;
-        const key = `${fecha}|${hora}`;
-        const arr = mapa.get(key)||[];
-        arr.slice(0,6).forEach(cl=>{
-          const tag = document.createElement('div'); tag.className='tag';
-          tag.textContent = `${cl.numero_alumno ? String(cl.numero_alumno).padStart(2,'0') : ''} ${cl.nombre ?? ''}`.trim();
-          if (!tag.textContent) tag.textContent = 'Alumno';
-          td.appendChild(tag);
-        });
-        if (arr.length >= 6){
-          const full = document.createElement('div'); full.className='tag full'; full.textContent = '+ cupo completo'; td.appendChild(full);
-        }
-      });
-    }
-
-    async function cargarSemana(){
-      actualizarHeader();
-      construirTablaBase();
-      await cargarClasesSemana();
-      pintarClases();
-    }
-
-    // ====== Modal ======
-    function abrirModal(){
-      document.getElementById('overlay').style.display='flex';
-      document.getElementById('buscadorAlumno').value='';
-      document.getElementById('selectAlumno').innerHTML=''; // no listar hasta buscar
-      document.getElementById('chkUnica').checked = false;
-      document.getElementById('chkPrueba').checked = false;
-      document.getElementById('boxRecurrente').style.display = '';
-      document.getElementById('boxUnica').style.display = 'none';
-      document.getElementById('boxPrueba').style.display = 'none';
-      const sedeSel = document.getElementById('selectSede');
-      sedeSel.value = '';
-      refrescarDiasYHoras();
-    }
-    function cerrarModal(){ document.getElementById('overlay').style.display='none'; }
-
-    function toggleModo(modo){
-      const chkU = document.getElementById('chkUnica');
-      const chkP = document.getElementById('chkPrueba');
-      if (modo==='unica' && chkU.checked) chkP.checked = false;
-      if (modo==='prueba' && chkP.checked) chkU.checked = false;
-      const unica = chkU.checked; const prueba = chkP.checked;
-      document.getElementById('boxRecurrente').style.display = (!unica && !prueba) ? '' : 'none';
-      document.getElementById('boxUnica').style.display = unica ? '' : 'none';
-      document.getElementById('boxPrueba').style.display = prueba ? '' : 'none';
-      refrescarDiasYHoras();
-    }
-
-    function refrescarDiasYHoras(){
-      const sede = document.getElementById('selectSede').value;
-      const contDias = document.getElementById('chipsDias');
-      const selGen = document.getElementById('selectHoraGeneral');
-      const perDia = document.getElementById('perDia');
-      contDias.innerHTML = '';
-      selGen.innerHTML = '<option value="">Seleccionar hora...</option>';
-      perDia.innerHTML = '';
-
-      // Si no hay sede elegida, solo limpio y salgo
-      if (!sede){
-        document.getElementById('horaUnica').innerHTML = '<option value="">Seleccionar hora...</option>';
-        document.getElementById('horaPrueba').innerHTML = '<option value="">Seleccionar hora...</option>';
-        return;
-      }
-      // Chips de días, ninguno seleccionado por defecto
-      const dias = diasHabilitados(sede);
-      dias.forEach(d=>{
-        const chip = document.createElement('div');
-        chip.className='chip'; chip.dataset.dow=d; chip.textContent = DIAS[d];
-        chip.onclick=()=>{ chip.classList.toggle('selected'); applySedeToSelectedDays(); applyHoraToSelectedDays(); };
-        contDias.appendChild(chip);
-      });
-
-      // Rango de horas
-      const horas = rangoHoras(sede);
-      horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selGen.appendChild(o); });
-
-      // Filas por día con selects vacíos, sede por defecto = sede principal
-      dias.forEach(d=>{
-        const wrap = document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
-        const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
-        const selHora = document.createElement('select');
-        const defH = document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
-        horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selHora.appendChild(o); });
-        const selSede = document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); }); selSede.value = sede;
-        wrap.appendChild(label); wrap.appendChild(selHora);
-        const sp = document.createElement('span'); sp.textContent='  '; wrap.appendChild(sp);
-        wrap.appendChild(selSede);
-        perDia.appendChild(wrap);
-      });
-
-      // Única vez & Prueba horas (basadas en sede seleccionada)
-      const hu = document.getElementById('horaUnica'); hu.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hu.appendChild(o); });
-      const hp = document.getElementById('horaPrueba'); hp.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hp.appendChild(o); });
+      tbody.appendChild(tr);
     });
-      const horas = rangoHoras(sede);
-      const selGen = document.getElementById('selectHoraGeneral'); selGen.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selGen.appendChild(o); });
 
-      // Per-day overrides (sede por día y hora por día)
-      const perDia = document.getElementById('perDia'); perDia.innerHTML='';
-      dias.forEach(d=>{
-        const wrap = document.createElement('div'); wrap.style.marginTop='6px';
-        const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
-        const selHora = document.createElement('select'); rangoHoras(sede).forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selHora.appendChild(o); }); selHora.value = horas[0];
-        const selSede = document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); }); selSede.value = sede;
-        wrap.appendChild(label); wrap.appendChild(selHora);
-        const sp = document.createElement('span'); sp.textContent='  '; wrap.appendChild(sp);
-        wrap.appendChild(selSede);
-        wrap.dataset.dow = d;
-        perDia.appendChild(wrap);
+    tabla.appendChild(thead);
+    tabla.appendChild(tbody);
+  }
+
+  // ====== Backend ======
+  async function cargarAlumnos(){
+    const res = await fetch('/alumnos');
+    const data = await res.json();
+    alumnos = data.map(a => ({ id:a.id, nombre:a.nombre, apellido:a.apellido, numero:a.numero_alumno }));
+    poblarListaAlumnos('');
+  }
+
+  function poblarListaAlumnos(filtro=''){
+    const sel = document.getElementById('selectAlumno');
+    sel.innerHTML='';
+    const texto = filtro.trim().toLowerCase();
+    if (!texto) return;
+    const list = alumnos.filter(a=>{
+      const padded = String(a.numero).padStart(2,'0');
+      const label = `${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
+      return padded.includes(texto) || label.includes(texto);
+    });
+    list.slice(0,200).forEach(a=>{
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      const padded = String(a.numero).padStart(2,'0');
+      opt.textContent = `${padded} - ${a.apellido||''}, ${a.nombre||''}`;
+      sel.appendChild(opt);
+    });
+  }
+  function filtrarAlumnos(){ poblarListaAlumnos(document.getElementById('buscadorAlumno').value); }
+
+  async function cargarClasesSemana(){
+    const desde = ymd(semanaInicio);
+    const dias  = diasHabilitados(sedeSeleccionada);
+    const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
+    const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
+    clasesSemana = await res.json();
+  }
+
+  function pintarClases(){
+    document.querySelectorAll('.slot').forEach(td=> td.innerHTML='');
+    const mapa = new Map();
+    for (const c of clasesSemana){
+      const key = `${c.fecha}|${c.hora}`;
+      if (!mapa.has(key)) mapa.set(key, []);
+      mapa.get(key).push(c);
+    }
+    document.querySelectorAll('.slot').forEach(td=>{
+      const key = `${td.dataset.fecha}|${td.dataset.hora}`;
+      const arr = mapa.get(key) || [];
+      arr.slice(0,6).forEach(cl=>{
+        const tag = document.createElement('div'); tag.className='tag';
+        tag.textContent = `${cl.numero_alumno ? String(cl.numero_alumno).padStart(2,'0') : ''} ${cl.nombre ?? ''}`.trim() || 'Alumno';
+        td.appendChild(tag);
       });
-
-      // Única vez & Prueba horas
-      const hu = document.getElementById('horaUnica'); hu.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hu.appendChild(o); });
-      const hp = document.getElementById('horaPrueba'); hp.innerHTML=''; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hp.appendChild(o); });
-    }
-
-    function fechasHastaFinDeAnio(dow){
-      // Genera fechas desde la semana visible (semanaInicio) para un día de la semana (1..6) hasta el 31/12/año actual.
-      const hoy = new Date();
-      const year = semanaInicio.getFullYear();
-      const fin = new Date(year, 11, 31);
-      let first = addDays(semanaInicio, dow-1);
-      // Si la primera fecha ya pasó, empezar la próxima semana para ese dow
-      const ahora = new Date(); ahora.setHours(0,0,0,0);
-      if (first < ahora) first = addDays(first, 7);
-      const out=[];
-      for (let d=first; d<=fin; d=addDays(d, 7)) out.push(ymd(d));
-      return out;
-    }
-
-    function cupoDisponible(fecha, hora, sede){
-      const arr = clasesSemana.filter(c=> c.fecha===fecha && c.hora===hora && c.sede===sede);
-      return Math.max(0, 6 - arr.length);
-    }
-
-    async function selectedDOWs(){ return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=> parseInt(ch.dataset.dow,10)); }
-    function applySedeToSelectedDays(){
-      const sedeBase = document.getElementById('selectSede').value; if(!sedeBase) return;
-      const selDias = selectedDOWs();
-      selDias.forEach(d=>{
-        const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-        if (row){ const selects = row.querySelectorAll('select'); if(selects[1]) selects[1].value = sedeBase; }
-      });
-    }
-    function applyHoraToSelectedDays(){
-      const horaGen = document.getElementById('selectHoraGeneral').value; if(!horaGen) return;
-      const selDias = selectedDOWs();
-      selDias.forEach(d=>{
-        const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-        if (row){ const selHora = row.querySelector('select'); if(selHora) selHora.value = horaGen; }
-      });
-    }
-
-    function guardarClase(){
-      const sel = document.getElementById('selectAlumno');
-      const alumno_id = parseInt(sel.value,10);
-      if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
-
-      const esUnica = document.getElementById('chkUnica').checked;
-      const esPrueba = document.getElementById('chkPrueba').checked;
-
-      const clases = [];
-
-      if (esUnica){
-        const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
-        const fecha = document.getElementById('fechaUnica').value;
-        const hora  = document.getElementById('horaUnica').value;
-        if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-        if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
-        clases.push({ fecha, hora, sede, tipo:'unica' });
-      } else if (esPrueba){
-        const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
-        const fecha = document.getElementById('fechaPrueba').value;
-        const hora  = document.getElementById('horaPrueba').value;
-        if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-        if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
-        const nota = document.getElementById('notaPrueba').value.trim();
-        clases.push({ fecha, hora, sede, tipo:'prueba', nota });
-      } else {
-        const sedeBase = document.getElementById('selectSede').value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
-        const seleccionados = selectedDOWs();
-        if (seleccionados.length===0){ alert('Seleccioná al menos un día'); return; }
-        for (const d of seleccionados){
-          const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-          const selects = row ? row.querySelectorAll('select') : null;
-          const hora = selects && selects[0] ? selects[0].value : '';
-          const sede = selects && selects[1] ? selects[1].value : sedeBase;
-          if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
-          const fechas = fechasHastaFinDeAnio(d);
-          for (const f of fechas){
-            if (cupoDisponible(f, hora, sede) <= 0) continue; // saltear celdas llenas
-            clases.push({ fecha: f, hora, sede, tipo:'normal' });
-          }
-        }
-        if (clases.length===0){ alert('No hay cupos disponibles en las selecciones.'); return; }
+      if (arr.length >= 6){
+        const full = document.createElement('div'); full.className='tag full'; full.textContent = '+ cupo completo';
+        td.appendChild(full);
       }
+    });
+  }
 
-      (async ()=>{
-        try {
-          const res = await fetch('/clases', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ alumno_id, clases }) });
-          if (!res.ok) throw new Error('Error al guardar');
-          cerrarModal();
-          await cargarSemana();
-          alert('Clases registradas');
-        } catch (e){ console.error(e); alert('No se pudo guardar.'); }
-      })();
+  async function cargarSemana(){ actualizarHeader(); construirTablaBase(); await cargarClasesSemana(); pintarClases(); }
+
+  // ====== Modal ======
+  function abrirModal(){
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('buscadorAlumno').value='';
+    document.getElementById('selectAlumno').innerHTML='';
+    document.getElementById('chkUnica').checked = false;
+    document.getElementById('chkPrueba').checked = false;
+    document.getElementById('boxRecurrente').style.display = '';
+    document.getElementById('boxUnica').style.display = 'none';
+    document.getElementById('boxPrueba').style.display = 'none';
+    document.getElementById('selectSede').value = '';
+    refrescarDiasYHoras();
+  }
+  function cerrarModal(){ document.getElementById('overlay').style.display='none'; }
+
+  function toggleModo(modo){
+    const chkU = document.getElementById('chkUnica');
+    const chkP = document.getElementById('chkPrueba');
+    if (modo==='unica'  && chkU.checked) chkP.checked = false;
+    if (modo==='prueba' && chkP.checked) chkU.checked = false;
+    const unica = chkU.checked, prueba = chkP.checked;
+    document.getElementById('boxRecurrente').style.display = (!unica && !prueba) ? '' : 'none';
+    document.getElementById('boxUnica').style.display     = unica  ? '' : 'none';
+    document.getElementById('boxPrueba').style.display     = prueba ? '' : 'none';
+    refrescarDiasYHoras();
+  }
+
+  function selectedDOWs(){
+    return Array.from(document.querySelectorAll('#chipsDias .chip.selected'))
+      .map(ch => parseInt(ch.dataset.dow,10));
+  }
+
+  function applySedeToSelectedDays(){
+    const sedeBase = document.getElementById('selectSede').value; if(!sedeBase) return;
+    selectedDOWs().forEach(d=>{
+      const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
+      if (row){ const selects = row.querySelectorAll('select'); if(selects[1]) selects[1].value = sedeBase; }
+    });
+  }
+  function applyHoraToSelectedDays(){
+    const horaGen = document.getElementById('selectHoraGeneral').value; if(!horaGen) return;
+    selectedDOWs().forEach(d=>{
+      const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
+      if (row){ const selHora = row.querySelector('select'); if(selHora) selHora.value = horaGen; }
+    });
+  }
+  function onSedeChange(){ refrescarDiasYHoras(); applySedeToSelectedDays(); applyHoraToSelectedDays(); }
+
+  function refrescarDiasYHoras(){
+    const sede = document.getElementById('selectSede').value;
+    const contDias = document.getElementById('chipsDias');
+    const selGen   = document.getElementById('selectHoraGeneral');
+    const perDia   = document.getElementById('perDia');
+    contDias.innerHTML = '';
+    selGen.innerHTML   = '<option value="">Seleccionar hora...</option>';
+    perDia.innerHTML   = '';
+
+    if (!sede){
+      document.getElementById('horaUnica').innerHTML  = '<option value="">Seleccionar hora...</option>';
+      document.getElementById('horaPrueba').innerHTML = '<option value="">Seleccionar hora...</option>';
+      return;
+    }
+
+    const dias = diasHabilitados(sede);
+    dias.forEach(d=>{
+      const chip = document.createElement('div');
+      chip.className='chip'; chip.dataset.dow=d; chip.textContent = DIAS[d];
+      chip.onclick = ()=>{ chip.classList.toggle('selected'); applySedeToSelectedDays(); applyHoraToSelectedDays(); };
+      contDias.appendChild(chip);
+    });
+
+    const horas = rangoHoras(sede);
+    horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selGen.appendChild(o); });
+
+    dias.forEach(d=>{
+      const wrap = document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
+      const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
+      const selHora = document.createElement('select');
+      const defH = document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
+      horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selHora.appendChild(o); });
+      const selSede = document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); }); selSede.value = sede;
+      wrap.appendChild(label); wrap.appendChild(selHora);
+      wrap.appendChild(document.createTextNode(' '));
+      wrap.appendChild(selSede);
+      perDia.appendChild(wrap);
+    });
+
+    // Única vez / Prueba
+    const hu = document.getElementById('horaUnica');  hu.innerHTML = '<option value=\"\">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hu.appendChild(o); });
+    const hp = document.getElementById('horaPrueba'); hp.innerHTML = '<option value=\"\">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hp.appendChild(o); });
+  }
+
+  function fechasHastaFinDeAnio(dow){
+    const fin = new Date(semanaInicio.getFullYear(), 11, 31);
+    let first = addDays(semanaInicio, dow-1);
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    if (first < hoy) first = addDays(first, 7);
+    const out=[]; for (let d=first; d<=fin; d=addDays(d,7)) out.push(ymd(d)); return out;
+  }
+
+  function cupoDisponible(fecha, hora, sede){
+    const arr = clasesSemana.filter(c=> c.fecha===fecha && c.hora===hora && c.sede===sede);
+    return Math.max(0, 6 - arr.length);
+  }
+
+  function guardarClase(){
+    const sel = document.getElementById('selectAlumno');
+    const alumno_id = parseInt(sel.value,10);
+    if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
+
+    const esUnica  = document.getElementById('chkUnica').checked;
+    const esPrueba = document.getElementById('chkPrueba').checked;
+    const clases = [];
+
+    if (esUnica){
+      const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
+      const fecha = document.getElementById('fechaUnica').value;
+      const hora  = document.getElementById('horaUnica').value;
+      if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+      if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
+      clases.push({ fecha, hora, sede, tipo:'unica' });
     } else if (esPrueba){
-        const fecha = document.getElementById('fechaPrueba').value;
-        const hora  = document.getElementById('horaPrueba').value;
-        if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-        if (cupoDisponible(fecha, hora, document.getElementById('selectSede').value) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
-        const nota = document.getElementById('notaPrueba').value.trim();
-        clases.push({ fecha, hora, sede: document.getElementById('selectSede').value, tipo:'prueba', nota });
-      } else {
-        // Recurrente
-        const sedeBase = document.getElementById('selectSede').value;
-        // días elegidos
-        const seleccionados = Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=> parseInt(ch.dataset.dow,10));
-        if (seleccionados.length===0){ alert('Seleccioná al menos un día'); return; }
-        // por cada día, tomar override de hora/sede
-        for (const d of seleccionados){
-          const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-          const hora = row ? row.querySelector('select').value : document.getElementById('selectHoraGeneral').value;
-          const selects = row ? row.querySelectorAll('select') : null;
-          const sede = selects ? selects[1].value : sedeBase;
-          const fechas = fechasHastaFinDeAnio(d);
-          for (const f of fechas){
-            if (cupoDisponible(f, hora, sede) <= 0) continue; // saltear celdas llenas
-            clases.push({ fecha: f, hora, sede, tipo:'normal' });
-          }
+      const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
+      const fecha = document.getElementById('fechaPrueba').value;
+      const hora  = document.getElementById('horaPrueba').value;
+      if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+      if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
+      const nota = document.getElementById('notaPrueba').value.trim();
+      clases.push({ fecha, hora, sede, tipo:'prueba', nota });
+    } else {
+      const sedeBase = document.getElementById('selectSede').value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
+      const seleccionados = selectedDOWs();
+      if (seleccionados.length===0){ alert('Seleccioná al menos un día'); return; }
+      for (const d of seleccionados){
+        const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
+        const selects = row ? row.querySelectorAll('select') : null;
+        const hora = selects && selects[0] ? selects[0].value : '';
+        const sede = selects && selects[1] ? selects[1].value : sedeBase;
+        if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
+        for (const f of fechasHastaFinDeAnio(d)){
+          if (cupoDisponible(f, hora, sede) <= 0) continue;
+          clases.push({ fecha:f, hora, sede, tipo:'normal' });
         }
-        if (clases.length===0){ alert('No hay cupos disponibles en las selecciones.'); return; }
       }
-
-      try {
-        const res = await fetch('/clases', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ alumno_id, clases })
-        });
-        if (!res.ok) throw new Error('Error al guardar');
-        cerrarModal();
-        await cargarSemana();
-        alert('Clases registradas');
-      } catch (e){
-        console.error(e); alert('No se pudo guardar.');
-      }
+      if (clases.length===0){ alert('No hay cupos disponibles en las selecciones.'); return; }
     }
 
+    (async ()=>{
+      try{
+        const res = await fetch('/clases', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ alumno_id, clases }) });
+        if (!res.ok) throw new Error('Error al guardar');
+        cerrarModal(); await cargarSemana(); alert('Clases registradas');
+      }catch(e){ console.error(e); alert('No se pudo guardar.'); }
+    })();
+  }
+
+  // ====== Init ======
+  window.onload = async () => { await cargarAlumnos(); await cargarSemana(); };
+</script>
+
+       
     // ====== Init ======
     window.onload = async () => {
       await cargarAlumnos();
