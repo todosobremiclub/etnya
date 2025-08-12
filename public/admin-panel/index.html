@@ -1105,6 +1105,22 @@ form.sede.value = alumno.sede;
 
 const TIPOS_CACHE_KEY = 'tipos-clase-cache-v1';
 
+async function fetchConRetry(url, retries = 1, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res;
+  } catch (e) {
+    if (retries > 0) return fetchConRetry(url, retries - 1, timeoutMs);
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+
 async function cargarOpcionesTipoClase() {
   const select = document.getElementById('tipoClaseSelect');
   select.disabled = true;
