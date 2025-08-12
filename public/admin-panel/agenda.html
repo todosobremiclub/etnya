@@ -6,601 +6,445 @@
   <title>Agenda</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* ====== Base (copiado del look & feel de configuracion.html) ====== */
-    body { margin: 0; font-family: 'Inter', sans-serif; background-color: #cce1d6; color: #6d6d6d; }
-    .sidebar { position: fixed; top: 0; left: 0; width: 200px; height: 100vh; background-color: #91586d; padding-top: 60px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); z-index: 1000; }
-    .sidebar a { display: block; padding: 10px 16px; color: white; text-decoration: none; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px; }
-    .sidebar a:hover { background-color: #6d3e4e; }
-    main { margin-left: 200px; padding: 16px; }
-    .header { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 16px; }
-    .header img { height: 40px; }
-    h1, h2 { color: #91586d; margin: 0 0 12px; text-align: center; font-size: 20px; }
+    /* ====== Base ====== */
+    body{margin:0;font-family:'Inter',sans-serif;background:#cce1d6;color:#6d6d6d}
+    .sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background:#91586d;padding-top:60px;box-shadow:2px 0 5px rgba(0,0,0,.1);z-index:1000}
+    .sidebar a{display:block;padding:10px 16px;color:#fff;text-decoration:none;font-weight:bold;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
+    .sidebar a:hover{background:#6d3e4e}
+    main{margin-left:200px;padding:16px}
+    .header{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:16px}
+    .header img{height:40px}
+    h1{color:#91586d;margin:0 0 12px;text-align:center;font-size:20px}
+    #menuToggle{display:none;position:fixed;top:10px;left:10px;z-index:1100;background:#91586d;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
+    @media (max-width:768px){#menuToggle{display:block}.sidebar{display:none;width:100%;height:auto;position:absolute;top:50px;left:0}.sidebar.mostrar{display:block}main{margin-left:0;padding:10px}.header{flex-direction:column}h1{font-size:18px}}
 
-    #menuToggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 1100; background-color: #91586d; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 18px; cursor: pointer; }
-
-    @media (max-width: 768px) {
-      #menuToggle { display: block; }
-      .sidebar { display: none; width: 100%; height: auto; position: absolute; top: 50px; left: 0; }
-      .sidebar.mostrar { display: block; }
-      main { margin-left: 0; padding: 10px; }
-      .header { flex-direction: column; }
-      h1, h2 { font-size: 18px; }
-    }
-
-    /* ====== Controles superiores ====== */
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .sede-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-    .sede-tabs button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .sede-tabs button.active { background-color: #91586d; }
-    .week-nav { display: flex; align-items: center; gap: 8px; }
-    .week-nav button { background-color: #b48a99; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .week-label { font-weight: 600; color: #91586d; min-width: 160px; text-align: center; }
-    .actions { display: flex; gap: 8px; align-items: center; }
-    .actions button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    /* ====== Controles ====== */
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .sede-tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .sede-tabs button,.week-nav button,.actions button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+    .sede-tabs button.active{background:#91586d}
+    .week-nav{display:flex;align-items:center;gap:8px}
+    .week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
+    .legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
+    .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+    .i-free{background:#cce1d6;border:1px solid #94b8a3}
+    .i-full{background:#ffd5d5;border:1px solid #ff9b9b}
 
     /* ====== Grilla ====== */
-    .agenda-wrap { background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); overflow: hidden; }
-    .agenda { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .agenda th, .agenda td { border-bottom: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; padding: 6px; vertical-align: top; }
-    .agenda th:last-child, .agenda td:last-child { border-right: none; }
-    .agenda th { background-color: #b48a99; color: #fff; font-size: 13px; position: sticky; top: 0; z-index: 2; }
-    .agenda .col-hora { width: 70px; background: #f7f7f7; font-weight: 600; text-align: center; position: sticky; left: 0; z-index: 1; }
-   /* Celda de horario: un solo cuadro dividido en 2 mitades */
-/* Celda: un solo recuadro, dividido en 2 columnas */
-.slot{
-  min-height: 110px;
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* izquierda | derecha */
-  gap: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    .agenda-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
+    table.agenda{width:100%;border-collapse:collapse;table-layout:fixed}
+    .agenda th,.agenda td{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;vertical-align:top}
+    .agenda th:last-child,.agenda td:last-child{border-right:none}
+    .agenda th{background:#b48a99;color:#fff;font-size:13px;position:sticky;top:0;z-index:2;padding:6px}
+    .col-hora{width:70px;background:#f7f7f7;font-weight:600;text-align:center;position:sticky;left:0;z-index:1;padding:6px}
 
-.slot .half{
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 6px;
-  box-sizing: border-box;
-  min-height: 110px;
-}
-
-/* separador vertical entre mitades */
-.slot .half:first-child{
-  border-right: 1px solid #e0e0e0;
-}
-
-/* “chips” de alumnos */
-.tag{
-  background: #f7faf8;
-  border: 1px solid #94b8a3;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 12px;
-  line-height: 1.2;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tag.full{
-  background: #ffd5d5;
-  border-color: #ff9b9b;
-  justify-content: center;
-}
-
-/* En mobile NO tocar .slot */
-@media (max-width: 768px) {
-  .modal .row { grid-template-columns: 1fr; }
-}
-
-    /* ====== Modal Registrar ====== */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 1200; }
-    .modal {
-  width: min(900px, 95vw);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  padding: 16px;
-  max-height: 90vh;       /* evita desborde */
-  overflow-y: auto;       /* scroll interno */
-}
-
-    .modal h3 { margin: 0 0 10px; color: #91586d; text-align: center; }
-    .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .modal label { font-size: 13px; font-weight: 600; color: #6d6d6d; }
-    .modal input[type="text"], .modal input[type="date"], .modal select, .modal textarea { width: 100%; padding: 8px; border: 1px solid #94b8a3; border-radius: 6px; background: #f9f9f9; font-size: 13px; }
-    .modal .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip { padding: 6px 10px; background: #cce1d6; border: 1px solid #94b8a3; border-radius: 999px; cursor: pointer; user-select: none; font-size: 12px; }
-    .chip.selected { background: #b48a99; border-color: #91586d; color: #fff; }
-    .modal .footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-    .modal .footer button { background-color: #b48a99; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .switches { display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 8px; }
-
-    @media (max-width: 768px) {
-      .modal .row { grid-template-columns: 1fr; }
-      
+    /* ====== Slot único por hora/día dividido en dos ====== */
+    td.slot{padding:0}
+    .slot-inner{
+      min-height:110px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
     }
+    .half{
+      min-height:110px;
+      padding:6px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .half.left{border-right:1px solid #e0e0e0}
+    .tag{
+      background:#f7faf8;border:1px solid #94b8a3;border-radius:6px;
+      padding:2px 6px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .tag.full{background:#ffd5d5;border-color:#ff9b9b;text-align:center}
 
-    .legend { margin: 8px 0; font-size: 12px; color: #6d6d6d; display: flex; gap: 12px; justify-content: flex-end; }
-    .legend span { display: inline-flex; align-items: center; gap: 6px; }
-    .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-    .legend .i-free { background: #cce1d6; border: 1px solid #94b8a3; }
-    .legend .i-full { background: #ffd5d5; border: 1px solid #ff9b9b; }
+    /* ====== Modal ====== */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1200}
+    .modal{width:min(900px,95vw);background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:16px;max-height:90vh;overflow:auto}
+    .modal h3{margin:0 0 10px;color:#91586d;text-align:center}
+    .modal .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .modal label{font-size:13px;font-weight:600;color:#6d6d6d}
+    .modal input[type="text"],.modal input[type="date"],.modal select,.modal textarea{width:100%;padding:8px;border:1px solid #94b8a3;border-radius:6px;background:#f9f9f9;font-size:13px}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{padding:6px 10px;background:#cce1d6;border:1px solid #94b8a3;border-radius:999px;cursor:pointer;font-size:12px;user-select:none}
+    .chip.selected{background:#b48a99;border-color:#91586d;color:#fff}
+    .modal .footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+    .modal .footer button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+    .switches{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:8px}
+    @media (max-width:768px){.modal .row{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <!-- Botón menú hamburguesa -->
-  <button id="menuToggle" onclick="toggleMenu()">☰</button>
+<button id="menuToggle" onclick="document.querySelector('.sidebar').classList.toggle('mostrar')">☰</button>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <a href="index.html">📋 Alumnas/os</a>
-    <a href="pagos.html">💳 Pagos</a>
-    <a href="gastos.html">🧾 Gastos</a>
-    <a href="agenda.html">📅 Agenda</a>
-    <a href="configuracion.html">⚙️ Configuración</a>
-    <a href="reportes.html">📈 Reportes</a>
-    <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
-      🚪 Cerrar sesión
-    </button>
+<div class="sidebar">
+  <a href="index.html">📋 Alumnas/os</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="gastos.html">🧾 Gastos</a>
+  <a href="agenda.html">📅 Agenda</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="reportes.html">📈 Reportes</a>
+  <button onclick="localStorage.removeItem('etnya_login');location='login.html'" style="width:100%;text-align:left;padding:10px 16px;background:transparent;border:none;color:#fff;font-weight:bold;font-size:13px;border-top:1px solid rgba(255,255,255,.1);cursor:pointer">🚪 Cerrar sesión</button>
+</div>
+
+<main>
+  <div class="header">
+    <img src="logo.jpeg" alt="Logo">
+    <h1>Agenda de Clases</h1>
   </div>
 
-  <main>
-    <div class="header">
-      <img src="logo.jpeg" alt="Logo">
-      <h1>Agenda de Clases</h1>
+  <div class="topbar">
+    <div class="sede-tabs">
+      <button id="tabReformer" class="active" onclick="cambiarSede('Craig Reformer')">Craig Reformer</button>
+      <button id="tabCircuito" onclick="cambiarSede('Craig Circuito')">Craig Circuito</button>
+      <button id="tabGoyena" onclick="cambiarSede('Pedro Goyena')">Pedro Goyena</button>
+    </div>
+    <div class="week-nav">
+      <button onclick="moverSemana(-1)">◀</button>
+      <div class="week-label" id="labelMes"></div>
+      <button onclick="moverSemana(1)">▶</button>
+    </div>
+    <div class="actions">
+      <button onclick="abrirModal()">+ Registrar clase</button>
+    </div>
+  </div>
+
+  <div class="legend"><span><i class="i-free"></i> cupos disponibles</span><span><i class="i-full"></i> cupo completo</span></div>
+
+  <div class="agenda-wrap">
+    <table class="agenda" id="tablaAgenda"></table>
+  </div>
+</main>
+
+<!-- ====== Modal Registrar ====== -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Registrar clase</h3>
+    <div class="switches">
+      <label><input type="checkbox" id="chkUnica" onchange="toggleModo('unica')"> Clase por única vez</label>
+      <label><input type="checkbox" id="chkPrueba" onchange="toggleModo('prueba')"> Clase de prueba</label>
     </div>
 
-    <div class="topbar">
-      <div class="sede-tabs">
-        <button id="tabReformer" class="active" onclick="cambiarSede('Craig Reformer')">Craig Reformer</button>
-        <button id="tabCircuito" onclick="cambiarSede('Craig Circuito')">Craig Circuito</button>
-        <button id="tabGoyena" onclick="cambiarSede('Pedro Goyena')">Pedro Goyena</button>
+    <div class="row">
+      <div>
+        <label>Buscar alumna/o</label>
+        <input type="text" id="buscadorAlumno" placeholder="Ingresá nombre o número" oninput="filtrarAlumnos()">
+        <select id="selectAlumno" size="6" style="margin-top:6px;"></select>
       </div>
-      <div class="week-nav">
-        <button onclick="moverSemana(-1)">◀</button>
-        <div class="week-label" id="labelMes"></div>
-        <button onclick="moverSemana(1)">▶</button>
-      </div>
-      <div class="actions">
-        <button onclick="abrirModal()">+ Registrar clase</button>
-      </div>
-    </div>
+      <div>
+        <label>Sede principal</label>
+        <select id="selectSede" onchange="onSedeChange()">
+          <option value="">Seleccionar sede...</option>
+          <option>Craig Reformer</option>
+          <option>Craig Circuito</option>
+          <option>Pedro Goyena</option>
+        </select>
 
-    <div class="legend">
-      <span><i class="i-free"></i> cupos disponibles</span>
-      <span><i class="i-full"></i> cupo completo</span>
-    </div>
-
-    <div class="agenda-wrap">
-      <table class="agenda" id="tablaAgenda">
-        <!-- generado por JS -->
-      </table>
-    </div>
-  </main>
-
-  <!-- Modal Registrar Clase -->
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <h3>Registrar clase</h3>
-      <div class="switches">
-        <label><input type="checkbox" id="chkUnica" onchange="toggleModo('unica')"> Clase por única vez</label>
-        <label><input type="checkbox" id="chkPrueba" onchange="toggleModo('prueba')"> Clase de prueba</label>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Buscar alumna/o</label>
-          <input type="text" id="buscadorAlumno" placeholder="Ingresá nombre o número" oninput="filtrarAlumnos()">
-          <select id="selectAlumno" size="6" style="margin-top:6px;"></select>
-        </div>
-        <div>
-          <label>Sede principal</label>
-          <select id="selectSede" onchange="onSedeChange()">
-            <option value="">Seleccionar sede...</option>
-            <option>Craig Reformer</option>
-            <option>Craig Circuito</option>
-            <option>Pedro Goyena</option>
-          </select>
-
-          <!-- Recurrente (por defecto) -->
-          <div id="boxRecurrente" style="margin-top:10px;">
-            <label>Días (según sede)</label>
-            <div class="chips" id="chipsDias"></div>
-            <div style="margin-top:10px;">
-              <label>Hora para todos los días</label>
-              <select id="selectHoraGeneral">
-                <option value="">Seleccionar hora...</option>
-              </select>
-            </div>
-            <div id="perDia" style="margin-top:10px;"></div>
-            <small>Se generarán las clases seleccionadas desde la semana visible hasta fin de año.</small>
+        <!-- Recurrente -->
+        <div id="boxRecurrente" style="margin-top:10px;">
+          <label>Días (según sede)</label>
+          <div class="chips" id="chipsDias"></div>
+          <div style="margin-top:10px;">
+            <label>Hora para todos los días</label>
+            <select id="selectHoraGeneral"><option value="">Seleccionar hora...</option></select>
           </div>
+          <div id="perDia" style="margin-top:10px;"></div>
+          <small>Se generarán las clases seleccionadas desde la semana visible hasta fin de año.</small>
+        </div>
 
-          <!-- Única vez -->
-          <div id="boxUnica" style="display:none; margin-top:10px;">
-            <label>Fecha única</label>
-            <input type="date" id="fechaUnica">
-            <div style="margin-top:10px;">
+        <!-- Única -->
+        <div id="boxUnica" style="display:none;margin-top:10px;">
+          <label>Fecha única</label>
+          <input type="date" id="fechaUnica">
+          <div style="margin-top:10px;">
+            <label>Hora</label>
+            <select id="horaUnica"><option value="">Seleccionar hora...</option></select>
+          </div>
+        </div>
+
+        <!-- Prueba -->
+        <div id="boxPrueba" style="display:none;margin-top:10px;">
+          <label>Motivo/nota de prueba</label>
+          <textarea id="notaPrueba" rows="3" placeholder="Escribí una breve nota..."></textarea>
+          <div style="margin-top:10px;" class="row">
+            <div>
+              <label>Fecha</label>
+              <input type="date" id="fechaPrueba">
+            </div>
+            <div>
               <label>Hora</label>
-              <select id="horaUnica"><option value="">Seleccionar hora...</option></select>
-            </div>
-          </div>
-
-          <!-- Prueba -->
-          <div id="boxPrueba" style="display:none; margin-top:10px;">
-            <label>Motivo/nota de prueba</label>
-            <textarea id="notaPrueba" rows="3" placeholder="Escribí una breve nota..."></textarea>
-            <div style="margin-top:10px;" class="row">
-              <div>
-                <label>Fecha</label>
-                <input type="date" id="fechaPrueba">
-              </div>
-              <div>
-                <label>Hora</label>
-                <select id="horaPrueba"><option value="">Seleccionar hora...</option></select>
-              </div>
+              <select id="horaPrueba"><option value="">Seleccionar hora...</option></select>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="footer">
-        <button onclick="cerrarModal()">Cancelar</button>
-        <button onclick="guardarClase()">Guardar</button>
-      </div>
+    <div class="footer">
+      <button onclick="cerrarModal()">Cancelar</button>
+      <button onclick="guardarClase()">Guardar</button>
     </div>
   </div>
+</div>
 
-  <script>
-  // ====== Estado global ======
-  if (localStorage.getItem('etnya_login') !== 'ok') {
-    window.location.href = 'login.html';
-  }
+<script>
+  if (localStorage.getItem('etnya_login') !== 'ok') location='login.html';
 
-  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-
-  const SEDES = {
-    'Craig Reformer': { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
-    'Craig Circuito': { dias: [1,2,3,4,5], desde: 9, hasta: 20 },
-    'Pedro Goyena'  : { dias: [1,2,3,4,5,6], desde: 8, hasta: 21 }
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS =['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const SEDES={
+    'Craig Reformer':{dias:[1,2,3,4,5],desde:9,hasta:20},
+    'Craig Circuito':{dias:[1,2,3,4,5],desde:9,hasta:20},
+    'Pedro Goyena': {dias:[1,2,3,4,5,6],desde:8,hasta:21}
   };
 
-  let sedeSeleccionada = 'Craig Reformer';
-  let semanaInicio = getLunes(new Date());
-  let alumnos = [];
-  let clasesSemana = [];
+  let sedeSeleccionada='Craig Reformer';
+  let semanaInicio=getLunes(new Date());
+  let alumnos=[], clasesSemana=[];
 
-  function toggleMenu(){ document.querySelector('.sidebar').classList.toggle('mostrar'); }
-  function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href = 'login.html'; }
+  function getLunes(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
+  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+  function ymd(d){return d.toISOString().slice(0,10)}
+  function humanHour(h){return String(h).padStart(2,'0')+':00'}
+  function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h<=hasta;h++)a.push(humanHour(h));return a}
+  function diasHabilitados(s){return SEDES[s].dias}
 
-  // ====== Fechas ======
-  function getLunes(date){ const d=new Date(date); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
-  function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
-  function ymd(d){ return d.toISOString().slice(0,10); }
-  function humanHour(h){ return String(h).padStart(2,'0') + ':00'; }
-  function rangoHoras(sede){ const {desde,hasta}=SEDES[sede]; const a=[]; for(let h=desde; h<=hasta; h++) a.push(humanHour(h)); return a; }
-  function diasHabilitados(sede){ return SEDES[sede].dias; }
-
-  function actualizarHeader(){
-    const label = document.getElementById('labelMes');
-    label.textContent = MESES[semanaInicio.getMonth()] + ' ' + semanaInicio.getFullYear();
+  function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
+  function moverSemana(d){semanaInicio=addDays(semanaInicio,7*d);cargarSemana()}
+  function cambiarSede(s){sedeSeleccionada=s;['tabReformer','tabCircuito','tabGoyena'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    if(s==='Craig Reformer')tabReformer.classList.add('active');
+    if(s==='Craig Circuito')tabCircuito.classList.add('active');
+    if(s==='Pedro Goyena')tabGoyena.classList.add('active');
+    cargarSemana()
   }
 
-  function moverSemana(delta){ semanaInicio = addDays(semanaInicio, 7*delta); cargarSemana(); }
-  function cambiarSede(s){
-    sedeSeleccionada = s;
-    document.getElementById('tabReformer').classList.toggle('active', s==='Craig Reformer');
-    document.getElementById('tabCircuito').classList.toggle('active', s==='Craig Circuito');
-    document.getElementById('tabGoyena').classList.toggle('active', s==='Pedro Goyena');
-    cargarSemana();
-  }
+  /* ========== Construcción grilla ==========
+     * UNA sola celda .slot por hora y por día.
+     */
+  function construirTablaBase(){
+    const tabla=document.getElementById('tablaAgenda'); tabla.innerHTML='';
+    const thead=document.createElement('thead'); const trh=document.createElement('tr');
+    const thHora=document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
 
-// ====== Grilla ======
-function construirTablaBase(){
-  const tabla = document.getElementById('tablaAgenda');
-  tabla.innerHTML = '';
+    const dias=diasHabilitados(sedeSeleccionada); const lunes=semanaInicio;
+    for(const dow of dias){
+      const fecha=addDays(lunes,dow-1);
+      const th=document.createElement('th'); th.dataset.fecha=ymd(fecha);
+      th.textContent=`${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
+      trh.appendChild(th);
+    }
+    thead.appendChild(trh);
 
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
-  const thHora = document.createElement('th');
-  thHora.className = 'col-hora';
-  thHora.textContent = 'Hora';
-  trh.appendChild(thHora);
+    const tbody=document.createElement('tbody'); const horas=rangoHoras(sedeSeleccionada);
+    horas.forEach(hh=>{
+      const tr=document.createElement('tr');
 
-  const dias = diasHabilitados(sedeSeleccionada);
-  const lunes = semanaInicio;
+      const tdHora=document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent=hh; tr.appendChild(tdHora);
 
-  for (const dow of dias){
-    const fecha = addDays(lunes, dow - 1);
-    const th = document.createElement('th');
-    th.dataset.fecha = ymd(fecha);
-    th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
-    trh.appendChild(th);
-  }
-  thead.appendChild(trh);
+      dias.forEach(dow=>{
+        const td=document.createElement('td'); td.className='slot';
+        td.dataset.fecha=ymd(addDays(semanaInicio,dow-1));
+        td.dataset.hora=hh; td.dataset.sede=sedeSeleccionada;
 
-  const tbody = document.createElement('tbody');
-  const horas = rangoHoras(sedeSeleccionada);
+        // Slot único (dos mitades)
+        td.innerHTML = `<div class="slot-inner">
+                          <div class="half left"></div>
+                          <div class="half right"></div>
+                        </div>`;
+        tr.appendChild(td);
+      });
 
-  horas.forEach(hh => {
-    const tr = document.createElement('tr');
-
-    const tdHora = document.createElement('td');
-    tdHora.className = 'col-hora';
-    tdHora.textContent = hh;
-    tr.appendChild(tdHora);
-
-    dias.forEach(dow => {
-      const fecha = ymd(addDays(semanaInicio, dow - 1));
-
-      const td = document.createElement('td');
-      td.className = 'slot';
-      td.dataset.fecha = fecha;
-      td.dataset.hora  = hh;               // HH:MM texto
-      td.dataset.sede  = sedeSeleccionada;
-
-      // Un solo recuadro dividido en 2 columnas (izq/der)
-      td.innerHTML = `
-        <div class="half" data-max="3"></div>
-        <div class="half" data-max="3"></div>
-      `;
-
-      tr.appendChild(td);
+      tbody.appendChild(tr);
     });
 
-    tbody.appendChild(tr);
-  });
+    tabla.appendChild(thead); tabla.appendChild(tbody);
+  }
 
-  tabla.appendChild(thead);
-  tabla.appendChild(tbody);
-}
-
-
-  // ====== Backend ======
+  /* ====== Datos ====== */
   async function cargarAlumnos(){
-    const res = await fetch('/alumnos');
-    const data = await res.json();
-    alumnos = data.map(a => ({ id:a.id, nombre:a.nombre, apellido:a.apellido, numero:a.numero_alumno }));
+    const res=await fetch('/alumnos'); const data=await res.json();
+    alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
     poblarListaAlumnos('');
   }
 
-  function poblarListaAlumnos(filtro=''){
-    const sel = document.getElementById('selectAlumno');
-    sel.innerHTML='';
-    const texto = filtro.trim().toLowerCase();
-    if (!texto) return;
-    const list = alumnos.filter(a=>{
-      const padded = String(a.numero).padStart(2,'0');
-      const label = `${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
-      return padded.includes(texto) || label.includes(texto);
+  function poblarListaAlumnos(f=''){
+    const sel=document.getElementById('selectAlumno'); sel.innerHTML='';
+    const t=f.trim().toLowerCase(); if(!t) return;
+    const list=alumnos.filter(a=>{
+      const padded=String(a.numero).padStart(2,'0');
+      const label=`${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
+      return padded.includes(t)||label.includes(t);
     });
     list.slice(0,200).forEach(a=>{
-      const opt = document.createElement('option');
-      opt.value = a.id;
-      const padded = String(a.numero).padStart(2,'0');
-      opt.textContent = `${padded} - ${a.apellido||''}, ${a.nombre||''}`;
+      const opt=document.createElement('option'); opt.value=a.id;
+      const padded=String(a.numero).padStart(2,'0'); opt.textContent=`${padded} - ${a.apellido||''}, ${a.nombre||''}`;
       sel.appendChild(opt);
     });
   }
-  function filtrarAlumnos(){ poblarListaAlumnos(document.getElementById('buscadorAlumno').value); }
+  function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAlumno').value)}
 
   async function cargarClasesSemana(){
-    const desde = ymd(semanaInicio);
-    const dias  = diasHabilitados(sedeSeleccionada);
-    const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
-    const res = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-    clasesSemana = await res.json();
+    const desde=ymd(semanaInicio);
+    const dias=diasHabilitados(sedeSeleccionada);
+    const hasta=ymd(addDays(semanaInicio,Math.max(...dias)));
+    const res=await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
+    clasesSemana=await res.json();
   }
 
- function pintarClases(){
-  // reset: dos mitades vacías en cada slot
-  document.querySelectorAll('.slot').forEach(td=>{
-    td.innerHTML = '<div class="half"></div><div class="half"></div>';
-  });
+  function pintarClases(){
+    // limpiar TODOS los slots
+    document.querySelectorAll('td.slot .left, td.slot .right').forEach(n=>n.innerHTML='');
 
-  // agrupar por fecha|hora
-  const mapa = new Map();
-  for (const c of clasesSemana){
-    const key = `${c.fecha}|${c.hora}`;
-    if (!mapa.has(key)) mapa.set(key, []);
-    mapa.get(key).push(c);
-  }
-
-  document.querySelectorAll('.slot').forEach(td=>{
-    const key = `${td.dataset.fecha}|${td.dataset.hora}`;
-    const arr = (mapa.get(key) || []);
-
-    const left  = td.querySelector('.half:first-child');
-    const right = td.querySelector('.half:last-child');
-
-    // 3 a la izquierda, 3 a la derecha
-    arr.slice(0,3).forEach(cl=>{
-      const tag = document.createElement('div'); tag.className='tag';
-      tag.textContent = `${cl.numero_alumno ? String(cl.numero_alumno).padStart(2,'0') : ''} ${cl.nombre ?? ''}`.trim() || 'Alumno';
-      left.appendChild(tag);
-    });
-    arr.slice(3,6).forEach(cl=>{
-      const tag = document.createElement('div'); tag.className='tag';
-      tag.textContent = `${cl.numero_alumno ? String(cl.numero_alumno).padStart(2,'0') : ''} ${cl.nombre ?? ''}`.trim() || 'Alumno';
-      right.appendChild(tag);
-    });
-
-    if (arr.length > 6){
-      const full = document.createElement('div'); full.className='tag full';
-      full.textContent = `+ ${arr.length - 6} en espera`;
-      right.appendChild(full);
+    // agrupar fecha|hora
+    const mapa=new Map();
+    for(const c of clasesSemana){
+      const key=`${c.fecha}|${c.hora}`; if(!mapa.has(key)) mapa.set(key,[]);
+      mapa.get(key).push(c);
     }
-  });
-}
 
+    document.querySelectorAll('td.slot').forEach(td=>{
+      const key=`${td.dataset.fecha}|${td.dataset.hora}`;
+      const arr=mapa.get(key)||[];
+      const left=td.querySelector('.left'); const right=td.querySelector('.right');
 
+      arr.slice(0,3).forEach(cl=>{
+        const d=document.createElement('div'); d.className='tag';
+        d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
+        left.appendChild(d);
+      });
+      arr.slice(3,6).forEach(cl=>{
+        const d=document.createElement('div'); d.className='tag';
+        d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
+        right.appendChild(d);
+      });
+      if(arr.length>6){
+        const d=document.createElement('div'); d.className='tag full'; d.textContent=`+ ${arr.length-6} en espera`;
+        right.appendChild(d);
+      }
+    });
+  }
 
-  async function cargarSemana(){ actualizarHeader(); construirTablaBase(); await cargarClasesSemana(); pintarClases(); }
+  async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
 
-  // ====== Modal ======
+  /* ====== Modal ====== */
   function abrirModal(){
-    document.getElementById('overlay').style.display='flex';
-    document.getElementById('buscadorAlumno').value='';
-    document.getElementById('selectAlumno').innerHTML='';
-    document.getElementById('chkUnica').checked = false;
-    document.getElementById('chkPrueba').checked = false;
-    document.getElementById('boxRecurrente').style.display = '';
-    document.getElementById('boxUnica').style.display = 'none';
-    document.getElementById('boxPrueba').style.display = 'none';
-    document.getElementById('selectSede').value = '';
-    refrescarDiasYHoras();
+    overlay.style.display='flex';
+    buscadorAlumno.value=''; selectAlumno.innerHTML='';
+    chkUnica.checked=false; chkPrueba.checked=false;
+    boxRecurrente.style.display=''; boxUnica.style.display='none'; boxPrueba.style.display='none';
+    selectSede.value=''; refrescarDiasYHoras();
   }
-  function cerrarModal(){ document.getElementById('overlay').style.display='none'; }
+  function cerrarModal(){overlay.style.display='none'}
 
-  function toggleModo(modo){
-    const chkU = document.getElementById('chkUnica');
-    const chkP = document.getElementById('chkPrueba');
-    if (modo==='unica'  && chkU.checked) chkP.checked = false;
-    if (modo==='prueba' && chkP.checked) chkU.checked = false;
-    const unica = chkU.checked, prueba = chkP.checked;
-    document.getElementById('boxRecurrente').style.display = (!unica && !prueba) ? '' : 'none';
-    document.getElementById('boxUnica').style.display     = unica  ? '' : 'none';
-    document.getElementById('boxPrueba').style.display     = prueba ? '' : 'none';
+  function toggleModo(m){
+    if(m==='unica'  && chkUnica.checked)  chkPrueba.checked=false;
+    if(m==='prueba' && chkPrueba.checked) chkUnica.checked=false;
+    const unica=chkUnica.checked, prueba=chkPrueba.checked;
+    boxRecurrente.style.display=(!unica&&!prueba)?'':'none';
+    boxUnica.style.display=unica?'':'none';
+    boxPrueba.style.display=prueba?'':'none';
     refrescarDiasYHoras();
   }
 
-  function selectedDOWs(){
-    return Array.from(document.querySelectorAll('#chipsDias .chip.selected'))
-      .map(ch => parseInt(ch.dataset.dow,10));
-  }
-
+  function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
   function applySedeToSelectedDays(){
-    const sedeBase = document.getElementById('selectSede').value; if(!sedeBase) return;
+    const sede=selectSede.value;if(!sede)return;
     selectedDOWs().forEach(d=>{
-      const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-      if (row){ const selects = row.querySelectorAll('select'); if(selects[1]) selects[1].value = sedeBase; }
+      const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+      if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
     });
   }
   function applyHoraToSelectedDays(){
-    const horaGen = document.getElementById('selectHoraGeneral').value; if(!horaGen) return;
+    const h=selectHoraGeneral.value;if(!h)return;
     selectedDOWs().forEach(d=>{
-      const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-      if (row){ const selHora = row.querySelector('select'); if(selHora) selHora.value = horaGen; }
+      const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+      if(row){const sel=row.querySelector('select'); if(sel) sel.value=h;}
     });
   }
-  function onSedeChange(){ refrescarDiasYHoras(); applySedeToSelectedDays(); applyHoraToSelectedDays(); }
+  function onSedeChange(){refrescarDiasYHoras();applySedeToSelectedDays();applyHoraToSelectedDays()}
 
   function refrescarDiasYHoras(){
-    const sede = document.getElementById('selectSede').value;
-    const contDias = document.getElementById('chipsDias');
-    const selGen   = document.getElementById('selectHoraGeneral');
-    const perDia   = document.getElementById('perDia');
-    contDias.innerHTML = '';
-    selGen.innerHTML   = '<option value="">Seleccionar hora...</option>';
-    perDia.innerHTML   = '';
-
-    if (!sede){
-      document.getElementById('horaUnica').innerHTML  = '<option value="">Seleccionar hora...</option>';
-      document.getElementById('horaPrueba').innerHTML = '<option value="">Seleccionar hora...</option>';
-      return;
-    }
-
-    const dias = diasHabilitados(sede);
+    const sede=selectSede.value, cont=chipsDias, selGen=selectHoraGeneral, perDia=perDiaDiv;
+    cont.innerHTML=''; selGen.innerHTML='<option value="">Seleccionar hora...</option>'; perDia.innerHTML='';
+    if(!sede){horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';return}
+    const dias=diasHabilitados(sede);
+    dias.forEach(d=>{const chip=document.createElement('div');chip.className='chip';chip.dataset.dow=d;chip.textContent=DIAS[d];chip.onclick=()=>{chip.classList.toggle('selected');applySedeToSelectedDays();applyHoraToSelectedDays();};cont.appendChild(chip)});
+    const horas=rangoHoras(sede); horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;selGen.appendChild(o)});
     dias.forEach(d=>{
-      const chip = document.createElement('div');
-      chip.className='chip'; chip.dataset.dow=d; chip.textContent = DIAS[d];
-      chip.onclick = ()=>{ chip.classList.toggle('selected'); applySedeToSelectedDays(); applyHoraToSelectedDays(); };
-      contDias.appendChild(chip);
+      const wrap=document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
+      const label=document.createElement('label'); label.textContent=`${DIAS[d]}: `; label.style.marginRight='6px';
+      const selHora=document.createElement('select'); const defH=document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
+      horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;selHora.appendChild(o)});
+      const selSede=document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{const o=document.createElement('option');o.textContent=s;selSede.appendChild(o)}); selSede.value=sede;
+      wrap.appendChild(label); wrap.appendChild(selHora); wrap.appendChild(document.createTextNode(' ')); wrap.appendChild(selSede); perDia.appendChild(wrap);
     });
-
-    const horas = rangoHoras(sede);
-    horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selGen.appendChild(o); });
-
-    dias.forEach(d=>{
-      const wrap = document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
-      const label = document.createElement('label'); label.textContent = `${DIAS[d]}: `; label.style.marginRight='6px';
-      const selHora = document.createElement('select');
-      const defH = document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
-      horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; selHora.appendChild(o); });
-      const selSede = document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{ const o=document.createElement('option'); o.textContent=s; selSede.appendChild(o); }); selSede.value = sede;
-      wrap.appendChild(label); wrap.appendChild(selHora);
-      wrap.appendChild(document.createTextNode(' '));
-      wrap.appendChild(selSede);
-      perDia.appendChild(wrap);
-    });
-
-    // Única vez / Prueba
-    const hu = document.getElementById('horaUnica');  hu.innerHTML = '<option value=\"\">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hu.appendChild(o); });
-    const hp = document.getElementById('horaPrueba'); hp.innerHTML = '<option value=\"\">Seleccionar hora...</option>'; horas.forEach(h=>{ const o=document.createElement('option'); o.textContent=h; hp.appendChild(o); });
+    horaUnica.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;horaUnica.appendChild(o)});
+    horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;horaPrueba.appendChild(o)});
   }
 
   function fechasHastaFinDeAnio(dow){
-    const fin = new Date(semanaInicio.getFullYear(), 11, 31);
-    let first = addDays(semanaInicio, dow-1);
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    if (first < hoy) first = addDays(first, 7);
-    const out=[]; for (let d=first; d<=fin; d=addDays(d,7)) out.push(ymd(d)); return out;
+    const fin=new Date(semanaInicio.getFullYear(),11,31); let first=addDays(semanaInicio,dow-1);
+    const hoy=new Date(); hoy.setHours(0,0,0,0); if(first<hoy) first=addDays(first,7);
+    const out=[]; for(let d=first; d<=fin; d=addDays(d,7)) out.push(ymd(d)); return out;
   }
-
-  function cupoDisponible(fecha, hora, sede){
-    const arr = clasesSemana.filter(c=> c.fecha===fecha && c.hora===hora && c.sede===sede);
-    return Math.max(0, 6 - arr.length);
-  }
+  function cupoDisponible(fecha,hora,sede){const arr=clasesSemana.filter(c=>c.fecha===fecha&&c.hora===hora&&c.sede===sede);return Math.max(0,6-arr.length)}
 
   function guardarClase(){
-    const sel = document.getElementById('selectAlumno');
-    const alumno_id = parseInt(sel.value,10);
-    if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
-
-    const esUnica  = document.getElementById('chkUnica').checked;
-    const esPrueba = document.getElementById('chkPrueba').checked;
-    const clases = [];
-
-    if (esUnica){
-      const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
-      const fecha = document.getElementById('fechaUnica').value;
-      const hora  = document.getElementById('horaUnica').value;
-      if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-      if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
-      clases.push({ fecha, hora, sede, tipo:'unica' });
-    } else if (esPrueba){
-      const sede = document.getElementById('selectSede').value; if(!sede){ alert('Seleccioná una sede'); return; }
-      const fecha = document.getElementById('fechaPrueba').value;
-      const hora  = document.getElementById('horaPrueba').value;
-      if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-      if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo para esa fecha/hora.'); return; }
-      const nota = document.getElementById('notaPrueba').value.trim();
-      clases.push({ fecha, hora, sede, tipo:'prueba', nota });
-    } else {
-      const sedeBase = document.getElementById('selectSede').value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
-      const seleccionados = selectedDOWs();
-      if (seleccionados.length===0){ alert('Seleccioná al menos un día'); return; }
-      for (const d of seleccionados){
-        const row = Array.from(document.querySelectorAll('#perDia > div')).find(el=> parseInt(el.dataset.dow,10)===d);
-        const selects = row ? row.querySelectorAll('select') : null;
-        const hora = selects && selects[0] ? selects[0].value : '';
-        const sede = selects && selects[1] ? selects[1].value : sedeBase;
-        if (!hora){ alert('Completá la hora para los días seleccionados'); return; }
-        for (const f of fechasHastaFinDeAnio(d)){
-          if (cupoDisponible(f, hora, sede) <= 0) continue;
-          clases.push({ fecha:f, hora, sede, tipo:'normal' });
-        }
+    const sel=selectAlumno; const alumno_id=parseInt(sel.value,10); if(!alumno_id){alert('Seleccioná una alumna/o');return}
+    const esUnica=chkUnica.checked, esPrueba=chkPrueba.checked; const clases=[];
+    if(esUnica){
+      const sede=selectSede.value; if(!sede){alert('Seleccioná una sede');return}
+      const fecha=fechaUnica.value, hora=horaUnica.value; if(!fecha||!hora){alert('Completá fecha y hora');return}
+      if(cupoDisponible(fecha,hora,sede)<=0){alert('Cupo completo');return}
+      clases.push({fecha,hora,sede,tipo:'unica'});
+    }else if(esPrueba){
+      const sede=selectSede.value; if(!sede){alert('Seleccioná una sede');return}
+      const fecha=fechaPrueba.value, hora=horaPrueba.value; if(!fecha||!hora){alert('Completá fecha y hora');return}
+      if(cupoDisponible(fecha,hora,sede)<=0){alert('Cupo completo');return}
+      const nota=notaPrueba.value.trim(); clases.push({fecha,hora,sede,tipo:'prueba',nota});
+    }else{
+      const sedeBase=selectSede.value; if(!sedeBase){alert('Seleccioná una sede');return}
+      const seleccionados=selectedDOWs(); if(seleccionados.length===0){alert('Seleccioná al menos un día');return}
+      for(const d of seleccionados){
+        const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+        const selects=row?row.querySelectorAll('select'):null;
+        const hora=selects&&selects[0]?selects[0].value:''; const sede=selects&&selects[1]?selects[1].value:sedeBase;
+        if(!hora){alert('Completá la hora');return}
+        for(const f of fechasHastaFinDeAnio(d)){ if(cupoDisponible(f,hora,sede)<=0) continue; clases.push({fecha:f,hora,sede,tipo:'normal'}) }
       }
-      if (clases.length===0){ alert('No hay cupos disponibles en las selecciones.'); return; }
+      if(clases.length===0){alert('No hay cupos disponibles');return}
     }
-
-    (async ()=>{
+    (async()=>{
       try{
-        const res = await fetch('/clases', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ alumno_id, clases }) });
-        if (!res.ok) throw new Error('Error al guardar');
+        const res=await fetch('/clases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({alumno_id,clases})});
+        if(!res.ok) throw new Error('Error al guardar');
         cerrarModal(); await cargarSemana(); alert('Clases registradas');
-      }catch(e){ console.error(e); alert('No se pudo guardar.'); }
+      }catch(e){console.error(e);alert('No se pudo guardar')}
     })();
   }
 
   // ====== Init ======
-  window.onload = async () => { await cargarAlumnos(); await cargarSemana(); };
-</script>
+  window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
 
+  // refs rápidas (evita document.getElementById repetido)
+  const overlay=document.getElementById('overlay');
+  const selectAlumno=document.getElementById('selectAlumno');
+  const buscadorAlumno=document.getElementById('buscadorAlumno');
+  const chkUnica=document.getElementById('chkUnica');
+  const chkPrueba=document.getElementById('chkPrueba');
+  const boxRecurrente=document.getElementById('boxRecurrente');
+  const boxUnica=document.getElementById('boxUnica');
+  const boxPrueba=document.getElementById('boxPrueba');
+  const selectSede=document.getElementById('selectSede');
+  const selectHoraGeneral=document.getElementById('selectHoraGeneral');
+  const chipsDias=document.getElementById('chipsDias');
+  const perDiaDiv=document.getElementById('perDia');
+  const fechaUnica=document.getElementById('fechaUnica');
+  const horaUnica=document.getElementById('horaUnica');
+  const fechaPrueba=document.getElementById('fechaPrueba');
+  const horaPrueba=document.getElementById('horaPrueba');
+  const notaPrueba=document.getElementById('notaPrueba');
+</script>
 </body>
 </html>
