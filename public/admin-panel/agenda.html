@@ -203,194 +203,195 @@
   let semanaInicio=getLunes(new Date());
   let alumnos=[], clasesSemana=[];
 
-  function getLunes(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
-  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
-  function ymd(d){return d.toISOString().slice(0,10)}
-  function humanHour(h){return String(h).padStart(2,'0')+':00'}
-  function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h<=hasta;h++)a.push(humanHour(h));return a}
-  function diasHabilitados(s){return SEDES[s].dias}
+// ===== Utils =====
+function getLunes(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function ymd(d){return d.toISOString().slice(0,10)}
+function humanHour(h){return String(h).padStart(2,'0')+':00'} // muestra HH:MM
+function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h<=hasta;h++)a.push(humanHour(h));return a}
+function diasHabilitados(s){return SEDES[s].dias}
+// ⚠️ Normalizar: '10:00' -> '10:00:00'
+function normTime(t){ return t && t.length===5 ? t+':00' : t }
 
-  function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
-  function moverSemana(d){semanaInicio=addDays(semanaInicio,7*d);cargarSemana()}
-  function cambiarSede(s){sedeSeleccionada=s;['tabReformer','tabCircuito','tabGoyena'].forEach(id=>document.getElementById(id).classList.remove('active'));
-    if(s==='Craig Reformer')tabReformer.classList.add('active');
-    if(s==='Craig Circuito')tabCircuito.classList.add('active');
-    if(s==='Pedro Goyena')tabGoyena.classList.add('active');
-    cargarSemana()
+// ===== Header / navegación =====
+function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
+function moverSemana(d){semanaInicio=addDays(semanaInicio,7*d);cargarSemana()}
+function cambiarSede(s){sedeSeleccionada=s;['tabReformer','tabCircuito','tabGoyena'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if(s==='Craig Reformer')tabReformer.classList.add('active');
+  if(s==='Craig Circuito')tabCircuito.classList.add('active');
+  if(s==='Pedro Goyena')tabGoyena.classList.add('active');
+  cargarSemana()
+}
+
+/* ========== Construcción grilla (1 slot por hora/día) ========== */
+function construirTablaBase(){
+  const tabla=document.getElementById('tablaAgenda'); tabla.innerHTML='';
+  const thead=document.createElement('thead'); const trh=document.createElement('tr');
+  const thHora=document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
+
+  const dias=diasHabilitados(sedeSeleccionada); const lunes=semanaInicio;
+  for(const dow of dias){
+    const fecha=addDays(lunes,dow-1);
+    const th=document.createElement('th'); th.dataset.fecha=ymd(fecha);
+    th.textContent=`${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
+    trh.appendChild(th);
+  }
+  thead.appendChild(trh);
+
+  const tbody=document.createElement('tbody'); const horas=rangoHoras(sedeSeleccionada);
+  horas.forEach(hh=>{
+    const tr=document.createElement('tr');
+
+    const tdHora=document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent=hh; tr.appendChild(tdHora);
+
+    dias.forEach(dow=>{
+      const td=document.createElement('td'); td.className='slot';
+      td.dataset.fecha=ymd(addDays(semanaInicio,dow-1));
+      td.dataset.hora=normTime(hh); // <-- guardamos con segundos
+      td.dataset.sede=sedeSeleccionada;
+
+      td.innerHTML = `<div class="slot-inner">
+                        <div class="half left"></div>
+                        <div class="half right"></div>
+                      </div>`;
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  tabla.appendChild(thead); tabla.appendChild(tbody);
+}
+
+/* ===== Datos ===== */
+async function cargarAlumnos(){
+  const res=await fetch('/alumnos'); const data=await res.json();
+  alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
+  poblarListaAlumnos('');
+}
+
+function poblarListaAlumnos(f=''){
+  const sel=document.getElementById('selectAlumno'); sel.innerHTML='';
+  const t=f.trim().toLowerCase(); if(!t) return;
+  const list=alumnos.filter(a=>{
+    const padded=String(a.numero).padStart(2,'0');
+    const label=`${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
+    return padded.includes(t)||label.includes(t);
+  });
+  list.slice(0,200).forEach(a=>{
+    const opt=document.createElement('option'); opt.value=a.id;
+    const padded=String(a.numero).padStart(2,'0'); opt.textContent=`${padded} - ${a.apellido||''}, ${a.nombre||''}`;
+    sel.appendChild(opt);
+  });
+}
+function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAlumno').value)}
+
+async function cargarClasesSemana(){
+  const desde=ymd(semanaInicio);
+  const dias=diasHabilitados(sedeSeleccionada);
+  const hasta=ymd(addDays(semanaInicio,Math.max(...dias)));
+  const res=await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
+  clasesSemana=await res.json();
+}
+
+/* ===== Pintar ===== */
+function pintarClases(){
+  document.querySelectorAll('td.slot .left, td.slot .right').forEach(n=>n.innerHTML='');
+
+  // agrupar por fecha|hora (normalizada)
+  const mapa=new Map();
+  for(const c of clasesSemana){
+    const key=`${c.fecha}|${normTime(c.hora)}`;
+    if(!mapa.has(key)) mapa.set(key,[]);
+    mapa.get(key).push(c);
   }
 
-  /* ========== Construcción grilla ==========
-     * UNA sola celda .slot por hora y por día.
-     */
-  function construirTablaBase(){
-    const tabla=document.getElementById('tablaAgenda'); tabla.innerHTML='';
-    const thead=document.createElement('thead'); const trh=document.createElement('tr');
-    const thHora=document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
+  document.querySelectorAll('td.slot').forEach(td=>{
+    const key=`${td.dataset.fecha}|${normTime(td.dataset.hora)}`;
+    const arr=mapa.get(key)||[];
+    const left=td.querySelector('.left'); const right=td.querySelector('.right');
 
-    const dias=diasHabilitados(sedeSeleccionada); const lunes=semanaInicio;
-    for(const dow of dias){
-      const fecha=addDays(lunes,dow-1);
-      const th=document.createElement('th'); th.dataset.fecha=ymd(fecha);
-      th.textContent=`${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
-      trh.appendChild(th);
+    arr.slice(0,3).forEach(cl=>{
+      const d=document.createElement('div'); d.className='tag';
+      d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
+      left.appendChild(d);
+    });
+    arr.slice(3,6).forEach(cl=>{
+      const d=document.createElement('div'); d.className='tag';
+      d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
+      right.appendChild(d);
+    });
+    if(arr.length>6){
+      const d=document.createElement('div'); d.className='tag full'; d.textContent=`+ ${arr.length-6} en espera`;
+      right.appendChild(d);
     }
-    thead.appendChild(trh);
+  });
+}
 
-    const tbody=document.createElement('tbody'); const horas=rangoHoras(sedeSeleccionada);
-    horas.forEach(hh=>{
-      const tr=document.createElement('tr');
+/* ===== Modal helpers ===== */
+function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
+function applySedeToSelectedDays(){
+  const sede=selectSede.value;if(!sede)return;
+  selectedDOWs().forEach(d=>{
+    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+    if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
+  });
+}
+function applyHoraToSelectedDays(){
+  const h=selectHoraGeneral.value;if(!h)return;
+  selectedDOWs().forEach(d=>{
+    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+    if(row){const sel=row.querySelector('select'); if(sel) sel.value=h;}
+  });
+}
+function onSedeChange(){refrescarDiasYHoras();applySedeToSelectedDays();applyHoraToSelectedDays()}
 
-      const tdHora=document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent=hh; tr.appendChild(tdHora);
-
-      dias.forEach(dow=>{
-        const td=document.createElement('td'); td.className='slot';
-        td.dataset.fecha=ymd(addDays(semanaInicio,dow-1));
-        td.dataset.hora=hh; td.dataset.sede=sedeSeleccionada;
-
-        // Slot único (dos mitades)
-        td.innerHTML = `<div class="slot-inner">
-                          <div class="half left"></div>
-                          <div class="half right"></div>
-                        </div>`;
-        tr.appendChild(td);
-      });
-
-      tbody.appendChild(tr);
-    });
-
-    tabla.appendChild(thead); tabla.appendChild(tbody);
+function refrescarDiasYHoras(){
+  const sede=selectSede.value, cont=chipsDias, selGen=selectHoraGeneral, perDia=perDiaDiv;
+  cont.innerHTML=''; selGen.innerHTML='<option value="">Seleccionar hora...</option>'; perDia.innerHTML='';
+  if(!sede){
+    horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';
+    horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';
+    return;
   }
+  const dias=diasHabilitados(sede);
+  dias.forEach(d=>{const chip=document.createElement('div');chip.className='chip';chip.dataset.dow=d;chip.textContent=DIAS[d];chip.onclick=()=>{chip.classList.toggle('selected');applySedeToSelectedDays();applyHoraToSelectedDays();};cont.appendChild(chip)});
 
-  /* ====== Datos ====== */
-  async function cargarAlumnos(){
-    const res=await fetch('/alumnos'); const data=await res.json();
-    alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
-    poblarListaAlumnos('');
-  }
+  const horas=rangoHoras(sede);
+  // Hora general (value normalizado)
+  horas.forEach(h=>{
+    const o=document.createElement('option');
+    o.value = normTime(h);
+    o.textContent = h;
+    selGen.appendChild(o);
+  });
 
-  function poblarListaAlumnos(f=''){
-    const sel=document.getElementById('selectAlumno'); sel.innerHTML='';
-    const t=f.trim().toLowerCase(); if(!t) return;
-    const list=alumnos.filter(a=>{
-      const padded=String(a.numero).padStart(2,'0');
-      const label=`${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
-      return padded.includes(t)||label.includes(t);
-    });
-    list.slice(0,200).forEach(a=>{
-      const opt=document.createElement('option'); opt.value=a.id;
-      const padded=String(a.numero).padStart(2,'0'); opt.textContent=`${padded} - ${a.apellido||''}, ${a.nombre||''}`;
-      sel.appendChild(opt);
-    });
-  }
-  function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAlumno').value)}
+  // Por día
+  dias.forEach(d=>{
+    const wrap=document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
+    const label=document.createElement('label'); label.textContent=`${DIAS[d]}: `; label.style.marginRight='6px';
+    const selHora=document.createElement('select'); const defH=document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
+    horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; selHora.appendChild(o)});
+    const selSede=document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{const o=document.createElement('option');o.textContent=s;selSede.appendChild(o)}); selSede.value=sede;
+    wrap.appendChild(label); wrap.appendChild(selHora); wrap.appendChild(document.createTextNode(' ')); wrap.appendChild(selSede); perDia.appendChild(wrap);
+  });
 
-  async function cargarClasesSemana(){
-    const desde=ymd(semanaInicio);
-    const dias=diasHabilitados(sedeSeleccionada);
-    const hasta=ymd(addDays(semanaInicio,Math.max(...dias)));
-    const res=await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-    clasesSemana=await res.json();
-  }
+  // Única / Prueba
+  horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';
+  horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaUnica.appendChild(o)});
+  horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';
+  horas.forEach(h=>{const o=document.createElement('option'); o.value=normTime(h); o.textContent=h; horaPrueba.appendChild(o)});
+}
 
-  function pintarClases(){
-    // limpiar TODOS los slots
-    document.querySelectorAll('td.slot .left, td.slot .right').forEach(n=>n.innerHTML='');
+/* ===== Lógica de cupo ===== */
+function cupoDisponible(fecha,hora,sede){
+  const h = normTime(hora);
+  const arr=clasesSemana.filter(c=>c.fecha===fecha && normTime(c.hora)===h && c.sede===sede);
+  return Math.max(0,6-arr.length);
+}
 
-    // agrupar fecha|hora
-    const mapa=new Map();
-    for(const c of clasesSemana){
-      const key=`${c.fecha}|${c.hora}`; if(!mapa.has(key)) mapa.set(key,[]);
-      mapa.get(key).push(c);
-    }
-
-    document.querySelectorAll('td.slot').forEach(td=>{
-      const key=`${td.dataset.fecha}|${td.dataset.hora}`;
-      const arr=mapa.get(key)||[];
-      const left=td.querySelector('.left'); const right=td.querySelector('.right');
-
-      arr.slice(0,3).forEach(cl=>{
-        const d=document.createElement('div'); d.className='tag';
-        d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
-        left.appendChild(d);
-      });
-      arr.slice(3,6).forEach(cl=>{
-        const d=document.createElement('div'); d.className='tag';
-        d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
-        right.appendChild(d);
-      });
-      if(arr.length>6){
-        const d=document.createElement('div'); d.className='tag full'; d.textContent=`+ ${arr.length-6} en espera`;
-        right.appendChild(d);
-      }
-    });
-  }
-
-  async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
-
-  /* ====== Modal ====== */
-  function abrirModal(){
-    overlay.style.display='flex';
-    buscadorAlumno.value=''; selectAlumno.innerHTML='';
-    chkUnica.checked=false; chkPrueba.checked=false;
-    boxRecurrente.style.display=''; boxUnica.style.display='none'; boxPrueba.style.display='none';
-    selectSede.value=''; refrescarDiasYHoras();
-  }
-  function cerrarModal(){overlay.style.display='none'}
-
-  function toggleModo(m){
-    if(m==='unica'  && chkUnica.checked)  chkPrueba.checked=false;
-    if(m==='prueba' && chkPrueba.checked) chkUnica.checked=false;
-    const unica=chkUnica.checked, prueba=chkPrueba.checked;
-    boxRecurrente.style.display=(!unica&&!prueba)?'':'none';
-    boxUnica.style.display=unica?'':'none';
-    boxPrueba.style.display=prueba?'':'none';
-    refrescarDiasYHoras();
-  }
-
-  function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
-  function applySedeToSelectedDays(){
-    const sede=selectSede.value;if(!sede)return;
-    selectedDOWs().forEach(d=>{
-      const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
-      if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
-    });
-  }
-  function applyHoraToSelectedDays(){
-    const h=selectHoraGeneral.value;if(!h)return;
-    selectedDOWs().forEach(d=>{
-      const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
-      if(row){const sel=row.querySelector('select'); if(sel) sel.value=h;}
-    });
-  }
-  function onSedeChange(){refrescarDiasYHoras();applySedeToSelectedDays();applyHoraToSelectedDays()}
-
-  function refrescarDiasYHoras(){
-    const sede=selectSede.value, cont=chipsDias, selGen=selectHoraGeneral, perDia=perDiaDiv;
-    cont.innerHTML=''; selGen.innerHTML='<option value="">Seleccionar hora...</option>'; perDia.innerHTML='';
-    if(!sede){horaUnica.innerHTML='<option value="">Seleccionar hora...</option>';horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>';return}
-    const dias=diasHabilitados(sede);
-    dias.forEach(d=>{const chip=document.createElement('div');chip.className='chip';chip.dataset.dow=d;chip.textContent=DIAS[d];chip.onclick=()=>{chip.classList.toggle('selected');applySedeToSelectedDays();applyHoraToSelectedDays();};cont.appendChild(chip)});
-    const horas=rangoHoras(sede); horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;selGen.appendChild(o)});
-    dias.forEach(d=>{
-      const wrap=document.createElement('div'); wrap.style.marginTop='6px'; wrap.dataset.dow=d;
-      const label=document.createElement('label'); label.textContent=`${DIAS[d]}: `; label.style.marginRight='6px';
-      const selHora=document.createElement('select'); const defH=document.createElement('option'); defH.value=''; defH.textContent='Seleccionar hora...'; selHora.appendChild(defH);
-      horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;selHora.appendChild(o)});
-      const selSede=document.createElement('select'); ['Craig Reformer','Craig Circuito','Pedro Goyena'].forEach(s=>{const o=document.createElement('option');o.textContent=s;selSede.appendChild(o)}); selSede.value=sede;
-      wrap.appendChild(label); wrap.appendChild(selHora); wrap.appendChild(document.createTextNode(' ')); wrap.appendChild(selSede); perDia.appendChild(wrap);
-    });
-    horaUnica.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;horaUnica.appendChild(o)});
-    horaPrueba.innerHTML='<option value="">Seleccionar hora...</option>'; horas.forEach(h=>{const o=document.createElement('option');o.textContent=h;horaPrueba.appendChild(o)});
-  }
-
-  function fechasHastaFinDeAnio(dow){
-    const fin=new Date(semanaInicio.getFullYear(),11,31); let first=addDays(semanaInicio,dow-1);
-    const hoy=new Date(); hoy.setHours(0,0,0,0); if(first<hoy) first=addDays(first,7);
-    const out=[]; for(let d=first; d<=fin; d=addDays(d,7)) out.push(ymd(d)); return out;
-  }
-  function cupoDisponible(fecha,hora,sede){const arr=clasesSemana.filter(c=>c.fecha===fecha&&c.hora===hora&&c.sede===sede);return Math.max(0,6-arr.length)}
-
-  function guardarClase(){
+/* ===== Guardar ===== */
+function guardarClase(){
   const sel = selectAlumno;
   const alumno_id = parseInt(sel.value, 10);
   if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
@@ -402,18 +403,17 @@
   if (esUnica){
     const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaUnica.value;
-    const hora  = horaUnica.value;
+    const hora  = normTime(horaUnica.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
-    clases.push({ fecha, hora, sede });           // <- sin tipo/nota
+    clases.push({ fecha, hora, sede });
   } else if (esPrueba){
     const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaPrueba.value;
-    const hora  = horaPrueba.value;
+    const hora  = normTime(horaPrueba.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
-    // const nota = notaPrueba.value.trim();      // si después agregás columna, la usamos
-    clases.push({ fecha, hora, sede });           // <- sin tipo/nota
+    clases.push({ fecha, hora, sede });
   } else {
     const sedeBase = selectSede.value; if(!sedeBase){ alert('Seleccioná una sede'); return; }
     const seleccionados = selectedDOWs(); if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
@@ -421,13 +421,13 @@
     for (const d of seleccionados){
       const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
       const selects = row ? row.querySelectorAll('select') : null;
-      const hora = selects && selects[0] ? selects[0].value : '';
+      const hora = normTime(selects && selects[0] ? selects[0].value : '');
       const sede = selects && selects[1] ? selects[1].value : sedeBase;
       if (!hora){ alert('Completá la hora'); return; }
 
       for (const f of fechasHastaFinDeAnio(d)){
         if (cupoDisponible(f, hora, sede) <= 0) continue;
-        clases.push({ fecha: f, hora, sede });    // <- sin tipo
+        clases.push({ fecha: f, hora, sede });
       }
     }
     if (clases.length === 0){ alert('No hay cupos disponibles'); return; }
@@ -451,8 +451,10 @@
   })();
 }
 
-  // ====== Init ======
-  window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
+/* ===== Init ===== */
+async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
+window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
+
 
   // refs rápidas (evita document.getElementById repetido)
   const overlay=document.getElementById('overlay');
