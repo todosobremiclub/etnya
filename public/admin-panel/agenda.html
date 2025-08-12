@@ -310,12 +310,21 @@ function poblarListaAlumnos(f=''){
 function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAlumno').value)}
 
 async function cargarClasesSemana(){
-  const desde=ymd(semanaInicio);
-  const dias=diasHabilitados(sedeSeleccionada);
-  const hasta=ymd(addDays(semanaInicio,Math.max(...dias)));
-  const res=await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-  const data=await res.json();
-  clasesSemana = data.map(c=>({ ...c, fecha: normDate(c.fecha), hora: normTime(c.hora) }));
+  const desde = ymd(semanaInicio);
+  const dias  = diasHabilitados(sedeSeleccionada);
+  const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
+
+  const res  = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
+  const data = await res.json();
+
+  clasesSemana = data
+    .map(c => ({
+      ...c,
+      fecha: normDate(c.fecha),     // '2025-08-19T...' -> '2025-08-19'
+      hora : normTime(c.hora),      // '10:00' -> '10:00:00'
+      sede : (c.sede || '').trim()  // normaliza espacios
+    }))
+    .filter(c => c.sede === sedeSeleccionada); // <- filtro final por sede
 }
 
 /* ===== Pintar ===== */
