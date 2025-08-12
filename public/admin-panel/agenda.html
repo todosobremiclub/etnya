@@ -177,6 +177,13 @@
 <div id="boxSituacion" style="margin-top:10px;border-top:1px dashed #e0e0e0;padding-top:8px;">
   <label>Situación actual (desde la semana visible)</label>
   <div id="situacionActual" class="chips"></div>
+
+<div style="margin-top:8px; display:flex; justify-content:flex-end;">
+  <button id="btnEliminarClases"
+          style="background:#e57373;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">
+    Eliminar todas (desde esta semana)
+  </button>
+</div>
 </div>
 
 
@@ -386,8 +393,56 @@ async function cargarSituacionAlumno(alumnoId){
     chip.className = 'chip';
     chip.textContent = `${DIAS[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
     cont.appendChild(chip);
+
+const btn = document.getElementById('btnEliminarClases');
+if (btn){
+  const tiene = clasesAlumnoActual.length > 0;
+  btn.disabled = !tiene;
+  btn.style.opacity = tiene ? '1' : '0.5';
+  btn.style.cursor  = tiene ? 'pointer' : 'not-allowed';
+}
+
   }
 }
+
+async function eliminarClasesAlumno(){
+  const alumno_id = parseInt(selectAlumno.value, 10) || 0;
+  if (!alumno_id){ alert('Primero elegí una/o.'); return; }
+
+  const ids = (clasesAlumnoActual || []).map(c => c.id);
+  if (!ids.length){ alert('No hay clases futuras para eliminar.'); return; }
+
+  const ok = confirm(`¿Eliminar ${ids.length} clases asignadas desde esta semana en adelante?`);
+  if (!ok) return;
+
+  try{
+    let del = await fetch('/clases', {
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ids })
+    });
+    // fallback si tu backend expone bulk-delete como POST
+    if (del.status === 404){
+      del = await fetch('/clases/bulk-delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ ids })
+      });
+    }
+    if (!del.ok){
+      const t = await del.text();
+      throw new Error(t || 'No se pudo borrar');
+    }
+
+    await cargarSemana();
+    await cargarSituacionAlumno(alumno_id);
+    alert('Clases eliminadas');
+  }catch(e){
+    console.error(e);
+    alert('Error al eliminar las clases');
+  }
+}
+
 
 
 /* ===== Pintar ===== */
@@ -725,6 +780,10 @@ window.toggleModo = function (modo){
   refrescarDiasYHoras();
 };
 
+const btnEliminar = document.getElementById('btnEliminarClases');
+if (btnEliminar){
+  btnEliminar.addEventListener('click', eliminarClasesAlumno);
+}
 
 
 
