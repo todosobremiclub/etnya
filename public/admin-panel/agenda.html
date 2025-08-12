@@ -451,6 +451,39 @@ function guardarClase(){
   })();
 }
 
+// === Modal (exponer en window para que funcionen los onclick del HTML) ===
+window.abrirModal = function (){
+  overlay.style.display = 'flex';
+  buscadorAlumno.value = '';
+  selectAlumno.innerHTML = '';
+  chkUnica.checked = false;
+  chkPrueba.checked = false;
+  boxRecurrente.style.display = '';
+  boxUnica.style.display = 'none';
+  boxPrueba.style.display = 'none';
+  selectSede.value = '';
+  refrescarDiasYHoras();
+};
+
+window.cerrarModal = function (){
+  overlay.style.display = 'none';
+};
+
+window.toggleModo = function (modo){
+  if (modo === 'unica'  && chkUnica.checked)  chkPrueba.checked = false;
+  if (modo === 'prueba' && chkPrueba.checked) chkUnica.checked = false;
+
+  const unica  = chkUnica.checked;
+  const prueba = chkPrueba.checked;
+
+  boxRecurrente.style.display = (!unica && !prueba) ? '' : 'none';
+  boxUnica.style.display      = unica  ? '' : 'none';
+  boxPrueba.style.display     = prueba ? '' : 'none';
+
+  refrescarDiasYHoras();
+};
+
+
 /* ===== Init ===== */
 async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
 window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
