@@ -25,10 +25,9 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Obtener clases de una semana
+// GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
 router.get('/', async (req, res) => {
   const { desde, hasta, alumno_id, sede } = req.query;
-
   try {
     const params = [desde, hasta];
     let where = 'c.fecha BETWEEN $1 AND $2';
@@ -42,20 +41,17 @@ router.get('/', async (req, res) => {
       where += ` AND c.alumno_id = $${params.length}`;
     }
 
-    const resultado = await pool.query(
-      `
+    const sql = `
       SELECT c.*, a.nombre, a.apellido, a.numero_alumno
       FROM clases c
-      JOIN alumnos a ON a.id = c.alumno_id
+      LEFT JOIN alumnos a ON a.id = c.alumno_id  -- 👈 importante para incluir PRUEBAS
       WHERE ${where}
       ORDER BY c.fecha, c.hora
-      `,
-      params
-    );
-
-    res.json(resultado.rows);
-  } catch (err) {
-    console.error('Error al obtener clases:', err);
+    `;
+    const r = await pool.query(sql, params);
+    res.json(r.rows);
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
