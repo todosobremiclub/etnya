@@ -199,6 +199,10 @@
 
         <!-- Prueba -->
         <div id="boxPrueba" style="display:none;margin-top:10px;">
+<div style="margin-top:10px;">
+  <label>Nombre (prueba)</label>
+  <input type="text" id="nombrePrueba" placeholder="Ingresá nombre">
+</div>
           <label>Motivo/nota de prueba</label>
           <textarea id="notaPrueba" rows="3" placeholder="Escribí una breve nota..."></textarea>
           <div style="margin-top:10px;" class="row">
@@ -443,44 +447,58 @@ async function eliminarClasesAlumno(){
   }
 }
 
+// Texto del chip: número+nombre (alumno) o nombre de prueba (nota)
+function chipText(cl){
+  const nombrePrueba = (cl.nota || '').trim();
+  // si no hay alumno (prueba), usamos el nombre ingresado
+  if ((cl.alumno_id == null || cl.alumno_id === 0) && nombrePrueba) return nombrePrueba;
 
+  const nombre = (cl.nombre || '').trim();
+  const num = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
+  const base = `${num ? num + ' ' : ''}${nombre}`.trim();
+  return base || nombrePrueba || 'Prueba';
+}
 
 /* ===== Pintar ===== */
 function pintarClases(){
-  document.querySelectorAll('td.slot .left, td.slot .right').forEach(n=>n.innerHTML='');
+  // limpiar
+  document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
-  // agrupar por fecha|hora (normalizada)
-  const mapa=new Map();
-  for(const c of clasesSemana){
-    const key = `${c.fecha}|${c.hora}`; // ya vienen normalizados
-    if(!mapa.has(key)) mapa.set(key,[]);
+  // agrupar por fecha|hora|sede
+  const mapa = new Map();
+  for (const c of clasesSemana){
+    const sede = (c.sede || '').trim();
+    const key  = `${c.fecha}|${c.hora}|${sede}`; // ya normalizados
+    if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push(c);
   }
 
-  document.querySelectorAll('td.slot').forEach(td=>{
-    const key=`${td.dataset.fecha}|${normTime(td.dataset.hora)}`;
-    const arr=mapa.get(key)||[];
-    const left=td.querySelector('.left'); const right=td.querySelector('.right');
+  // render
+  document.querySelectorAll('td.slot').forEach(td => {
+    const key  = `${td.dataset.fecha}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
+    const arr  = mapa.get(key) || [];
+    const left = td.querySelector('.left');
+    const right= td.querySelector('.right');
 
-    arr.slice(0,3).forEach(cl=>{
-  const tag = document.createElement('div'); tag.className='tag';
-  const num = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
-  const nombre = cl.nombre ?? '';
-  tag.textContent = `${num ? num + ' ' : ''}${nombre}`.trim();
-  left.appendChild(tag);
-});
+    arr.slice(0,3).forEach(cl => {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = chipText(cl);
+      left.appendChild(tag);
+    });
 
-arr.slice(3,6).forEach(cl=>{
-  const tag = document.createElement('div'); tag.className='tag';
-  const num = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
-  const nombre = cl.nombre ?? '';
-  tag.textContent = `${num ? num + ' ' : ''}${nombre}`.trim();
-  right.appendChild(tag);
-});
+    arr.slice(3,6).forEach(cl => {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = chipText(cl);
+      right.appendChild(tag);
+    });
 
-    if(arr.length>6){
-      const d=document.createElement('div'); d.className='tag full'; d.textContent=`+ ${arr.length-6} en espera`;
-      right.appendChild(d);
+    if (arr.length > 6){
+      const more = document.createElement('div');
+      more.className = 'tag full';
+      more.textContent = `+ ${arr.length - 6} en espera`;
+      right.appendChild(more);
     }
   });
 }
@@ -607,11 +625,15 @@ function fechasHastaFinDeAnio(dow){
 
 /* ===== Guardar ===== */
 function guardarClase(){
-  const alumno_id = parseInt(selectAlumno.value, 10);
-  if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
-
   const esUnica  = chkUnica.checked;
   const esPrueba = chkPrueba.checked;
+
+  // alumno_id solo si NO es prueba
+  let alumno_id = null;
+  if (!esPrueba){
+    alumno_id = parseInt(selectAlumno.value, 10);
+    if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
+  }
 
   let clases = [];
 
@@ -625,14 +647,17 @@ function guardarClase(){
     clases.push({ fecha, hora, sede });
   }
 
-  // === Prueba ===
+  // === Clase de PRUEBA (sin alumno, usa nombrePrueba) ===
   else if (esPrueba){
-    const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
-    const fecha = fechaPrueba.value;
-    const hora  = normTime(horaPrueba.value);
+    const sede   = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
+    const fecha  = fechaPrueba.value;
+    const hora   = normTime(horaPrueba.value);
+    const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+    if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
     if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
-    clases.push({ fecha, hora, sede });
+    // guardamos el nombre de prueba en 'nota'
+    clases.push({ fecha, hora, sede, nota: nombre });
   }
 
   // === Recurrente (reemplazo inteligente) ===
@@ -730,12 +755,12 @@ function guardarClase(){
       const res = await fetch('/clases', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ alumno_id, clases })
+        body: JSON.stringify({ alumno_id, clases }) // alumno_id puede ser null en prueba
       });
       if (!res.ok) throw new Error('Error al guardar');
       cerrarModal();
       await cargarSemana();
-      await cargarSituacionAlumno(alumno_id);
+      await cargarSituacionAlumno(alumno_id || 0);
       alert('Clases registradas');
     }catch(e){
       console.error(e);
@@ -772,6 +797,10 @@ window.toggleModo = function (modo){
 
   const unica  = chkUnica.checked;
   const prueba = chkPrueba.checked;
+// ocultar/mostrar la columna izquierda (buscador) según sea prueba
+const colIzq = document.querySelector('.modal .row > div:first-child');
+if (colIzq) colIzq.style.display = (prueba ? 'none' : '');
+
 
   boxRecurrente.style.display = (!unica && !prueba) ? '' : 'none';
   boxUnica.style.display      = unica  ? '' : 'none';
@@ -785,6 +814,8 @@ if (btnEliminar){
   btnEliminar.addEventListener('click', eliminarClasesAlumno);
 }
 
+const np = document.getElementById('nombrePrueba');
+if (np) np.value = '';
 
 
 /* ===== Init ===== */
