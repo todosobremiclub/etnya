@@ -50,14 +50,30 @@
       padding:6px;
       display:flex;
       flex-direction:column;
-      gap:4px;
+      gap:8px;
     }
     .half.left{border-right:1px solid #e0e0e0}
-    .tag{
-      background:#f7faf8;border:1px solid #94b8a3;border-radius:6px;
-      padding:2px 6px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-    }
-    .tag.full{background:#ffd5d5;border-color:#ff9b9b;text-align:center}
+   .tag{
+  display:block;
+  width:100%;
+  padding:8px 10px;
+  border-radius:10px;
+  background:#f3fbf7;
+  border:1px solid #94b8a3;
+  box-shadow:0 1px 0 rgba(0,0,0,.03);
+  font-size:12px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tag.full{
+  background:#ffdede;
+  border-color:#ff9b9b;
+  text-align:center;
+  font-weight:600;
+}
 
     /* ====== Modal ====== */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1200}
@@ -316,15 +332,21 @@ function pintarClases(){
     const left=td.querySelector('.left'); const right=td.querySelector('.right');
 
     arr.slice(0,3).forEach(cl=>{
-      const d=document.createElement('div'); d.className='tag';
-      d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
-      left.appendChild(d);
-    });
-    arr.slice(3,6).forEach(cl=>{
-      const d=document.createElement('div'); d.className='tag';
-      d.textContent=`${cl.numero_alumno?String(cl.numero_alumno).padStart(2,'0'):''} ${cl.apellido?cl.apellido+', ':''}${cl.nombre||''}`.trim();
-      right.appendChild(d);
-    });
+  const tag = document.createElement('div'); tag.className='tag';
+  const num = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+  const nombre = cl.nombre ?? '';
+  tag.textContent = `${num ? num + ' ' : ''}${nombre}`.trim();
+  left.appendChild(tag);
+});
+
+arr.slice(3,6).forEach(cl=>{
+  const tag = document.createElement('div'); tag.className='tag';
+  const num = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+  const nombre = cl.nombre ?? '';
+  tag.textContent = `${num ? num + ' ' : ''}${nombre}`.trim();
+  right.appendChild(tag);
+});
+
     if(arr.length>6){
       const d=document.createElement('div'); d.className='tag full'; d.textContent=`+ ${arr.length-6} en espera`;
       right.appendChild(d);
