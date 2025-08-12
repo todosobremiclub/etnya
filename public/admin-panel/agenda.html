@@ -643,10 +643,6 @@ window.toggleModo = function (modo){
   refrescarDiasYHoras();
 };
 
-selectAlumno.addEventListener('change', () => {
-  const id = parseInt(selectAlumno.value, 10) || 0;
-  cargarSituacionAlumno(id);
-});
 
 
 
@@ -674,6 +670,14 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   const fechaPrueba=document.getElementById('fechaPrueba');
   const horaPrueba=document.getElementById('horaPrueba');
   const notaPrueba=document.getElementById('notaPrueba');
+  const id = parseInt(selectAlumno.value, 10) || 0;
+  cargarSituacionAlumno(id);
+
+	
+selectAlumno.addEventListener('change', () => {
+  const id = parseInt(selectAlumno.value, 10) || 0;
+  cargarSituacionAlumno(id);
+});
 </script>
 </body>
 </html>
