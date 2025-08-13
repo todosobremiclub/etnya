@@ -568,40 +568,55 @@ chkSobreHora.checked = (estado === 'sobre_hora');
 
 function cerrarModalClase(){ overlayClase.style.display = 'none'; }
 
-function guardarEstadoClase(){
-  // solo uno activo (como radios)
- let estado = '';
-if (chkAsistio.checked)   estado = 'asistio';
-else if (chkSinAviso.checked)  estado = 'sin_aviso';
-else if (chkConAviso.checked)  estado = 'con_aviso';
-else if (chkSobreHora.checked) estado = 'sobre_hora';
+async function guardarEstadoClase(){
+  // único estado seleccionado (o ninguno para limpiar)
+  let estado = '';
+  if (chkAsistio.checked)        estado = 'asistio';
+  else if (chkSinAviso.checked)  estado = 'sin_aviso';
+  else if (chkConAviso.checked)  estado = 'con_aviso';
+  else if (chkSobreHora.checked) estado = 'sobre_hora';
 
-
-  // actualizar UI inmediata
+  // UI inmediata
   if (claseSelTag){
     claseSelTag.dataset.estado = estado;
     applyEstadoClassToTag(claseSelTag, estado);
   }
 
-  // persistir en backend (PATCH /clases/:id {estado}) con fallback
-  if (claseSelId){
-    fetch(`/clases/${claseSelId}`, {
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ estado })
-    }).then(r=>{
-      if (!r.ok) throw new Error();
-    }).catch(async ()=>{
-      await fetch('/clases/estado', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ id: claseSelId, estado })
+  try{
+    if (claseSelId){
+      // intenta PATCH /clases/:id
+      let r = await fetch(`/clases/${claseSelId}`, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ estado: estado || null })
       });
-    }).finally(()=>{
-      cerrarModalClase();
-    });
-  } else {
+
+      // fallback POST /clases/estado si el PATCH no existe
+      if (!r.ok){
+        r = await fetch('/clases/estado', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ id: claseSelId, estado: estado || null })
+        });
+        if (!r.ok) throw new Error('No se pudo guardar el estado');
+      }
+
+      // sincronizar cache local para persistir en repintados/cambios de semana
+      const it = clasesSemana.find(c => c.id === claseSelId);
+      if (it) it.estado = estado || null;
+    }
     cerrarModalClase();
+  }catch(err){
+    console.error(err);
+    alert('No se pudo guardar el estado');
+
+    // rollback visual si falló
+    if (claseSelTag){
+      const it = clasesSemana.find(c => c.id === claseSelId);
+      const prev = it ? (it.estado || '') : '';
+      claseSelTag.dataset.estado = prev;
+      applyEstadoClassToTag(claseSelTag, prev);
+    }
   }
 }
 
