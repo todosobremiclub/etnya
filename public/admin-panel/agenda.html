@@ -375,21 +375,41 @@ function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAl
 
 async function cargarClasesSemana(){
   const desde = ymd(semanaInicio);
-  const dias  = diasHabilitados(sedeSeleccionada);
+  const dias  = diasHabilitados(sedeSeleccionada) || [1,2,3,4,5];
   const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
 
-  const res  = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
-  const data = await res.json();
+  const url = `/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`;
 
-  clasesSemana = (data || [])
-    .map(c => ({
-      ...c,
-      fecha : normDate(c.fecha),
-      hora  : normTime(c.hora),
-      sede  : (c.sede || '').trim(),
-      estado: c.estado || null
-    }))
-    .filter(c => c.sede === sedeSeleccionada); // filtro final por sede
+  try{
+    const res = await fetch(url);
+    if (!res.ok){
+      const txt = await res.text();
+      console.error('GET /clases fallo', res.status, txt);
+      clasesSemana = [];
+      return; // no intentes mapear
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)){
+      console.warn('GET /clases devolvió algo que no es array:', data);
+      clasesSemana = [];
+      return;
+    }
+
+    clasesSemana = data
+      .map(c => ({
+        ...c,
+        fecha : normDate(c.fecha),
+        hora  : normTime(c.hora),
+        sede  : (c.sede || '').trim(),
+        estado: c.estado || null
+      }))
+      .filter(c => c.sede === sedeSeleccionada);
+
+  }catch(err){
+    console.error('Error de red/parseo en /clases:', err);
+    clasesSemana = [];
+  }
 }
 
 async function cargarSituacionAlumno(alumnoId){
