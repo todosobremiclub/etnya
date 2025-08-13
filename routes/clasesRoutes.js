@@ -8,66 +8,54 @@ router.get('/', async (req, res) => {
   try {
     let { desde, hasta, alumno_id, sede } = req.query;
 
-    if (!desde || !hasta){
-      return res.status(400).json({ error: 'Parámetros desde y hasta son requeridos', got: {desde, hasta, sede} });
+    // Validación temprana
+    if (!desde || !hasta) {
+      return res.status(400).json({
+        error: 'Parámetros "desde" y "hasta" son requeridos',
+        got: { desde, hasta, sede, alumno_id }
+      });
     }
 
-    const params = [desde, hasta];
-    let where = 'c.fecha BETWEEN $1 AND $2';
+    // Construcción segura del WHERE y los parámetros
+    const params = [];
+    const wheres = [];
+
+    params.push(desde);
+    wheres.push(`c.fecha >= $${params.length}`);
+
+    params.push(hasta);
+    wheres.push(`c.fecha <= $${params.length}`);
 
     if (sede) {
       sede = String(sede).trim();
       params.push(sede);
-      where += ` AND c.sede = $${params.length}`;
+      wheres.push(`c.sede = $${params.length}`);
     }
+
     if (alumno_id) {
       params.push(parseInt(alumno_id, 10));
-      where += ` AND c.alumno_id = $${params.length}`;
+      wheres.push(`c.alumno_id = $${params.length}`);
     }
 
     const sql = `
-      SELECT c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
-             a.nombre, a.apellido, a.numero_alumno
+      SELECT
+        c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
+        a.nombre, a.apellido, a.numero_alumno
       FROM clases c
       LEFT JOIN alumnos a ON a.id = c.alumno_id
-      WHERE ${where}
+      ${wheres.length ? 'WHERE ' + wheres.join(' AND ') : ''}
       ORDER BY c.fecha, c.hora
     `;
+
+    // Logs útiles para Render
+    console.log('[GET /clases] params:', { desde, hasta, sede, alumno_id });
+    console.log('[GET /clases] SQL:', sql, 'params:', params);
+
     const r = await pool.query(sql, params);
     return res.json(r.rows);
-
   } catch (err) {
-    console.error('Error en GET /clases:', err);
-    return res.status(500).json({ error: 'Error del servidor' });
-  }
-});
-
-// POST /clases  { alumno_id?: number|null, clases: [{fecha, hora, sede, nota?}] }
-router.post('/', async (req, res) => {
-  const { alumno_id, clases } = req.body;
-
-  if (!Array.isArray(clases) || clases.length === 0) {
-    return res.status(400).json({ error: 'Datos incompletos' });
-  }
-
-  try {
-    for (const clase of clases) {
-      await pool.query(
-        `INSERT INTO clases (alumno_id, fecha, hora, sede, nota)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [
-          alumno_id ?? null,
-          clase.fecha,
-          clase.hora,
-          (clase.sede || '').trim(),
-          clase.nota ?? null
-        ]
-      );
-    }
-    res.status(201).json({ mensaje: 'Clases guardadas con éxito' });
-  } catch (err) {
-    console.error('Error al guardar clase:', err);
-    res.status(500).json({ error: 'Error del servidor' });
+    console.error('[GET /clases] error:', err);
+    return res.status(500).json({ error: 'Error del servidor', detail: err.message });
   }
 });
 
