@@ -944,7 +944,7 @@ async function eliminarClaseSeleccionada(){
   if (!ok) return;
 
   try{
-    // Intento 1: endpoint por id si existe en tu backend
+    // Intento 1: endpoint por id
     let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
 
     // Fallback: borra con el endpoint masivo enviando un solo id
@@ -972,8 +972,9 @@ async function eliminarClaseSeleccionada(){
   }
 }
 
-// Exponer
+// 🔹 Esto es lo que faltaba para que el onclick del HTML la vea
 window.eliminarClaseSeleccionada = eliminarClaseSeleccionada;
+
 
   })();
 }
