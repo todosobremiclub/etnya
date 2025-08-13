@@ -475,12 +475,7 @@ async function eliminarClasesAlumno(){
     await cargarSemana();
     await cargarSituacionAlumno(alumno_id);
     alert('Clases eliminadas');
-  }catch(e){
-    console.error(e);
-    alert('Error al eliminar las clases');
   }
-}
-
 // Texto del chip: número+nombre (alumno) o nombre de prueba (nota)
 function chipText(cl){
   const nombrePrueba = (cl.nota || '').trim();
