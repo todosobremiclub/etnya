@@ -5,14 +5,19 @@ const pool = require('../db'); // <-- ajustá si tu proyecto usa otra ruta
 
 // GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
 router.get('/', async (req, res) => {
-  const { desde, hasta, alumno_id, sede } = req.query;
-
   try {
+    let { desde, hasta, alumno_id, sede } = req.query;
+
+    if (!desde || !hasta){
+      return res.status(400).json({ error: 'Parámetros desde y hasta son requeridos' });
+    }
+
     const params = [desde, hasta];
     let where = 'c.fecha BETWEEN $1 AND $2';
 
     if (sede) {
-      params.push(sede.trim());
+      sede = sede.trim();
+      params.push(sede);
       where += ` AND c.sede = $${params.length}`;
     }
     if (alumno_id) {
@@ -21,20 +26,19 @@ router.get('/', async (req, res) => {
     }
 
     const sql = `
-      SELECT
-        c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
-        a.nombre, a.apellido, a.numero_alumno
+      SELECT c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
+             a.nombre, a.apellido, a.numero_alumno
       FROM clases c
       LEFT JOIN alumnos a ON a.id = c.alumno_id
       WHERE ${where}
       ORDER BY c.fecha, c.hora
     `;
-
     const r = await pool.query(sql, params);
-    res.json(r.rows);
+    return res.json(r.rows);
+
   } catch (err) {
-    console.error('Error al obtener clases:', err);
-    res.status(500).json({ error: 'Error del servidor' });
+    console.error('Error en GET /clases:', err);
+    return res.status(500).json({ error: 'Error del servidor' });
   }
 });
 
