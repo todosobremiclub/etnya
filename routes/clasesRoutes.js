@@ -59,6 +59,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+// DELETE /clases/:id  -> borra una sola clase
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const r = await pool.query('DELETE FROM clases WHERE id = $1', [id]);
+    res.json({ eliminadas: r.rowCount });
+  } catch (err) {
+    console.error('Error al borrar clase por id:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+
 // DELETE /clases  { ids: number[] }
 router.delete('/', async (req, res) => {
   const { ids } = req.body;

@@ -250,9 +250,11 @@
     </div>
 
     <div class="footer">
-      <button onclick="cerrarModalClase()">Cerrar</button>
-      <button onclick="guardarEstadoClase()">Guardar</button>
-    </div>
+  <button onclick="cerrarModalClase()">Cerrar</button>
+  <button onclick="guardarEstadoClase()">Guardar</button>
+  <button onclick="eliminarClaseSeleccionada()" style="background:#e57373">Eliminar clase</button>
+</div>
+
   </div>
 </div>
 
@@ -932,6 +934,47 @@ function guardarClase(){
       console.error(e);
       alert('No se pudo guardar');
     }
+
+async function eliminarClaseSeleccionada(){
+  if (!claseSelId){
+    alert('No hay una clase seleccionada.'); 
+    return;
+  }
+  const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
+  if (!ok) return;
+
+  try{
+    // Intento 1: endpoint por id si existe en tu backend
+    let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
+
+    // Fallback: borra con el endpoint masivo enviando un solo id
+    if (r.status === 404){
+      r = await fetch('/clases', {
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ ids: [claseSelId] })
+      });
+    }
+
+    if (!r.ok){
+      const t = await r.text();
+      throw new Error(t || 'No se pudo eliminar la clase');
+    }
+
+    // Actualizar cache local y UI
+    clasesSemana = clasesSemana.filter(c => c.id !== claseSelId);
+    pintarClases();
+    cerrarModalClase();
+    alert('Clase eliminada.');
+  }catch(err){
+    console.error(err);
+    alert('Error al eliminar la clase.');
+  }
+}
+
+// Exponer
+window.eliminarClaseSeleccionada = eliminarClaseSeleccionada;
+
   })();
 }
 
