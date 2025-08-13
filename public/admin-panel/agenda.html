@@ -339,6 +339,8 @@ function construirTablaBase(){
                         <div class="half left"></div>
                         <div class="half right"></div>
                       </div>`;
+
+td.addEventListener('dblclick', onSlotDblClick);
       tr.appendChild(td);
     });
 
@@ -555,6 +557,7 @@ let claseSelId = null;
 let claseSelTag = null;
 
 function onTagDblClick(e){
+  e.stopPropagation();
   const tag = e.currentTarget;
   claseSelTag = tag;
   claseSelId  = parseInt(tag.dataset.id, 10) || null;
@@ -616,6 +619,32 @@ else if (chkSobreHora.checked) estado = 'sobre_hora';
 // exponer para los botones del modal
 window.cerrarModalClase = cerrarModalClase;
 window.guardarEstadoClase = guardarEstadoClase;
+
+function onSlotDblClick(e){
+  const td = e.currentTarget;
+  const fecha = td.dataset.fecha;
+  const hora  = normTime(td.dataset.hora);
+  const sede  = (td.dataset.sede||'').trim();
+
+  // abrir y preparar modal
+  abrirModal();
+
+  // setear sede y reconstruir combos de horas/días
+  selectSede.value = sede;
+  onSedeChange(); // llama a refrescarDiasYHoras internamente
+
+  // preseleccionar "única vez" (podés cambiar a 'prueba' si querés)
+  chkUnica.checked = true;
+  chkPrueba.checked = false;
+  toggleModo('unica');
+
+  // precargar fecha/hora en ambas secciones (por si cambiás de modo)
+  fechaUnica.value   = fecha;
+  horaUnica.value    = hora;
+  fechaPrueba.value  = fecha;
+  horaPrueba.value   = hora;
+}
+
 
 
 /* ===== Modal helpers ===== */
@@ -952,7 +981,7 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   selectHoraGeneral.addEventListener('change', applyHoraToSelectedDays);
   const chipsDias=document.getElementById('chipsDias');
   const perDiaDiv=document.getElementById('perDia');
-  const fechaUnica=document.getElementById('fechaUnica');
+  const fechaUnica=document.getElementById('fechaUnica');construirTablaBase
   const horaUnica=document.getElementById('horaUnica');
   const fechaPrueba=document.getElementById('fechaPrueba');
   const horaPrueba=document.getElementById('horaPrueba');
