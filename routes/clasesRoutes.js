@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-
-// Guardar clase (única o recurrente)
+// Guardar clase (única, prueba o recurrente)
 router.post('/', async (req, res) => {
   const { alumno_id, clases } = req.body;
 
@@ -12,18 +11,25 @@ router.post('/', async (req, res) => {
 
   try {
     for (const clase of clases) {
-      await pool.query(`
-        INSERT INTO clases (alumno_id, fecha, hora, sede)
-        VALUES ($1, $2, $3, $4)
-      `, [alumno_id, clase.fecha, clase.hora, clase.sede]);
+      await pool.query(
+        `INSERT INTO clases (alumno_id, fecha, hora, sede, nota)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          alumno_id ?? null,
+          clase.fecha,
+          clase.hora,                      // 'HH:MM:SS' desde el front
+          (clase.sede || '').trim(),
+          clase.nota ?? null               // nombre de “prueba”, si corresponde
+        ]
+      );
     }
-
     res.status(201).json({ mensaje: 'Clases guardadas con éxito' });
   } catch (err) {
     console.error('Error al guardar clase:', err);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
 
 // GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
 router.get('/', async (req, res) => {
@@ -75,5 +81,23 @@ router.delete('/', async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
+// Actualizar estado de una clase (sin_aviso | con_aviso | sobre_hora | null)
+router.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { estado } = req.body; // puede venir null/undefined para limpiar
+
+  try {
+    const r = await pool.query(
+      'UPDATE clases SET estado = $1 WHERE id = $2',
+      [estado ?? null, id]
+    );
+    res.json({ updated: r.rowCount });
+  } catch (err) {
+    console.error('Error al actualizar estado:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 
 module.exports = router;
