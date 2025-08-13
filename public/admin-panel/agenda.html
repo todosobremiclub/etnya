@@ -459,6 +459,7 @@ async function eliminarClasesAlumno(){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ ids })
     });
+
     // fallback si tu backend expone bulk-delete como POST
     if (del.status === 404){
       del = await fetch('/clases/bulk-delete', {
@@ -467,6 +468,7 @@ async function eliminarClasesAlumno(){
         body: JSON.stringify({ ids })
       });
     }
+
     if (!del.ok){
       const t = await del.text();
       throw new Error(t || 'No se pudo borrar');
@@ -475,7 +477,11 @@ async function eliminarClasesAlumno(){
     await cargarSemana();
     await cargarSituacionAlumno(alumno_id);
     alert('Clases eliminadas');
+  } catch(e){
+    console.error(e);
+    alert('Error al eliminar las clases');
   }
+}
 // Texto del chip: número+nombre (alumno) o nombre de prueba (nota)
 function chipText(cl){
   const nombrePrueba = (cl.nota || '').trim();
@@ -970,7 +976,7 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   selectHoraGeneral.addEventListener('change', applyHoraToSelectedDays);
   const chipsDias=document.getElementById('chipsDias');
   const perDiaDiv=document.getElementById('perDia');
-  const fechaUnica=document.getElementById('fechaUnica');construirTablaBase
+  const fechaUnica=document.getElementById('fechaUnica');
   const horaUnica=document.getElementById('horaUnica');
   const fechaPrueba=document.getElementById('fechaPrueba');
   const horaPrueba=document.getElementById('horaPrueba');
