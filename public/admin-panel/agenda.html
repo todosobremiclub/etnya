@@ -378,20 +378,27 @@ async function cargarClasesSemana(){
   const dias  = diasHabilitados(sedeSeleccionada) || [1,2,3,4,5];
   const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
 
-  const url = `/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`;
+  // Construcción segura de la query
+  const params = new URLSearchParams();
+  params.set('desde', desde);
+  params.set('hasta', hasta);
+  params.set('sede', sedeSeleccionada || '');
+
+  const url = `/clases?${params.toString()}`;
+  // console.debug('GET', url);
 
   try{
     const res = await fetch(url);
     if (!res.ok){
-      const txt = await res.text();
+      const txt = await res.text().catch(()=> '');
       console.error('GET /clases fallo', res.status, txt);
       clasesSemana = [];
-      return; // no intentes mapear
+      return;
     }
 
     const data = await res.json();
     if (!Array.isArray(data)){
-      console.warn('GET /clases devolvió algo que no es array:', data);
+      console.warn('GET /clases no devolvió array:', data);
       clasesSemana = [];
       return;
     }
