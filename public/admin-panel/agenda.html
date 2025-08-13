@@ -939,16 +939,16 @@ function guardarClase(){
       alert('No se pudo guardar');
     }
   })();
+}
 
 // ---- ELIMINAR CLASE (una sola) ----
-async function eliminarClaseSeleccionada(){
+window.eliminarClaseSeleccionada = async function (){
   if (!claseSelId){
     alert('No hay una clase seleccionada.');
     return;
   }
   const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
   if (!ok) return;
-
   try{
     // Intento 1: DELETE /clases/:id
     let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
