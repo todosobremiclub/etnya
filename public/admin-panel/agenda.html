@@ -229,10 +229,12 @@
       </div>
     </div>
 
-    <div class="footer">
-      <button onclick="cerrarModal()">Cancelar</button>
-      <button onclick="guardarClase()">Guardar</button>
-    </div>
+   <div class="footer">
+  <button onclick="cerrarModalClase()">Cerrar</button>
+  <button onclick="guardarEstadoClase()">Guardar</button>
+  <button id="btnEliminarClaseUnica" type="button" style="background:#e57373">Eliminar clase</button>
+</div>
+
   </div>
 </div>
 
@@ -975,12 +977,43 @@ async function eliminarClaseSeleccionada(){
   }
 }
 
-// 🔸 Exponer al scope global para que funcione el onclick del HTML
-window.eliminarClaseSeleccionada = eliminarClaseSeleccionada;
+// Eliminar una clase (la seleccionada en el modal)
+window.eliminarClaseSeleccionada = async function (){
+  if (!claseSelId){
+    alert('No hay una clase seleccionada.');
+    return;
+  }
+  const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
+  if (!ok) return;
 
+  try{
+    // 1) Intento: DELETE /clases/:id
+    let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
 
-  })();
-}
+    // 2) Fallback si ese endpoint no existe: DELETE masivo con un solo id
+    if (r.status === 404){
+      r = await fetch('/clases', {
+        method:'DELETE',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ ids: [claseSelId] })
+      });
+    }
+
+    if (!r.ok){
+      const t = await r.text();
+      throw new Error(t || 'No se pudo eliminar la clase');
+    }
+
+    // Actualizar cache/UI
+    clasesSemana = clasesSemana.filter(c => c.id !== claseSelId);
+    pintarClases();
+    cerrarModalClase();
+    alert('Clase eliminada.');
+  }catch(err){
+    console.error(err);
+    alert('Error al eliminar la clase.');
+  }
+};
 
 // === Modal (exponer en window para que funcionen los onclick del HTML) ===
 window.abrirModal = function (){
@@ -1029,6 +1062,11 @@ if (btnEliminar){
 
 const np = document.getElementById('nombrePrueba');
 if (np) np.value = '';
+
+const btnEliminarClaseUnica = document.getElementById('btnEliminarClaseUnica');
+if (btnEliminarClaseUnica){
+  btnEliminarClaseUnica.addEventListener('click', eliminarClaseSeleccionada);
+}
 
 
 /* ===== Init ===== */
