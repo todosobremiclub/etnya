@@ -80,6 +80,7 @@
 }
 
 /* Estados de asistencia (colores fuertes) */
+.tag.estado-asistio     { background:#fff6bf; border-color:#e6d98a; color:#5a5200; } /* amarillo clarito */
 .tag.estado-sin-aviso { background:#ffe066; border-color:#e6b800; color:#5a4b00; }
 .tag.estado-con-aviso { background:#ffc2d1; border-color:#ff8fa3; color:#6d3e4e; }
 .tag.estado-sobre-hora{ background:#b2f2bb; border-color:#63d471; color:#245b2a; }
@@ -242,6 +243,7 @@
     <div id="claseInfo" style="margin-bottom:10px;color:#6d6d6d;font-size:13px"></div>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+      <label><input type="checkbox" id="chkAsistio"> Asistió</label>
       <label><input type="checkbox" id="chkSinAviso"> Ausente sin aviso</label>
       <label><input type="checkbox" id="chkConAviso"> Ausente con aviso</label>
       <label><input type="checkbox" id="chkSobreHora"> Ausente sobre la hora</label>
@@ -492,8 +494,9 @@ function chipText(cl){
 
 // aplicar clases visuales según estado
 function applyEstadoClassToTag(tag, estado){
-  tag.classList.remove('estado-sin-aviso','estado-con-aviso','estado-sobre-hora');
+  tag.classList.remove('estado-asistio','estado-sin-aviso','estado-con-aviso','estado-sobre-hora');
   if (!estado) return;
+  if (estado==='asistio')     tag.classList.add('estado-asistio');
   if (estado==='sin_aviso')   tag.classList.add('estado-sin-aviso');
   if (estado==='con_aviso')   tag.classList.add('estado-con-aviso');
   if (estado==='sobre_hora')  tag.classList.add('estado-sobre-hora');
@@ -562,9 +565,11 @@ function onTagDblClick(e){
   document.getElementById('claseInfo').textContent = `${numero ? numero+' · ' : ''}${nombre}`;
 
   const estado = tag.dataset.estado || '';
-  chkSinAviso.checked  = (estado === 'sin_aviso');
-  chkConAviso.checked  = (estado === 'con_aviso');
-  chkSobreHora.checked = (estado === 'sobre_hora');
+  chkAsistio.checked   = (estado === 'asistio');
+chkSinAviso.checked  = (estado === 'sin_aviso');
+chkConAviso.checked  = (estado === 'con_aviso');
+chkSobreHora.checked = (estado === 'sobre_hora');
+
 
   overlayClase.style.display = 'flex';
 }
@@ -573,10 +578,12 @@ function cerrarModalClase(){ overlayClase.style.display = 'none'; }
 
 function guardarEstadoClase(){
   // solo uno activo (como radios)
-  let estado = '';
-  if (chkSinAviso.checked)  estado = 'sin_aviso';
-  if (chkConAviso.checked)  estado = 'con_aviso';
-  if (chkSobreHora.checked) estado = 'sobre_hora';
+ let estado = '';
+if (chkAsistio.checked)   estado = 'asistio';
+else if (chkSinAviso.checked)  estado = 'sin_aviso';
+else if (chkConAviso.checked)  estado = 'con_aviso';
+else if (chkSobreHora.checked) estado = 'sobre_hora';
+
 
   // actualizar UI inmediata
   if (claseSelTag){
@@ -953,13 +960,12 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   const id = parseInt(selectAlumno.value, 10) || 0;
   cargarSituacionAlumno(id);
 // Refs modal de clase
-const overlayClase = document.getElementById('overlayClase');
+const chkAsistio  = document.getElementById('chkAsistio');
 const chkSinAviso  = document.getElementById('chkSinAviso');
 const chkConAviso  = document.getElementById('chkConAviso');
 const chkSobreHora = document.getElementById('chkSobreHora');
 
-// Que actúen como radios
-[chkSinAviso, chkConAviso, chkSobreHora].forEach((chk, idx, arr) => {
+[chkAsistio, chkSinAviso, chkConAviso, chkSobreHora].forEach((chk, _, arr) => {
   chk.addEventListener('change', (e)=>{
     if (!e.target.checked) return;
     arr.forEach(c => { if (c !== e.target) c.checked = false; });
