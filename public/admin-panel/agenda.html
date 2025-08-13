@@ -79,6 +79,15 @@
   font-weight:600;
 }
 
+/* Estados de asistencia (colores fuertes) */
+.tag.estado-sin-aviso { background:#ffe066; border-color:#e6b800; color:#5a4b00; }
+.tag.estado-con-aviso { background:#ffc2d1; border-color:#ff8fa3; color:#6d3e4e; }
+.tag.estado-sobre-hora{ background:#b2f2bb; border-color:#63d471; color:#245b2a; }
+.tag.is-clickable { cursor: pointer; }
+.tag.is-clickable { cursor: pointer; user-select: none; }
+
+
+
     /* ====== Modal ====== */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1200}
     .modal{width:min(900px,95vw);background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:16px;max-height:90vh;overflow:auto}
@@ -226,6 +235,26 @@
   </div>
 </div>
 
+<!-- Modal detalle de clase -->
+<div class="overlay" id="overlayClase">
+  <div class="modal">
+    <h3>Detalle de clase</h3>
+    <div id="claseInfo" style="margin-bottom:10px;color:#6d6d6d;font-size:13px"></div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+      <label><input type="checkbox" id="chkSinAviso"> Ausente sin aviso</label>
+      <label><input type="checkbox" id="chkConAviso"> Ausente con aviso</label>
+      <label><input type="checkbox" id="chkSobreHora"> Ausente sobre la hora</label>
+    </div>
+
+    <div class="footer">
+      <button onclick="cerrarModalClase()">Cerrar</button>
+      <button onclick="guardarEstadoClase()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
   if (localStorage.getItem('etnya_login') !== 'ok') location='login.html';
 
@@ -348,14 +377,15 @@ async function cargarClasesSemana(){
   const res  = await fetch(`/clases?desde=${desde}&hasta=${hasta}&sede=${encodeURIComponent(sedeSeleccionada)}`);
   const data = await res.json();
 
-  clasesSemana = data
+  clasesSemana = (data || [])
     .map(c => ({
       ...c,
-      fecha: normDate(c.fecha),     // '2025-08-19T...' -> '2025-08-19'
-      hora : normTime(c.hora),      // '10:00' -> '10:00:00'
-      sede : (c.sede || '').trim()  // normaliza espacios
+      fecha : normDate(c.fecha),
+      hora  : normTime(c.hora),
+      sede  : (c.sede || '').trim(),
+      estado: c.estado || null
     }))
-    .filter(c => c.sede === sedeSeleccionada); // <- filtro final por sede
+    .filter(c => c.sede === sedeSeleccionada); // filtro final por sede
 }
 
 async function cargarSituacionAlumno(alumnoId){
@@ -459,6 +489,17 @@ function chipText(cl){
   return base || nombrePrueba || 'Prueba';
 }
 
+
+// aplicar clases visuales según estado
+function applyEstadoClassToTag(tag, estado){
+  tag.classList.remove('estado-sin-aviso','estado-con-aviso','estado-sobre-hora');
+  if (!estado) return;
+  if (estado==='sin_aviso')   tag.classList.add('estado-sin-aviso');
+  if (estado==='con_aviso')   tag.classList.add('estado-con-aviso');
+  if (estado==='sobre_hora')  tag.classList.add('estado-sobre-hora');
+}
+
+
 /* ===== Pintar ===== */
 function pintarClases(){
   // limpiar
@@ -468,7 +509,7 @@ function pintarClases(){
   const mapa = new Map();
   for (const c of clasesSemana){
     const sede = (c.sede || '').trim();
-    const key  = `${c.fecha}|${c.hora}|${sede}`; // ya normalizados
+    const key  = `${c.fecha}|${c.hora}|${sede}`; // normalizados
     if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push(c);
   }
@@ -480,19 +521,23 @@ function pintarClases(){
     const left = td.querySelector('.left');
     const right= td.querySelector('.right');
 
-    arr.slice(0,3).forEach(cl => {
+    const makeTag = (cl) => {
       const tag = document.createElement('div');
-      tag.className = 'tag';
+      tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
-      left.appendChild(tag);
-    });
+      // data para el modal
+      tag.dataset.id      = cl.id;
+      tag.dataset.estado  = cl.estado || '';
+      tag.dataset.nombre  = (cl.nombre || cl.nota || '').trim();
+      tag.dataset.numero  = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+      applyEstadoClassToTag(tag, tag.dataset.estado);
+      tag.addEventListener('dblclick', onTagDblClick);
 
-    arr.slice(3,6).forEach(cl => {
-      const tag = document.createElement('div');
-      tag.className = 'tag';
-      tag.textContent = chipText(cl);
-      right.appendChild(tag);
-    });
+      return tag;
+    };
+
+    arr.slice(0,3).forEach(cl => left.appendChild(makeTag(cl)));
+    arr.slice(3,6).forEach(cl => right.appendChild(makeTag(cl)));
 
     if (arr.length > 6){
       const more = document.createElement('div');
@@ -502,6 +547,69 @@ function pintarClases(){
     }
   });
 }
+
+let claseSelId = null;
+let claseSelTag = null;
+
+function onTagDblClick(e){
+  const tag = e.currentTarget;
+  claseSelTag = tag;
+  claseSelId  = parseInt(tag.dataset.id, 10) || null;
+
+  const nombre = tag.dataset.nombre || tag.textContent;
+  const numero = tag.dataset.numero || '';
+
+  document.getElementById('claseInfo').textContent = `${numero ? numero+' · ' : ''}${nombre}`;
+
+  const estado = tag.dataset.estado || '';
+  chkSinAviso.checked  = (estado === 'sin_aviso');
+  chkConAviso.checked  = (estado === 'con_aviso');
+  chkSobreHora.checked = (estado === 'sobre_hora');
+
+  overlayClase.style.display = 'flex';
+}
+
+function cerrarModalClase(){ overlayClase.style.display = 'none'; }
+
+function guardarEstadoClase(){
+  // solo uno activo (como radios)
+  let estado = '';
+  if (chkSinAviso.checked)  estado = 'sin_aviso';
+  if (chkConAviso.checked)  estado = 'con_aviso';
+  if (chkSobreHora.checked) estado = 'sobre_hora';
+
+  // actualizar UI inmediata
+  if (claseSelTag){
+    claseSelTag.dataset.estado = estado;
+    applyEstadoClassToTag(claseSelTag, estado);
+  }
+
+  // persistir en backend (PATCH /clases/:id {estado}) con fallback
+  if (claseSelId){
+    fetch(`/clases/${claseSelId}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ estado })
+    }).then(r=>{
+      if (!r.ok) throw new Error();
+    }).catch(async ()=>{
+      await fetch('/clases/estado', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id: claseSelId, estado })
+      });
+    }).finally(()=>{
+      cerrarModalClase();
+    });
+  } else {
+    cerrarModalClase();
+  }
+}
+
+// exponer para los botones del modal
+window.cerrarModalClase = cerrarModalClase;
+window.guardarEstadoClase = guardarEstadoClase;
+
 
 /* ===== Modal helpers ===== */
 function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
@@ -844,6 +952,20 @@ window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
   const notaPrueba=document.getElementById('notaPrueba');
   const id = parseInt(selectAlumno.value, 10) || 0;
   cargarSituacionAlumno(id);
+// Refs modal de clase
+const overlayClase = document.getElementById('overlayClase');
+const chkSinAviso  = document.getElementById('chkSinAviso');
+const chkConAviso  = document.getElementById('chkConAviso');
+const chkSobreHora = document.getElementById('chkSobreHora');
+
+// Que actúen como radios
+[chkSinAviso, chkConAviso, chkSobreHora].forEach((chk, idx, arr) => {
+  chk.addEventListener('change', (e)=>{
+    if (!e.target.checked) return;
+    arr.forEach(c => { if (c !== e.target) c.checked = false; });
+  });
+});
+
 
 	
 selectAlumno.addEventListener('change', () => {
