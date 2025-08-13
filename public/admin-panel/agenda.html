@@ -978,7 +978,7 @@ window.eliminarClaseSeleccionada = async function (){
     console.error(err);
     alert('Error al eliminar la clase.');
   }
-}
+
 
 // Eliminar una clase (la seleccionada en el modal)
 window.eliminarClaseSeleccionada = async function (){
@@ -986,14 +986,13 @@ window.eliminarClaseSeleccionada = async function (){
     alert('No hay una clase seleccionada.');
     return;
   }
+
   const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
   if (!ok) return;
 
   try{
-    // 1) Intento: DELETE /clases/:id
     let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
 
-    // 2) Fallback si ese endpoint no existe: DELETE masivo con un solo id
     if (r.status === 404){
       r = await fetch('/clases', {
         method:'DELETE',
@@ -1007,12 +1006,11 @@ window.eliminarClaseSeleccionada = async function (){
       throw new Error(t || 'No se pudo eliminar la clase');
     }
 
-    // Actualizar cache/UI
     clasesSemana = clasesSemana.filter(c => c.id !== claseSelId);
     pintarClases();
     cerrarModalClase();
     alert('Clase eliminada.');
-  }catch(err){
+  } catch(err){
     console.error(err);
     alert('Error al eliminar la clase.');
   }
