@@ -251,11 +251,11 @@
       <label><input type="checkbox" id="chkSobreHora"> Ausente sobre la hora</label>
     </div>
 
-    <div class="footer">
-  <button onclick="cerrarModalClase()">Cerrar</button>
-  <button onclick="guardarEstadoClase()">Guardar</button>
-  <button onclick="eliminarClaseSeleccionada()" style="background:#e57373">Eliminar clase</button>
+   <div class="footer">
+  <button onclick="cerrarModal()">Cerrar</button>
+  <button onclick="guardarClase()">Guardar</button>
 </div>
+
 
   </div>
 </div>
@@ -943,17 +943,12 @@ function guardarClase(){
 
 // ---- ELIMINAR CLASE (una sola) ----
 window.eliminarClaseSeleccionada = async function (){
-  if (!claseSelId){
-    alert('No hay una clase seleccionada.');
-    return;
-  }
+  if (!claseSelId){ alert('No hay una clase seleccionada.'); return; }
   const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
   if (!ok) return;
-  try{
-    // Intento 1: DELETE /clases/:id
-    let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
 
-    // Fallback si no existe ese endpoint: DELETE masivo con un solo id
+  try{
+    let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
     if (r.status === 404){
       r = await fetch('/clases', {
         method:'DELETE',
@@ -961,11 +956,19 @@ window.eliminarClaseSeleccionada = async function (){
         body: JSON.stringify({ ids: [claseSelId] })
       });
     }
-
     if (!r.ok){
       const t = await r.text();
       throw new Error(t || 'No se pudo eliminar la clase');
     }
+    clasesSemana = clasesSemana.filter(c => c.id !== claseSelId);
+    pintarClases();
+    cerrarModalClase();
+    alert('Clase eliminada.');
+  }catch(err){
+    console.error(err);
+    alert('Error al eliminar la clase.');
+  }
+};
 
     // Actualizar cache local y UI
     clasesSemana = clasesSemana.filter(c => c.id !== claseSelId);
