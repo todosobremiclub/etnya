@@ -140,7 +140,7 @@
     </div>
   </div>
 
-  <div class="legend"><span><i class="i-free"></i> cupos disponibles</span><span><i class="i-full"></i> cupo completo</span></div>
+  
 
   <div class="agenda-wrap">
     <table class="agenda" id="tablaAgenda"></table>
@@ -514,7 +514,7 @@ function pintarClases(){
   const mapa = new Map();
   for (const c of clasesSemana){
     const sede = (c.sede || '').trim();
-    const key  = `${c.fecha}|${c.hora}|${sede}`; // normalizados
+    const key  = `${c.fecha}|${c.hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push(c);
   }
@@ -526,30 +526,19 @@ function pintarClases(){
     const left = td.querySelector('.left');
     const right= td.querySelector('.right');
 
-    const makeTag = (cl) => {
+    arr.forEach((cl, idx) => {
       const tag = document.createElement('div');
       tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
-      // data para el modal
+      // datos para modal de estado (si ya lo tenés)
       tag.dataset.id      = cl.id;
       tag.dataset.estado  = cl.estado || '';
       tag.dataset.nombre  = (cl.nombre || cl.nota || '').trim();
       tag.dataset.numero  = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
       applyEstadoClassToTag(tag, tag.dataset.estado);
       tag.addEventListener('dblclick', onTagDblClick);
-
-      return tag;
-    };
-
-    arr.slice(0,3).forEach(cl => left.appendChild(makeTag(cl)));
-    arr.slice(3,6).forEach(cl => right.appendChild(makeTag(cl)));
-
-    if (arr.length > 6){
-      const more = document.createElement('div');
-      more.className = 'tag full';
-      more.textContent = `+ ${arr.length - 6} en espera`;
-      right.appendChild(more);
-    }
+      (idx % 2 === 0 ? left : right).appendChild(tag);
+    });
   });
 }
 
@@ -744,11 +733,9 @@ function refrescarDiasYHoras(){
 }
 
 
-/* ===== Lógica de cupo ===== */
-function cupoDisponible(fecha,hora,sede){
-  const h = normTime(hora);
-  const arr=clasesSemana.filter(c=>c.fecha===fecha && normTime(c.hora)===h && c.sede===sede);
-  return Math.max(0,6-arr.length);
+// Cupo ilimitado: nunca bloquea
+function cupoDisponible(fecha, hora, sede){
+  return Number.POSITIVE_INFINITY;
 }
 
 // Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta fin de año
