@@ -9,14 +9,14 @@ router.get('/', async (req, res) => {
     let { desde, hasta, alumno_id, sede } = req.query;
 
     if (!desde || !hasta){
-      return res.status(400).json({ error: 'Parámetros desde y hasta son requeridos' });
+      return res.status(400).json({ error: 'Parámetros desde y hasta son requeridos', got: {desde, hasta, sede} });
     }
 
     const params = [desde, hasta];
     let where = 'c.fecha BETWEEN $1 AND $2';
 
     if (sede) {
-      sede = sede.trim();
+      sede = String(sede).trim();
       params.push(sede);
       where += ` AND c.sede = $${params.length}`;
     }
