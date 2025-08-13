@@ -654,6 +654,8 @@ async function guardarEstadoClase(){
 window.cerrarModalClase = cerrarModalClase;
 window.guardarEstadoClase = guardarEstadoClase;
 
+
+
 function onSlotDblClick(e){
   const td = e.currentTarget;
   const fecha = td.dataset.fecha;
@@ -935,23 +937,24 @@ function guardarClase(){
       alert('No se pudo guardar');
     }
 
+// ---- ELIMINAR CLASE (una sola) ----
 async function eliminarClaseSeleccionada(){
   if (!claseSelId){
-    alert('No hay una clase seleccionada.'); 
+    alert('No hay una clase seleccionada.');
     return;
   }
   const ok = confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
   if (!ok) return;
 
   try{
-    // Intento 1: endpoint por id
+    // Intento 1: DELETE /clases/:id
     let r = await fetch(`/clases/${claseSelId}`, { method:'DELETE' });
 
-    // Fallback: borra con el endpoint masivo enviando un solo id
+    // Fallback si no existe ese endpoint: DELETE masivo con un solo id
     if (r.status === 404){
       r = await fetch('/clases', {
         method:'DELETE',
-        headers:{'Content-Type':'application/json'},
+        headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ ids: [claseSelId] })
       });
     }
@@ -972,7 +975,7 @@ async function eliminarClaseSeleccionada(){
   }
 }
 
-// 🔹 Esto es lo que faltaba para que el onclick del HTML la vea
+// 🔸 Exponer al scope global para que funcione el onclick del HTML
 window.eliminarClaseSeleccionada = eliminarClaseSeleccionada;
 
 
