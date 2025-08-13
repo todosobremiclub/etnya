@@ -34,34 +34,23 @@ router.post('/', async (req, res) => {
 // GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
 router.get('/', async (req, res) => {
   const { desde, hasta, alumno_id, sede } = req.query;
-  try {
-    const params = [desde, hasta];
-    let where = 'c.fecha BETWEEN $1 AND $2';
+  const params = [desde, hasta];
+  let where = 'c.fecha BETWEEN $1 AND $2';
+  if (sede)      { params.push(sede.trim()); where += ` AND c.sede = $${params.length}`; }
+  if (alumno_id) { params.push(parseInt(alumno_id,10)); where += ` AND c.alumno_id = $${params.length}`; }
 
-    if (sede) {
-      params.push(sede.trim());
-      where += ` AND c.sede = $${params.length}`;
-    }
-    if (alumno_id) {
-      params.push(parseInt(alumno_id, 10));
-      where += ` AND c.alumno_id = $${params.length}`;
-    }
-
-    const sql = `
-      SELECT c.*, a.nombre, a.apellido, a.numero_alumno
-      FROM clases c
-      LEFT JOIN alumnos a ON a.id = c.alumno_id  -- 👈 importante para incluir PRUEBAS
-      WHERE ${where}
-      ORDER BY c.fecha, c.hora
-    `;
-    const r = await pool.query(sql, params);
-    res.json(r.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Error del servidor' });
-  }
+  const sql = `
+    SELECT c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,   -- 👈 incluye estado
+           a.nombre, a.apellido, a.numero_alumno
+    FROM clases c
+    LEFT JOIN alumnos a ON a.id = c.alumno_id
+    WHERE ${where}
+    ORDER BY c.fecha, c.hora
+  `;
+  const r = await pool.query(sql, params);
+  res.json(r.rows);
 });
-
+  
 // Borrar muchas clases por ID
 router.delete('/', async (req, res) => {
   const { ids } = req.body; // { ids: number[] }
@@ -83,16 +72,12 @@ router.delete('/', async (req, res) => {
 });
 
 // Actualizar estado de una clase (sin_aviso | con_aviso | sobre_hora | null)
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', async (req,res)=>{
   const { id } = req.params;
-  const { estado } = req.body; // puede venir null/undefined para limpiar
-
-  try {
-    const r = await pool.query(
-      'UPDATE clases SET estado = $1 WHERE id = $2',
-      [estado ?? null, id]
-    );
-    res.json({ updated: r.rowCount });
+  const { estado } = req.body; // 'asistio' | 'sin_aviso' | 'con_aviso' | 'sobre_hora' | null
+  const r = await pool.query('UPDATE clases SET estado=$1 WHERE id=$2', [estado ?? null, id]);
+  res.json({ updated: r.rowCount });
+});
   } catch (err) {
     console.error('Error al actualizar estado:', err);
     res.status(500).json({ error: 'Error del servidor' });
