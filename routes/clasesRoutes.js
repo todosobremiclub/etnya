@@ -1,7 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
-// Guardar clase (única, prueba o recurrente)
+// Dejá tu import real del pool:
+const pool = require('../db'); // <-- ajustá si tu proyecto usa otra ruta
+
+// GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
+router.get('/', async (req, res) => {
+  const { desde, hasta, alumno_id, sede } = req.query;
+
+  try {
+    const params = [desde, hasta];
+    let where = 'c.fecha BETWEEN $1 AND $2';
+
+    if (sede) {
+      params.push(sede.trim());
+      where += ` AND c.sede = $${params.length}`;
+    }
+    if (alumno_id) {
+      params.push(parseInt(alumno_id, 10));
+      where += ` AND c.alumno_id = $${params.length}`;
+    }
+
+    const sql = `
+      SELECT
+        c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
+        a.nombre, a.apellido, a.numero_alumno
+      FROM clases c
+      LEFT JOIN alumnos a ON a.id = c.alumno_id
+      WHERE ${where}
+      ORDER BY c.fecha, c.hora
+    `;
+
+    const r = await pool.query(sql, params);
+    res.json(r.rows);
+  } catch (err) {
+    console.error('Error al obtener clases:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// POST /clases  { alumno_id?: number|null, clases: [{fecha, hora, sede, nota?}] }
 router.post('/', async (req, res) => {
   const { alumno_id, clases } = req.body;
 
@@ -17,9 +54,9 @@ router.post('/', async (req, res) => {
         [
           alumno_id ?? null,
           clase.fecha,
-          clase.hora,                      // 'HH:MM:SS' desde el front
+          clase.hora,
           (clase.sede || '').trim(),
-          clase.nota ?? null               // nombre de “prueba”, si corresponde
+          clase.nota ?? null
         ]
       );
     }
@@ -30,40 +67,14 @@ router.post('/', async (req, res) => {
   }
 });
 
-
-// GET /clases?desde=YYYY-MM-DD&hasta=YYYY-MM-DD[&sede=...][&alumno_id=...]
-router.get('/', async (req, res) => {
-  const { desde, hasta, alumno_id, sede } = req.query;
-  const params = [desde, hasta];
-  let where = 'c.fecha BETWEEN $1 AND $2';
-  if (sede)      { params.push(sede.trim()); where += ` AND c.sede = $${params.length}`; }
-  if (alumno_id) { params.push(parseInt(alumno_id,10)); where += ` AND c.alumno_id = $${params.length}`; }
-
-  const sql = `
-    SELECT c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,   -- 👈 incluye estado
-           a.nombre, a.apellido, a.numero_alumno
-    FROM clases c
-    LEFT JOIN alumnos a ON a.id = c.alumno_id
-    WHERE ${where}
-    ORDER BY c.fecha, c.hora
-  `;
-  const r = await pool.query(sql, params);
-  res.json(r.rows);
-});
-  
-// Borrar muchas clases por ID
+// DELETE /clases  { ids: number[] }
 router.delete('/', async (req, res) => {
-  const { ids } = req.body; // { ids: number[] }
-
+  const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ error: 'ids requeridos' });
   }
-
   try {
-    const r = await pool.query(
-      'DELETE FROM clases WHERE id = ANY($1::int[])',
-      [ids]
-    );
+    const r = await pool.query('DELETE FROM clases WHERE id = ANY($1::int[])', [ids]);
     res.json({ eliminadas: r.rowCount });
   } catch (err) {
     console.error('Error al borrar clases:', err);
@@ -71,18 +82,51 @@ router.delete('/', async (req, res) => {
   }
 });
 
-// Actualizar estado de una clase (sin_aviso | con_aviso | sobre_hora | null)
-router.patch('/:id', async (req,res)=>{
-  const { id } = req.params;
-  const { estado } = req.body; // 'asistio' | 'sin_aviso' | 'con_aviso' | 'sobre_hora' | null
-  const r = await pool.query('UPDATE clases SET estado=$1 WHERE id=$2', [estado ?? null, id]);
-  res.json({ updated: r.rowCount });
+// Fallback: POST /clases/bulk-delete  { ids: number[] }
+router.post('/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'ids requeridos' });
+  }
+  try {
+    const r = await pool.query('DELETE FROM clases WHERE id = ANY($1::int[])', [ids]);
+    res.json({ eliminadas: r.rowCount });
+  } catch (err) {
+    console.error('Error en bulk-delete:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
 });
+
+// PATCH /clases/:id  { estado: 'asistio'|'sin_aviso'|'con_aviso'|'sobre_hora'|null }
+router.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { estado } = req.body;
+  try {
+    const r = await pool.query(
+      'UPDATE clases SET estado = $1 WHERE id = $2',
+      [estado ?? null, id]
+    );
+    res.json({ updated: r.rowCount });
   } catch (err) {
     console.error('Error al actualizar estado:', err);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
 
+// Fallback: POST /clases/estado  { id, estado }
+router.post('/estado', async (req, res) => {
+  const { id, estado } = req.body;
+  if (!id) return res.status(400).json({ error: 'id requerido' });
+  try {
+    const r = await pool.query(
+      'UPDATE clases SET estado = $1 WHERE id = $2',
+      [estado ?? null, id]
+    );
+    res.json({ updated: r.rowCount });
+  } catch (err) {
+    console.error('Error en /clases/estado:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
 
 module.exports = router;
