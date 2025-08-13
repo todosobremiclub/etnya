@@ -784,11 +784,10 @@ function guardarClase(){
     const fecha = fechaUnica.value;
     const hora  = normTime(horaUnica.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-    if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
     clases.push({ fecha, hora, sede });
   }
 
-  // === Clase de PRUEBA (sin alumno, usa nombrePrueba) ===
+  // === Clase de PRUEBA (sin alumno, usa nombrePrueba en 'nota') ===
   else if (esPrueba){
     const sede   = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha  = fechaPrueba.value;
@@ -796,21 +795,19 @@ function guardarClase(){
     const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
-    if (cupoDisponible(fecha, hora, sede) <= 0){ alert('Cupo completo'); return; }
-    // guardamos el nombre de prueba en 'nota'
     clases.push({ fecha, hora, sede, nota: nombre });
   }
 
   // === Recurrente (reemplazo inteligente) ===
   else {
-    const sedeBase = selectSede.value; 
-    if(!sedeBase){ alert('Seleccioná una sede'); return; }
+    const sedeBase = selectSede.value;
+    if (!sedeBase){ alert('Seleccioná una sede'); return; }
 
-    const seleccionados = selectedDOWs(); 
+    const seleccionados = selectedDOWs();
     if (seleccionados.length === 0){ alert('Seleccioná al menos un día'); return; }
 
-    // 1) NUEVOS patrones elegidos (dow/hora/sede)
-    const nuevos = []; // [{dow,hora,sede}]
+    // 1) patrones nuevos
+    const nuevos = [];
     for (const d of seleccionados){
       const row = [...document.querySelectorAll('#perDia > div')].find(el => parseInt(el.dataset.dow,10) === d);
       const selects = row ? row.querySelectorAll('select') : null;
@@ -820,36 +817,31 @@ function guardarClase(){
       nuevos.push({ dow:d, hora, sede });
     }
 
-    // 2) PATRONES ACTUALES del alumno (desde la semana visible)
+    // 2) patrones actuales
     const actualesSet = new Set();
     for (const c of clasesAlumnoActual){
       actualesSet.add(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede));
     }
 
-    // 3) Patrones a ELIMINAR = actuales - nuevos
+    // 3) a eliminar
     const nuevosSet = new Set(nuevos.map(p => groupKey(p.dow, p.hora, p.sede)));
     const patronesAEliminar = [...actualesSet].filter(k => !nuevosSet.has(k));
-
-    // IDs a eliminar (todas las futuras del alumno que coincidan con esos patrones)
     const idsAEliminar = clasesAlumnoActual
       .filter(c => patronesAEliminar.includes(groupKey(dowNumFromYMD(c.fecha), c.hora, c.sede)))
       .map(c => c.id);
 
-    // 4) Construir INSERCIONES nuevas (todas las fechas hacia fin de año)
+    // 4) a insertar
     const clasesNuevas = [];
     for (const p of nuevos){
       for (const f of fechasHastaFinDeAnio(p.dow)){
-        if (cupoDisponible(f, p.hora, p.sede) <= 0) continue;
         clasesNuevas.push({ fecha:f, hora:p.hora, sede:p.sede });
       }
     }
-
     if (clasesNuevas.length===0 && idsAEliminar.length===0){
-      alert('No hay cambios para aplicar.');
-      return;
+      alert('No hay cambios para aplicar.'); return;
     }
 
-    // 5) Ejecutar: primero DELETE, luego INSERT
+    // 5) ejecutar
     (async ()=>{
       try{
         if (idsAEliminar.length){
@@ -879,7 +871,7 @@ function guardarClase(){
 
         cerrarModal();
         await cargarSemana();
-        await cargarSituacionAlumno(alumno_id);
+        await cargarSituacionAlumno(alumno_id || 0);
         alert('Cambios aplicados');
       }catch(e){
         console.error(e);
@@ -887,16 +879,16 @@ function guardarClase(){
       }
     })();
 
-    return; // no continuar con flujo de única/prueba
+    return; // no seguir al bloque final
   }
 
-  // === Guardado para Única/Prueba ===
+  // === Envío para Única/Prueba ===
   (async ()=>{
     try{
       const res = await fetch('/clases', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ alumno_id, clases }) // alumno_id puede ser null en prueba
+        body: JSON.stringify({ alumno_id, clases })
       });
       if (!res.ok) throw new Error('Error al guardar');
       cerrarModal();
