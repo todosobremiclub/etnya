@@ -69,15 +69,44 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Eliminar alumno por ID
+// Eliminar alumno por ID (con borrado de dependencias y adjuntos en Firebase)
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
-    await pool.query('DELETE FROM alumnos WHERE id = $1', [id]);
-    res.sendStatus(200);
+    await client.query('BEGIN');
+
+    // 1) Adjuntos: borrar archivos en Firebase (no rompe si no existen)
+    const { rows: adjuntos } = await client.query(
+      'SELECT nombre_archivo FROM adjuntos WHERE alumno_id = $1',
+      [id]
+    );
+    for (const a of adjuntos) {
+      try {
+        await bucket.file(a.nombre_archivo).delete();
+      } catch (e) {
+        if (e.code !== 404) console.warn('No se pudo borrar en Firebase:', a.nombre_archivo, e.message);
+      }
+    }
+
+    // 2) Borrar dependencias (ajustá si tenés más tablas hijas)
+    await client.query('DELETE FROM clases        WHERE alumno_id = $1', [id]);
+    await client.query('DELETE FROM observaciones WHERE alumno_id = $1', [id]);
+    await client.query('DELETE FROM adjuntos      WHERE alumno_id = $1', [id]);
+    await client.query('DELETE FROM pagos         WHERE alumno_id = $1', [id]);
+    await client.query('DELETE FROM becados       WHERE alumno_id = $1', [id]);
+
+    // 3) Borrar el alumno
+    await client.query('DELETE FROM alumnos WHERE id = $1', [id]);
+
+    await client.query('COMMIT');
+    res.sendStatus(204);
   } catch (err) {
-    console.error('Error al eliminar alumno:', err);
-    res.status(500).send('Error al eliminar alumno');
+    await client.query('ROLLBACK');
+    console.error('DELETE /alumnos error:', err.code, err.detail || err.message);
+    res.status(500).json({ error: 'No se pudo eliminar el alumno' });
+  } finally {
+    client.release();
   }
 });
 
