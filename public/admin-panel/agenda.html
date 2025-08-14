@@ -266,8 +266,58 @@
 
 
 <script>
-  if (localStorage.getItem('etnya_login') !== 'ok') location='login.html';
+  // ===== Guardia de login =====
+  if (localStorage.getItem('etnya_login') !== 'ok') location = 'login.html';
 
+  // ===== Timeout de sesión (6 horas sin actividad) =====
+  (function sessionTimeout() {
+    const SESSION_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6h
+    const KEY_LOGIN = 'etnya_login';
+    const KEY_LAST  = 'etnya_lastActivity';
+
+    const now = () => Date.now();
+    const isLogged = () => localStorage.getItem(KEY_LOGIN) === 'ok';
+    const setLast = (t = now()) => localStorage.setItem(KEY_LAST, String(t));
+    const getLast = () => {
+      const v = Number(localStorage.getItem(KEY_LAST));
+      return Number.isFinite(v) ? v : 0;
+    };
+    const expire = () => {
+      if (!isLogged()) return; // evitar dobles entre pestañas
+      alert('Sesión expirada por inactividad. Volvé a iniciar sesión.');
+      localStorage.removeItem(KEY_LOGIN);
+      if (!location.pathname.endsWith('/login.html')) location.href = 'login.html';
+    };
+
+    // Registrar actividad (throttle para no spamear)
+    let throttled = false;
+    const markActivity = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (throttled) return;
+      throttled = true;
+      setLast();
+      setTimeout(() => (throttled = false), 500);
+    };
+    ['mousemove','mousedown','keydown','scroll','click','touchstart','visibilitychange']
+      .forEach(ev => window.addEventListener(ev, markActivity, { passive: true }));
+
+    // Sincronizar entre pestañas
+    window.addEventListener('storage', (e) => {
+      if (e.key === KEY_LOGIN && e.newValue !== 'ok') expire();
+    });
+
+    // Chequeo periódico
+    const check = () => {
+      if (!isLogged()) return;
+      const last = getLast();
+      if (!last) return setLast(); // primera actividad de la sesión
+      if (now() - last > SESSION_TIMEOUT_MS) expire();
+    };
+    setInterval(check, 60 * 1000); // cada 1 min
+    if (isLogged()) setLast();     // marcar al cargar
+  })();
+
+  // ===== App =====
   const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const DIAS =['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const SEDES={
