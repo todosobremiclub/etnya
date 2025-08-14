@@ -115,6 +115,32 @@
     }
     th { background-color: #b48a99; color: white; }
     h2 { text-align: center; color: #91586d; }
+
+td.acciones {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+  }
+  td.acciones button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  td.acciones button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  td.acciones .editar {
+    color: #f39c12; /* Naranja para editar */
+    font-size: 16px;
+  }
+  td.acciones .borrar {
+    color: #c0392b; /* Rojo para borrar */
+    font-size: 16px;
+  }
   </style>
 </head>
 <body>
