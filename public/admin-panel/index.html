@@ -12,11 +12,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Alumnos Etnya</title>
 
-  <script>
-    if (localStorage.getItem('etnya_login') !== 'ok') {
-      window.location.href = 'login.html';
-    }
-  </script>
+  <!-- Guardia de login -->
+<script>
+  if (localStorage.getItem('etnya_login') !== 'ok') {
+    location = 'login.html';
+  }
+</script>
+
+<!-- Timeout de sesión (6h) -->
+<script src="session-timeout.js"></script>
+
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
