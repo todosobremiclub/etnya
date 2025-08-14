@@ -71,6 +71,11 @@ router.get('/registrados', async (req, res) => {
 // Registrar nuevo gasto
 router.post('/', async (req, res) => {
   const { nombre, monto, fecha, cuenta } = req.body;
+
+  if (!nombre || !monto || !fecha || !cuenta) {
+    return res.status(400).json({ error: 'Faltan campos: nombre, monto, fecha, cuenta' });
+  }
+
   try {
     await pool.query(
       'INSERT INTO gastos (nombre, monto, fecha, cuenta) VALUES ($1, $2, $3, $4)',
@@ -94,5 +99,28 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
+// Editar gasto
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nombre, monto, fecha, cuenta } = req.body;
+
+  // Validaciones simples
+  if (!nombre || !monto || !fecha || !cuenta) {
+    return res.status(400).json({ error: 'Faltan campos: nombre, monto, fecha, cuenta' });
+  }
+
+  try {
+    await pool.query(
+      'UPDATE gastos SET nombre = $1, monto = $2, fecha = $3, cuenta = $4 WHERE id = $5',
+      [nombre, monto, fecha, cuenta, id]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al editar gasto:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 
 module.exports = router;
