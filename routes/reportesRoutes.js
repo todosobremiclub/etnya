@@ -246,6 +246,48 @@ router.get('/recaudacion-por-sede', async (req, res) => {
   }
 });
 
+// 11. Gastos por cuenta (mensual, todos los meses)
+router.get('/gastos-por-cuenta-mensual', async (req, res) => {
+  try {
+    const q = `
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', fecha), 'YYYY-MM') AS mes,
+        COALESCE(cuenta, 'Sin cuenta') AS cuenta,
+        SUM(monto) AS total
+      FROM gastos
+      GROUP BY 1, 2
+      ORDER BY 1 DESC, 2
+    `;
+    const { rows } = await pool.query(q);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /gastos-por-cuenta-mensual:', err);
+    res.status(500).json({ error: 'Error al obtener gastos por cuenta mensual' });
+  }
+});
+
+// 12. Gastos por cuenta (filtrado por mes/año)
+router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
+  const { mes, anio } = req.query; // mes: 1..12  |  anio: 2025, etc.
+  if (!mes || !anio) return res.status(400).json({ error: 'Faltan mes y anio' });
+  try {
+    const q = `
+      SELECT
+        COALESCE(cuenta, 'Sin cuenta') AS cuenta,
+        SUM(monto) AS total
+      FROM gastos
+      WHERE EXTRACT(MONTH FROM fecha) = $1
+        AND EXTRACT(YEAR  FROM fecha) = $2
+      GROUP BY 1
+      ORDER BY 1
+    `;
+    const { rows } = await pool.query(q, [mes, anio]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /gastos-por-cuenta-filtrado:', err);
+    res.status(500).json({ error: 'Error al obtener gastos por cuenta (filtrado)' });
+  }
+});
 
 
 

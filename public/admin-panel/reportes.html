@@ -114,6 +114,8 @@
     <button class="report-btn" data-report="alumnos-modalidad" onclick="mostrarReporte('alumnos-modalidad')">Alumnos por modalidad</button>
     <button class="report-btn" data-report="ingresos" onclick="mostrarReporte('ingresos')">Ingresos por mes/año</button>
     <button class="report-btn" data-report="recaudacion-sede" onclick="mostrarReporte('recaudacion-sede')">Recaudación por sede</button>
+    <button class="report-btn" data-report="gastos-cuenta" onclick="mostrarReporte('gastos-cuenta')">Gastos por cuenta</button>
+
   </div>
 </div>
 
@@ -174,6 +176,13 @@
     <h2>7. Recaudación por sede (mes pagado)</h2>
     <div id="reporte-recaudacion-sede"></div>
   </div>
+
+<div class="bloque-reporte" data-report="gastos-cuenta">
+  <h2>Gastos por cuenta (mensual)</h2>
+  <div id="reporte-gastos-cuenta"></div>
+</div>
+
+
 </div>
 
 <script>
@@ -357,8 +366,27 @@
     }catch(e){ console.error('Error recaudación sede:',e); }
   }
 
+async function cargarReporteGastosPorCuenta(){
+  try {
+    const r = await fetch('/reportes/gastos-por-cuenta-mensual');
+    const d = await r.json();
+    // d = [{ mes: 'YYYY-MM', cuenta: 'x', total: 'nnn' }, ...]
+
+    const rows = d.map(row => ({
+      Mes: formatearMesYYYYMM(row.mes),
+      Cuenta: row.cuenta || 'Sin cuenta',
+      Total: parseFloat(row.total)
+    }));
+
+    renderTabla('reporte-gastos-cuenta', ['Mes','Cuenta','Total'], rows);
+  } catch(e) {
+    console.error('Error gastos por cuenta:', e);
+  }
+}
+
+
   /* Botonera: mostrar/ocultar */
-  const REPORTES=['cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede'];
+  const REPORTES=['gastos-cuenta','cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede'];
   function mostrarReporte(rep){
     document.querySelectorAll('.bloque-reporte').forEach(b=>b.style.display=(b.dataset.report===rep)?'block':'none');
     document.querySelectorAll('.report-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.report===rep));
@@ -366,19 +394,21 @@
   }
 
   // Cargas iniciales y selección por defecto
-  window.onload=()=>{
-    actualizarTituloMesAnio();
-    cargarReporteCuenta(mesActual,anioActual);
-    cargarReporteMesPagado();
-    cargarReporteFechaPago();
-    cargarReporteAlumnosSede();
-    cargarReporteAlumnosModalidad();
-    cargarReporteIngresos();
-    cargarReporteRecaudacionPorSede();
+  window.onload = ()=>{
+  actualizarTituloMesAnio();
+  cargarReporteGastosPorCuenta(); // ← NUEVO
+  cargarReporteCuenta(mesActual,anioActual);
+  cargarReporteMesPagado();
+  cargarReporteFechaPago();
+  cargarReporteAlumnosSede();
+  cargarReporteAlumnosModalidad();
+  cargarReporteIngresos();
+  cargarReporteRecaudacionPorSede();
 
-    const repGuardado=localStorage.getItem('reporte_activo') || 'cuenta';
-    mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'cuenta');
-  };
+  const repGuardado=localStorage.getItem('reporte_activo') || 'gastos-cuenta';
+  mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'gastos-cuenta');
+};
+
 
   document.getElementById('toggleMenu').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('mostrar'));
 </script>
