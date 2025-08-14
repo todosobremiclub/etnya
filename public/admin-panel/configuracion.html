@@ -732,11 +732,16 @@ async function eliminarGasto(id) {
 
 
 // ------------------- ONLOAD -------------------
-window.onload = () => {
-if (localStorage.getItem('etnya_login') !== 'ok') {
-  window.location.href = 'login.html';
-}
+<script>
+  if (localStorage.getItem('etnya_login') !== 'ok') {
+    location = 'login.html';
+  }
+</script>
 
+<!-- Timeout de sesión (6h). Asegurate de tener este archivo en public/admin-panel/ -->
+<script src="session-timeout.js"></script>
+
+<script>
 
   cargarTiposClase();
   cargarFeriados();
