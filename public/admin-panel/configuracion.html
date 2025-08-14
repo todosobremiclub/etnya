@@ -731,32 +731,33 @@ async function eliminarGasto(id) {
 
 
 
-// ------------------- ONLOAD -------------------
+<!-- ------------------- ONLOAD ------------------- -->
+
+<!-- Guardia de login -->
 <script>
   if (localStorage.getItem('etnya_login') !== 'ok') {
     location = 'login.html';
   }
 </script>
 
-<!-- Timeout de sesión (6h). Asegurate de tener este archivo en public/admin-panel/ -->
+<!-- Timeout de sesión (6h) -->
 <script src="session-timeout.js"></script>
 
 <script>
+  // Ejecutar cuando el documento esté listo (y los elementos existan)
+  window.addEventListener('load', () => {
+    try { cargarTiposClase(); } catch (e) { console.error(e); }
+    try { cargarFeriados(); }   catch (e) { console.error(e); }
+    try { cargarCuentas(); }    catch (e) { console.error(e); }
+    try { cargarAlumnosParaBecado(); } catch (e) { console.error(e); }
+    try { cargarBecados(); }    catch (e) { console.error(e); }
+    try { cargarGastos(); }     catch (e) { console.error(e); }
 
-  cargarTiposClase();
-  cargarFeriados();
-  cargarCuentas();
-  cargarAlumnosParaBecado();
-  cargarBecados();
-  cargarGastos();
-
-  // Ocultar la tabla de becados al inicio
-  becadosVisibles = false;
-  document.getElementById('flechaBecados').textContent = '▶';
-};
-
-
-
+    // Ocultar la tabla de becados al inicio
+    window.becadosVisibles = false;
+    const flecha = document.getElementById('flechaBecados');
+    if (flecha) flecha.textContent = '▶';
+  });
 </script>
 </body>
 </html>
