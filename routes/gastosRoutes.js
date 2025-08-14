@@ -70,11 +70,11 @@ router.get('/registrados', async (req, res) => {
 
 // Registrar nuevo gasto
 router.post('/', async (req, res) => {
-  const { nombre, monto, fecha } = req.body;
+  const { nombre, monto, fecha, cuenta } = req.body;
   try {
     await pool.query(
-      'INSERT INTO gastos (nombre, monto, fecha) VALUES ($1, $2, $3)',
-      [nombre, monto, fecha]
+      'INSERT INTO gastos (nombre, monto, fecha, cuenta) VALUES ($1, $2, $3, $4)',
+      [nombre, monto, fecha, cuenta]
     );
     res.status(201).send('Gasto registrado');
   } catch (err) {

@@ -146,6 +146,8 @@
       <select id="tipoGasto"></select>
       <label for="mes">Mes:</label>
       <input type="month" id="mes" required>
+      <label for="cuenta">Cuenta:</label>   
+      <select id="cuenta"></select>
       <label for="monto">Monto:</label>
       <input type="text" id="monto" placeholder="$ 0.000" oninput="formatearMonto(this)">
       <button class="boton-guardar" onclick="guardarPago()">Guardar</button>
@@ -201,30 +203,32 @@
   }
 
   async function guardarPago() {
-    const nombre = document.getElementById('tipoGasto').value;
-    const mes = document.getElementById('mes').value;
-    const montoStr = document.getElementById('monto').value.replace(/[^\d]/g, '');
-    const monto = parseFloat(montoStr);
+  const nombre = document.getElementById('tipoGasto').value;
+  const mes = document.getElementById('mes').value;
+  const cuenta = document.getElementById('cuenta').value; // ← Nuevo
+  const montoStr = document.getElementById('monto').value.replace(/[^\d]/g, '');
+  const monto = parseFloat(montoStr);
 
-    if (!nombre || !mes || isNaN(monto)) {
-      alert('Completa todos los campos correctamente');
-      return;
-    }
-
-    const res = await fetch('/gastos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, monto, fecha: mes + '-01' })
-    });
-
-    if (res.ok) {
-      alert('Gasto guardado');
-      cerrarModal();
-      cargarGastosRegistrados();
-    } else {
-      alert('Error al guardar');
-    }
+  if (!nombre || !mes || !cuenta || isNaN(monto)) {
+    alert('Completa todos los campos correctamente');
+    return;
   }
+
+  const res = await fetch('/gastos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, cuenta, monto, fecha: mes + '-01' }) // ← Nuevo
+  });
+
+  if (res.ok) {
+    alert('Gasto guardado');
+    cerrarModal();
+    cargarGastosRegistrados();
+  } else {
+    alert('Error al guardar');
+  }
+}
+
 
   async function cargarGastosRegistrados() {
     const res = await fetch('/gastos/registrados');
@@ -265,10 +269,12 @@
         tr.style.display = "none";
         const mesReal = formatearMesTexto(g.fecha.slice(0, 7));
         tr.innerHTML = `
-          <td>${g.nombre}</td>
-          <td>${mesReal}</td>
-          <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
-          <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>`;
+  <td>${g.nombre}</td>
+  <td>${g.cuenta ?? '-'}</td>
+  <td>${mesReal}</td>
+  <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
+  <td><button onclick="eliminarGasto(${g.id})">🗑️</button></td>`;
+
         tbody.appendChild(tr);
       });
     }
@@ -295,14 +301,31 @@
     return `${nombresMeses[parseInt(mes) - 1]} ${anio}`;
   }
 
+async function fetchCuentas() {
+  const res = await fetch('/cuentas');
+  const data = await res.json();
+  const select = document.getElementById('cuenta');
+  select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+  data.forEach(c => {
+    const option = document.createElement('option');
+    option.value = c.nombre;
+    option.textContent = c.nombre;
+    select.appendChild(option);
+  });
+}
+
+
   window.onload = () => {
     if (localStorage.getItem('etnya_login') !== 'ok') {
       window.location.href = 'login.html';
       return;
     }
     fetchTiposDeGasto();
+    fetchCuentas();
     cargarGastosRegistrados();
   };
+
+
 </script>
 
 </body>
