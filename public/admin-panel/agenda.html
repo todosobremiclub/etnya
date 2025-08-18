@@ -432,16 +432,28 @@ async function cargarAlumnos(){
 }
 
 function poblarListaAlumnos(f=''){
-  const sel=document.getElementById('selectAlumno'); sel.innerHTML='';
-  const t=f.trim().toLowerCase(); if(!t) return;
-  const list=alumnos.filter(a=>{
-    const padded=String(a.numero).padStart(2,'0');
-    const label=`${padded} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
-    return padded.includes(t)||label.includes(t);
+  const sel = document.getElementById('selectAlumno');
+  sel.innerHTML = '';
+  const t = f.trim().toLowerCase();
+  if (!t) return;
+
+  const list = alumnos.filter(a => {
+    const rawNum = String(a.numero || '').trim();
+    // ✅ si ya trae guion (ej: 02-C), lo dejamos así
+    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2, '0');
+    const label  = `${numVis} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
+
+    return numVis.toLowerCase().includes(t) || label.includes(t);
   });
-  list.slice(0,200).forEach(a=>{
-    const opt=document.createElement('option'); opt.value=a.id;
-    const padded=String(a.numero).padStart(2,'0'); opt.textContent=`${padded} - ${a.apellido||''}, ${a.nombre||''}`;
+
+  list.slice(0, 200).forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+
+    const rawNum = String(a.numero || '').trim();
+    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2, '0');
+
+    opt.textContent = `${numVis} - ${a.apellido||''}, ${a.nombre||''}`;
     sel.appendChild(opt);
   });
 }
@@ -590,12 +602,18 @@ async function eliminarClasesAlumno(){
 // Texto del chip: número+nombre (alumno) o nombre de prueba (nota)
 function chipText(cl){
   const nombrePrueba = (cl.nota || '').trim();
-  // si no hay alumno (prueba), usamos el nombre ingresado
   if ((cl.alumno_id == null || cl.alumno_id === 0) && nombrePrueba) return nombrePrueba;
 
   const nombre = (cl.nombre || '').trim();
-  const num = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
-  const base = `${num ? num + ' ' : ''}${nombre}`.trim();
+
+  // ✅ usar numero_alumno tal cual si ya trae sede (02-C, 149-G, 225-CR)
+  let numTxt = '';
+  if (cl.numero_alumno != null) {
+    const raw = String(cl.numero_alumno).trim();
+    numTxt = raw.includes('-') ? raw : String(raw).padStart(2,'0'); // si es solo número, pad a 2
+  }
+
+  const base = `${numTxt ? numTxt + ' ' : ''}${nombre}`.trim();
   return base || nombrePrueba || 'Prueba';
 }
 
