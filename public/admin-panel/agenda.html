@@ -841,16 +841,20 @@ function pintarClases(){
       // datasets para el modal de detalle
 tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
 tag.dataset.estado   = cl.estado || '';
-tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título arriba del modal
+tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim();
 tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
 tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
 tag.dataset.fecha    = cl.fecha || '';
 tag.dataset.hora     = cl.hora  || '';
 tag.dataset.sede     = cl.sede  || '';
-// 👉 Modal debe mostrar SOLO el motivo (observación) en pruebas
-tag.dataset.observacion = (cl.observacion && String(cl.observacion).trim()) 
-  ? String(cl.observacion).trim() 
-  : '';
+// 👉 Guardamos la observación con todos los alias posibles
+tag.dataset.observacion = (
+  (cl.observacion && String(cl.observacion).trim()) ||
+  (cl.obs && String(cl.obs).trim()) ||
+  (cl.motivo && String(cl.motivo).trim()) ||
+  ''
+);
+
 
 
 
@@ -894,30 +898,46 @@ function onTagDblClick(e){
   e.stopPropagation();
   const tag = e.currentTarget;
 
+  // guardar refs para guardar/eliminar
   claseSelTag = tag;
   claseSelId  = parseInt(tag.dataset.id, 10) || null;
 
-  const nombre = tag.dataset.nombre || tag.textContent;
-  const numero = tag.dataset.numero || '';
-  document.getElementById('claseInfo').textContent = `${numero ? numero+' · ' : ''}${nombre}`;
+  // Título arriba del modal: número + "Nombre (prueba)" si lo hubiera
+  var nombre = tag.dataset.nombre || tag.textContent || '';
+  var numero = tag.dataset.numero || '';
+  document.getElementById('claseInfo').textContent =
+    (numero ? (numero + ' · ') : '') + nombre;
 
-  // Estado
-  const estado = tag.dataset.estado || '';
+  // Estado (checks exclusivos)
+  var estado = tag.dataset.estado || '';
   chkAsistio.checked   = (estado === 'asistio');
   chkSinAviso.checked  = (estado === 'sin_aviso');
   chkConAviso.checked  = (estado === 'con_aviso');
   chkSobreHora.checked = (estado === 'sobre_hora');
 
-  // Observación (dejo siempre visible)
-  const obs = (tag.dataset.observacion || '').trim();
-document.getElementById('observacionClase').value = obs;  // 👈 solo motivo
+  // Observación / Motivo de prueba: SOLO motivo (nunca el nombre)
+  var obs = (tag.dataset.observacion || '').trim();
 
+  // Fallback: si no vino en dataset, buscá en cache por id y alias (observacion/obs/motivo)
+  if (!obs) {
+    var idSel = parseInt(tag.dataset.id, 10) || 0;
+    if (idSel && Array.isArray(window.clasesSemana)) {
+      var it = null;
+      for (var i = 0; i < window.clasesSemana.length; i++) {
+        if (Number(window.clasesSemana[i].id) === idSel) { it = window.clasesSemana[i]; break; }
+      }
+      if (it) {
+        obs = ( (it.observacion && String(it.observacion).trim()) ||
+                (it.obs && String(it.obs).trim()) ||
+                (it.motivo && String(it.motivo).trim()) || '' );
+      }
+    }
+  }
 
+  document.getElementById('observacionClase').value = obs;
+
+  // abrir modal
   overlayClase.style.display = 'flex';
-}
-
-function cerrarModalClase(){
-  overlayClase.style.display = 'none';
 }
 
 
@@ -936,13 +956,9 @@ async function guardarEstadoClase(){
 if (claseSelTag){
   claseSelTag.dataset.estado = estado;
   const obs = observacion || '';
-
-  // 👇 en pruebas guardamos dataset.observacion; en no-prueba, podés seguir usando dataset.nota si querés
-  if ((clasesSemana.find(c => c.id === claseSelId)?.tipo) === 'prueba'){
-    claseSelTag.dataset.observacion = obs;
-  } else {
-    claseSelTag.dataset.nota = obs;
-  }
+  // Para prueba guardamos en dataset.observacion
+  const itType = (clasesSemana.find(c => c.id === claseSelId)?.tipo) || '';
+  if (itType === 'prueba') claseSelTag.dataset.observacion = obs;
   applyEstadoClassToTag(claseSelTag, estado);
 }
 
@@ -950,11 +966,10 @@ if (claseSelTag){
 const it = clasesSemana.find(c => c.id === claseSelId);
 if (it){
   it.estado = estado || null;
-  if (it.tipo === 'prueba') {
-    it.observacion = observacion || '';  // 👈 guardá motivo
-  } else {
-    it.nota = observacion || '';
-  }
+  if (it.tipo === 'prueba') it.observacion = observacion || '';
+  else it.nota = observacion || '';
+}
+
 }
 
 
