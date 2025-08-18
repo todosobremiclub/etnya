@@ -674,12 +674,13 @@ async function cargarClasesSemana(){
   estado : c.estado || null,
   alumno_id : c.alumno_id ?? null,
   nota      : (c.nota || '').trim(),
-  // 👇 SI el backend no manda tipo, lo inferimos con flags comunes
+  observacion: (c.observacion || c.obs || '').trim(),   // 👈 A G R E G A D O
   tipo   : c.tipo ?? (
             c.es_prueba ? 'prueba' :
             (c.es_recuperacion || c.unica_vez || c.recuperacion ? 'recuperacion' : null)
           )
 })).filter(c => c.sede === sedeSeleccionada);
+
 
 
   }catch(err){
@@ -846,7 +847,10 @@ function pintarClases(){
       tag.dataset.fecha    = cl.fecha;
       tag.dataset.hora     = cl.hora;   // (ya normalizada arriba)
       tag.dataset.sede     = cl.sede;
-      tag.dataset.nota     = cl.nota || '';
+      tag.dataset.nota = (cl.tipo === 'prueba')
+  ? (cl.observacion || '')
+  : (cl.nota || '');
+
 
     // 1) aplicar estado primero (por si esa función toca clases/estilos)
 applyEstadoClassToTag(tag, tag.dataset.estado);
@@ -960,9 +964,14 @@ async function guardarEstadoClase(){
       // sincronizar cache local para persistir en repintados/cambios de semana
       const it = clasesSemana.find(c => c.id === claseSelId);
       if (it){
-        it.estado = estado || null;
-        it.nota   = observacion || '';
-      }
+  it.estado = estado || null;
+  if (it.tipo === 'prueba') {
+    it.observacion = observacion || '';   // 👈 prueba: guarda en observacion
+  } else {
+    it.nota = observacion || '';          // resto: sigue usando nota
+  }
+}
+
     }
     cerrarModalClase();
   }catch(err){
@@ -1306,17 +1315,19 @@ function guardarClase(){
 
       for (const c of creadas){
         clasesSemana.push({
-          id    : c.id ?? null,
-          fecha : normDate(c.fecha ?? fechaLocal),
-          hora  : normTime(c.hora  ?? horaLocal),
-          sede  : (c.sede ?? baseSede).trim(),
-          alumno_id,
-          nombre: esPrueba ? '' : (c.nombre ?? displayNombre),
-          numero_alumno: esPrueba ? null : (c.numero_alumno ?? numeroAlumno),
-          nota  : esPrueba ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
-          estado: c.estado ?? null,
-          tipo  : c.tipo ?? tipoLocal   // 👈 fuerza 'recuperacion' rojo o 'prueba' violeta
-        });
+  id    : c.id ?? null,
+  fecha : normDate(c.fecha ?? fechaLocal),
+  hora  : normTime(c.hora  ?? horaLocal),
+  sede  : (c.sede ?? baseSede).trim(),
+  alumno_id,
+  nombre: esPrueba ? '' : (c.nombre ?? displayNombre),
+  numero_alumno: esPrueba ? null : (c.numero_alumno ?? numeroAlumno),
+  nota  : esPrueba ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
+  observacion: esPrueba ? (c.observacion ?? (document.getElementById('notaPrueba')?.value||'').trim()) : '', // 👈 A G R E G A D O
+  estado: c.estado ?? null,
+  tipo  : c.tipo ?? tipoLocal
+});
+
       }
 
       pintarClases();
