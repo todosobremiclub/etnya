@@ -1035,49 +1035,68 @@ function guardarClase(){
   }
 
   // === Guardado para PRUEBA o RECUPERACIÓN ===
-  (async ()=>{
-    try{
-      const res = await fetch('/clases', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ alumno_id, clases })
-      });
-      if (!res.ok) throw new Error('No se pudo registrar la clase');
+(async ()=>{
+  try{
+    const res = await fetch('/clases', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ alumno_id, clases })
+    });
+    if (!res.ok) throw new Error('No se pudo registrar la clase');
 
-      // Normalizar respuesta (array | objeto | vacío)
-      let data; try { data = await res.json(); } catch {}
-      let creadas = [];
-      if (Array.isArray(data))       creadas = data;
-      else if (data && typeof data === 'object') creadas = [data];
-      else                            creadas = clases.map(c => ({ ...c })); // fallback
-
-      const tipoLocal = clases[0]?.tipo || null;
-      const baseSede  = (selectSede.value || '').trim();
-      const esP       = esPrueba;
-
-      // Insertar en cache local con tipo
-      for (const c of creadas){
-        clasesSemana.push({
-          id    : c.id ?? null,
-          fecha : normDate(c.fecha ?? clases[0].fecha),
-          hora  : normTime(c.hora  ?? clases[0].hora),
-          sede  : (c.sede ?? baseSede).trim(),
-          alumno_id,
-          nombre: c.nombre ?? '',
-          nota  : c.nota ?? (esP ? (document.getElementById('nombrePrueba')?.value||'').trim() : ''),
-          estado: c.estado ?? null,
-          tipo  : c.tipo ?? tipoLocal
-        });
-      }
-
-      pintarClases();
-      cerrarModal();
-    }catch(e){
-      console.error(e);
-      alert(e.message || 'Error al guardar la clase');
+    // Intentar leer respuesta
+    let data; try { data = await res.json(); } catch {}
+    let creadas = [];
+    if (Array.isArray(data)) {
+      creadas = data;
+    } else if (data && typeof data === 'object') {
+      creadas = [data];
     }
-  })();
-}
+
+    // Datos del alumno para pintar correctamente (recuperación)
+    const listaAlumnos = (window.alumnosGlobal || window.alumnos || []);
+    const alum = listaAlumnos.find(a => Number(a.id) === Number(alumno_id));
+    const displayNombre = alum ? `${alum.apellido || ''} ${alum.nombre || ''}`.trim() : '';
+    const numeroAlumno  = alum?.numero_alumno ?? null;
+
+    // Si no vino nada útil del backend, recargamos semana para tener IDs reales
+    if (creadas.length === 0 || creadas.every(c => c.id == null)) {
+      cerrarModal();
+      await cargarSemana(); // repinta con datos completos (incluye id, nombre, etc.)
+      return;
+    }
+
+    // Insertar en cache local con tipo y nombre/numero enriquecidos
+    const tipoLocal  = clases[0]?.tipo || null;
+    const baseSede   = (selectSede.value || '').trim();
+    const esP        = esPrueba;
+    const fechaLocal = esP ? clases[0].fecha : clases[0].fecha;
+    const horaLocal  = esP ? clases[0].hora  : clases[0].hora;
+
+    for (const c of creadas){
+      clasesSemana.push({
+        id    : c.id ?? null,
+        fecha : normDate(c.fecha ?? fechaLocal),
+        hora  : normTime(c.hora  ?? horaLocal),
+        sede  : (c.sede ?? baseSede).trim(),
+        alumno_id,
+        // Para prueba mostramos 'nota' (nombre ingresado). Para recuperación mostramos alumno real.
+        nombre: esP ? '' : (c.nombre ?? displayNombre),
+        numero_alumno: esP ? null : (c.numero_alumno ?? numeroAlumno),
+        nota  : esP ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
+        estado: c.estado ?? null,
+        tipo  : c.tipo ?? tipoLocal
+      });
+    }
+
+    pintarClases();
+    cerrarModal();
+  }catch(e){
+    console.error(e);
+    alert(e.message || 'Error al guardar la clase');
+  }
+})();
+
 
 
 
