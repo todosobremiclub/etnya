@@ -452,14 +452,12 @@ async function cargarClasesSemana(){
   const dias  = diasHabilitados(sedeSeleccionada) || [1,2,3,4,5];
   const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
 
-  // Construcción segura de la query
   const params = new URLSearchParams();
   params.set('desde', desde);
   params.set('hasta', hasta);
   params.set('sede', sedeSeleccionada || '');
 
   const url = `/clases?${params.toString()}`;
-  // console.debug('GET', url);
 
   try{
     const res = await fetch(url);
@@ -477,18 +475,17 @@ async function cargarClasesSemana(){
       return;
     }
 
-    clasesSemana = data
-      .map(c => ({
-        ...c,
-        fecha : normDate(c.fecha),
-        hora  : normTime(c.hora),
-        sede  : (c.sede || '').trim(),
-        estado: c.estado || null,
-        alumno_id: c.alumno_id ?? null,
-        nota: (c.nota || '').trim(),
-        tipo: c.tipo || null    // 👈 aseguramos que venga 'prueba' o 'recuperacion'
-      }))
-      .filter(c => c.sede === sedeSeleccionada);
+    clasesSemana = data.map(c => ({
+      ...c,
+      fecha  : normDate(c.fecha),
+      hora   : normTime(c.hora),
+      sede   : (c.sede || '').trim(),
+      estado : c.estado || null,
+      alumno_id: c.alumno_id ?? null,
+      nota   : (c.nota || '').trim(),
+      tipo   : c.tipo || null   // 👈 ahora guardamos tipo (prueba/recuperacion)
+    }))
+    .filter(c => c.sede === sedeSeleccionada);
 
   }catch(err){
     console.error('Error de red/parseo en /clases:', err);
@@ -615,13 +612,15 @@ function pintarClases(){
   // limpiar
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
-  // agrupar por fecha|hora|sede
+  // agrupar por fecha|hora|sede (normalizando hora)
   const mapa = new Map();
   for (const c of clasesSemana){
-    const sede = (c.sede || '').trim();
-    const key  = `${c.fecha}|${c.hora}|${sede}`;
+    const sede  = (c.sede || '').trim();
+    const fecha = c.fecha;
+    const hora  = normTime(c.hora);              // 👈 normalizo
+    const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
-    mapa.get(key).push(c);
+    mapa.get(key).push({ ...c, hora });          // guardo hora normalizada
   }
 
   // render
@@ -636,29 +635,31 @@ function pintarClases(){
       tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
 
-      // ===== tipo visual =====
-      const tipo = cl.tipo
-        ?? (cl.es_prueba ? 'prueba'
-        :  (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-        :  (!cl.alumno_id ? 'prueba' : 'normal'))); // fallback
+      // ===== tipo visual (prioriza cl.tipo) =====
+      const tipo = cl.tipo ?? (
+        cl.es_prueba ? 'prueba' :
+        (cl.unica_vez || cl.es_recuperacion ? 'recuperacion' :
+         (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+      );
       tag.dataset.tipo = tipo;
-      if (tipo === 'prueba')        tag.classList.add('tag-prueba');        // violeta
-      else if (tipo === 'recuperacion') tag.classList.add('tag-recuperacion'); // rojo
+      if (tipo === 'prueba') {
+        tag.classList.add('tag-prueba');          // violeta
+      } else if (tipo === 'recuperacion') {
+        tag.classList.add('tag-recuperacion');    // rojo fuerte
+      }
 
       // ===== datasets para doble click / detalle =====
-      tag.dataset.id       = cl.id;
+      tag.dataset.id       = cl.id ?? '';
       tag.dataset.estado   = cl.estado || '';
       tag.dataset.nombre   = (cl.nombre || cl.nota || '').trim();
       tag.dataset.numero   = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
       tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : '';
       tag.dataset.fecha    = cl.fecha;
-      tag.dataset.hora     = cl.hora;
+      tag.dataset.hora     = cl.hora;             // ya normalizada
       tag.dataset.sede     = cl.sede;
       tag.dataset.nota     = cl.nota || '';
 
-      // estado visual (bordes/estilos existentes)
       applyEstadoClassToTag(tag, tag.dataset.estado);
-
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
