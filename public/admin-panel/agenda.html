@@ -916,7 +916,7 @@ function fechasHastaFinDeAnio(dow){
 
 /* ===== Guardar ===== */
 function guardarClase(){
-  const esRecuperacion = chkUnica.checked;   // ahora se llama Clase de Recuperación
+  const esRecuperacion = chkUnica.checked;   // "Clase de Recuperación"
   const esPrueba       = chkPrueba.checked;
 
   // alumno_id solo si NO es prueba
@@ -930,28 +930,29 @@ function guardarClase(){
 
   // === Clase de RECUPERACIÓN (antes única vez) ===
   if (esRecuperacion){
-    const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
+    const sede  = (selectSede.value || '').trim(); if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaUnica.value;
     const hora  = normTime(horaUnica.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     clases.push({ fecha, hora, sede, tipo: 'recuperacion' });
   }
 
-  // === Clase de PRUEBA (sin alumno, usa nombrePrueba en 'nota') ===
+  // === Clase de PRUEBA (sin alumno) ===
   else if (esPrueba){
-    const sede   = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
+    const sede   = (selectSede.value || '').trim(); if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha  = fechaPrueba.value;
     const hora   = normTime(horaPrueba.value);
     const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
-    const nota   = (document.getElementById('notaPrueba')?.value || '').trim();
+    const nota   = (document.getElementById('notaPrueba')?.value   || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
+    // nota = nombre visible del chip; observacion = motivo
     clases.push({ fecha, hora, sede, nota: nombre, observacion: nota, tipo: 'prueba' });
   }
 
   // === Recurrente (normal) ===
   else {
-    const sedeBase = selectSede.value;
+    const sedeBase = (selectSede.value || '').trim();
     if (!sedeBase){ alert('Seleccioná una sede'); return; }
 
     const seleccionados = selectedDOWs();
@@ -1033,7 +1034,7 @@ function guardarClase(){
     return; // termina rama recurrente
   }
 
-  // === Guardado para prueba o recuperación ===
+  // === Guardado para PRUEBA o RECUPERACIÓN ===
   (async ()=>{
     try{
       const res = await fetch('/clases', {
@@ -1043,14 +1044,32 @@ function guardarClase(){
       });
       if (!res.ok) throw new Error('No se pudo registrar la clase');
 
-      const data = await res.json();
+      // Normalizar respuesta (array | objeto | vacío)
+      let data; try { data = await res.json(); } catch {}
+      let creadas = [];
+      if (Array.isArray(data))       creadas = data;
+      else if (data && typeof data === 'object') creadas = [data];
+      else                            creadas = clases.map(c => ({ ...c })); // fallback
+
+      const tipoLocal = clases[0]?.tipo || null;
+      const baseSede  = (selectSede.value || '').trim();
+      const esP       = esPrueba;
+
       // Insertar en cache local con tipo
-      for (const c of data){
+      for (const c of creadas){
         clasesSemana.push({
-          ...c,
-          tipo: clases[0].tipo  // 'prueba' o 'recuperacion'
+          id    : c.id ?? null,
+          fecha : normDate(c.fecha ?? clases[0].fecha),
+          hora  : normTime(c.hora  ?? clases[0].hora),
+          sede  : (c.sede ?? baseSede).trim(),
+          alumno_id,
+          nombre: c.nombre ?? '',
+          nota  : c.nota ?? (esP ? (document.getElementById('nombrePrueba')?.value||'').trim() : ''),
+          estado: c.estado ?? null,
+          tipo  : c.tipo ?? tipoLocal
         });
       }
+
       pintarClases();
       cerrarModal();
     }catch(e){
