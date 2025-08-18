@@ -79,6 +79,16 @@
   font-weight:600;
 }
 
+.tag-prueba{
+    background-color:#8e44ad;   /* violeta fuerte */
+    color:#fff;
+  }
+  .tag-recuperacion{
+    background-color:#c62828;   /* rojo fuerte */
+    color:#fff;
+  }
+
+
 /* Estados de asistencia (colores fuertes) */
 .tag.estado-asistio     { background:#fff6bf; border-color:#e6d98a; color:#5a5200; } /* amarillo clarito */
 .tag.estado-sin-aviso { background:#ffe066; border-color:#e6b800; color:#5a4b00; }
@@ -152,7 +162,7 @@
   <div class="modal">
     <h3>Registrar clase</h3>
     <div class="switches">
-      <label><input type="checkbox" id="chkUnica" onchange="toggleModo('unica')"> Clase por única vez</label>
+      <label><input type="checkbox" id="chkUnica" onchange="toggleModo('unica')"> Clase de Recuperación</label>
       <label><input type="checkbox" id="chkPrueba" onchange="toggleModo('prueba')"> Clase de prueba</label>
     </div>
 
@@ -616,28 +626,40 @@ function pintarClases(){
 
   // render
   document.querySelectorAll('td.slot').forEach(td => {
-    const key  = `${td.dataset.fecha}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
-    const arr  = mapa.get(key) || [];
-    const left = td.querySelector('.left');
-    const right= td.querySelector('.right');
+    const key   = `${td.dataset.fecha}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
+    const arr   = mapa.get(key) || [];
+    const left  = td.querySelector('.left');
+    const right = td.querySelector('.right');
 
     arr.forEach((cl, idx) => {
       const tag = document.createElement('div');
-tag.className = 'tag is-clickable';
-tag.textContent = chipText(cl);
-tag.dataset.id      = cl.id;
-tag.dataset.estado  = cl.estado || '';
-tag.dataset.nombre  = (cl.nombre || cl.nota || '').trim();
-tag.dataset.numero  = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
-tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : ''; // 👈
-tag.dataset.fecha   = cl.fecha;   // 👈 para prefijar en modal
-tag.dataset.hora    = cl.hora;    // 👈 para prefijar en modal
-tag.dataset.sede    = cl.sede;    // 👈 para prefijar en modal
-tag.dataset.nota    = cl.nota || ''; // 👈 “Motivo/nota de prueba”
-// estado visual
-applyEstadoClassToTag(tag, tag.dataset.estado);
-tag.addEventListener('dblclick', onTagDblClick);
+      tag.className = 'tag is-clickable';
+      tag.textContent = chipText(cl);
 
+      // ===== tipo visual =====
+      const tipo = cl.tipo
+        ?? (cl.es_prueba ? 'prueba'
+        :  (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+        :  (!cl.alumno_id ? 'prueba' : 'normal'))); // fallback
+      tag.dataset.tipo = tipo;
+      if (tipo === 'prueba')        tag.classList.add('tag-prueba');        // violeta
+      else if (tipo === 'recuperacion') tag.classList.add('tag-recuperacion'); // rojo
+
+      // ===== datasets para doble click / detalle =====
+      tag.dataset.id       = cl.id;
+      tag.dataset.estado   = cl.estado || '';
+      tag.dataset.nombre   = (cl.nombre || cl.nota || '').trim();
+      tag.dataset.numero   = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+      tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : '';
+      tag.dataset.fecha    = cl.fecha;
+      tag.dataset.hora     = cl.hora;
+      tag.dataset.sede     = cl.sede;
+      tag.dataset.nota     = cl.nota || '';
+
+      // estado visual (bordes/estilos existentes)
+      applyEstadoClassToTag(tag, tag.dataset.estado);
+
+      tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
   });
@@ -894,8 +916,8 @@ function fechasHastaFinDeAnio(dow){
 
 /* ===== Guardar ===== */
 function guardarClase(){
-  const esUnica  = chkUnica.checked;
-  const esPrueba = chkPrueba.checked;
+  const esRecuperacion = chkUnica.checked;   // ahora se llama Clase de Recuperación
+  const esPrueba       = chkPrueba.checked;
 
   // alumno_id solo si NO es prueba
   let alumno_id = null;
@@ -906,13 +928,13 @@ function guardarClase(){
 
   let clases = [];
 
-  // === Única vez ===
-  if (esUnica){
+  // === Clase de RECUPERACIÓN (antes única vez) ===
+  if (esRecuperacion){
     const sede  = selectSede.value; if (!sede){ alert('Seleccioná una sede'); return; }
     const fecha = fechaUnica.value;
     const hora  = normTime(horaUnica.value);
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
-    clases.push({ fecha, hora, sede });
+    clases.push({ fecha, hora, sede, tipo: 'recuperacion' });
   }
 
   // === Clase de PRUEBA (sin alumno, usa nombrePrueba en 'nota') ===
@@ -923,10 +945,10 @@ function guardarClase(){
     const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
-    clases.push({ fecha, hora, sede, nota: nombre });
+    clases.push({ fecha, hora, sede, nota: nombre, tipo: 'prueba' });
   }
 
-  // === Recurrente (reemplazo inteligente) ===
+  // === Recurrente (normal) ===
   else {
     const sedeBase = selectSede.value;
     if (!sedeBase){ alert('Seleccioná una sede'); return; }
@@ -1006,6 +1028,36 @@ function guardarClase(){
         alert(e.message || 'Error al guardar cambios');
       }
     })();
+
+    return; // no seguir al bloque final
+  }
+
+  // === Guardado para prueba o recuperación ===
+  (async ()=>{
+    try{
+      const res = await fetch('/clases', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ alumno_id, clases })
+      });
+      if (!res.ok) throw new Error('No se pudo registrar la clase');
+
+      const data = await res.json();
+      // Insertar en cache local con tipo
+      for (const c of data){
+        clasesSemana.push({
+          ...c,
+          tipo: clases[0].tipo  // 'prueba' o 'recuperacion'
+        });
+      }
+      pintarClases();
+      cerrarModal();
+    }catch(e){
+      console.error(e);
+      alert(e.message || 'Error al guardar la clase');
+    }
+  })();
+}
 
     return; // no seguir al bloque final
   }
