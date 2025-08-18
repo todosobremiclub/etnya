@@ -476,16 +476,20 @@ async function cargarClasesSemana(){
     }
 
     clasesSemana = data.map(c => ({
-      ...c,
-      fecha  : normDate(c.fecha),
-      hora   : normTime(c.hora),
-      sede   : (c.sede || '').trim(),
-      estado : c.estado || null,
-      alumno_id: c.alumno_id ?? null,
-      nota   : (c.nota || '').trim(),
-      tipo   : c.tipo || null   // 👈 ahora guardamos tipo (prueba/recuperacion)
-    }))
-    .filter(c => c.sede === sedeSeleccionada);
+  ...c,
+  fecha  : normDate(c.fecha),
+  hora   : normTime(c.hora),
+  sede   : (c.sede || '').trim(),
+  estado : c.estado || null,
+  alumno_id : c.alumno_id ?? null,
+  nota      : (c.nota || '').trim(),
+  // 👇 SI el backend no manda tipo, lo inferimos con flags comunes
+  tipo   : c.tipo ?? (
+            c.es_prueba ? 'prueba' :
+            (c.es_recuperacion || c.unica_vez || c.recuperacion ? 'recuperacion' : null)
+          )
+})).filter(c => c.sede === sedeSeleccionada);
+
 
   }catch(err){
     console.error('Error de red/parseo en /clases:', err);
