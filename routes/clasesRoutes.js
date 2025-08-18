@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 
     const sql = `
      SELECT
- c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
+ c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado, c.tipo
  a.nombre, a.apellido, a.numero_alumno, a.sede AS sede_alumno
 
       FROM clases c
