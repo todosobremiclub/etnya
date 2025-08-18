@@ -134,4 +134,54 @@ router.post('/estado', async (req, res) => {
   }
 });
 
+// POST /clases  -> crea 1..N clases
+// body: { alumno_id?: number|null, clases: [{ fecha: 'YYYY-MM-DD', hora: 'HH:MM'|'HH:MM:SS', sede: string, nota?: string }] }
+router.post('/', async (req, res) => {
+  let { alumno_id, clases } = req.body || {};
+  if (!Array.isArray(clases) || clases.length === 0) {
+    return res.status(400).json({ error: 'Faltan clases a crear' });
+  }
+
+  // normalizar alumno_id (permitimos null para "clase de prueba")
+  if (alumno_id === undefined) alumno_id = null;
+  if (alumno_id !== null && Number.isNaN(Number(alumno_id))) {
+    return res.status(400).json({ error: 'alumno_id inválido' });
+  }
+
+  // validación básica y normalización de hora
+  const rows = [];
+  for (const c of clases) {
+    if (!c || !c.fecha || !c.hora || !c.sede) {
+      return res.status(400).json({ error: 'Cada clase requiere fecha, hora y sede' });
+    }
+    const hora = (c.hora.length === 5) ? `${c.hora}:00` : c.hora; // HH:MM -> HH:MM:SS
+    rows.push({
+      alumno_id: alumno_id === null ? null : Number(alumno_id),
+      fecha: c.fecha.slice(0, 10),
+      hora,
+      sede: String(c.sede).trim(),
+      nota: c.nota ? String(c.nota).trim() : null,  // para clase de prueba
+    });
+  }
+
+  try {
+    const insertedIds = [];
+    for (const r of rows) {
+      const q = `
+        INSERT INTO clases (alumno_id, fecha, hora, sede, nota)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `;
+      const vals = [r.alumno_id, r.fecha, r.hora, r.sede, r.nota];
+      const out = await pool.query(q, vals);
+      insertedIds.push(out.rows[0].id);
+    }
+    return res.status(201).json({ created: insertedIds.length, ids: insertedIds });
+  } catch (err) {
+    console.error('[POST /clases] error:', err);
+    return res.status(500).json({ error: 'Error del servidor', detail: err.message });
+  }
+});
+
+
 module.exports = router;
