@@ -1060,26 +1060,6 @@ function guardarClase(){
   })();
 }
 
-     // === Envío para Única/Prueba ===
-  (async ()=>{
-    try{
-      const res = await fetch('/clases', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ alumno_id, clases })
-      });
-      if (!res.ok) throw new Error('Error al guardar');
-      cerrarModal();
-      await cargarSemana();
-      await cargarSituacionAlumno(alumno_id || 0);
-      alert('Clases registradas');
-    }catch(e){
-      console.error(e);
-      alert('No se pudo guardar');
-    }
-  })();
-}
-
 
 
 // Eliminar una clase (la seleccionada en el modal)
