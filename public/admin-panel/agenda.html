@@ -943,9 +943,10 @@ function guardarClase(){
     const fecha  = fechaPrueba.value;
     const hora   = normTime(horaPrueba.value);
     const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
+    const nota   = (document.getElementById('notaPrueba')?.value || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
-    clases.push({ fecha, hora, sede, nota: nombre, tipo: 'prueba' });
+    clases.push({ fecha, hora, sede, nota: nombre, observacion: nota, tipo: 'prueba' });
   }
 
   // === Recurrente (normal) ===
@@ -1029,7 +1030,7 @@ function guardarClase(){
       }
     })();
 
-    return; // no seguir al bloque final
+    return; // termina rama recurrente
   }
 
   // === Guardado para prueba o recuperación ===
@@ -1057,11 +1058,9 @@ function guardarClase(){
       alert(e.message || 'Error al guardar la clase');
     }
   })();
+}
 
-    return; // no seguir al bloque final
-  }
-
-  // === Envío para Única/Prueba ===
+     // === Envío para Única/Prueba ===
   (async ()=>{
     try{
       const res = await fetch('/clases', {
