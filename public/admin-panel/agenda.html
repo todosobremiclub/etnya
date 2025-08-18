@@ -839,17 +839,19 @@ function pintarClases(){
       tag.textContent = chipText(cl);
 
       // datasets para el modal de detalle
-      tag.dataset.id       = cl.id ?? '';
-      tag.dataset.estado   = cl.estado || '';
-      tag.dataset.nombre   = (cl.nombre || cl.nota || '').trim();
-      tag.dataset.numero   = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
-      tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : '';
-      tag.dataset.fecha    = cl.fecha;
-      tag.dataset.hora     = cl.hora;   // (ya normalizada arriba)
-      tag.dataset.sede     = cl.sede;
-      tag.dataset.nota = (cl.observacion && cl.observacion.trim()) || (cl.nota || '');
-  ? (cl.observacion || '')
+tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
+tag.dataset.estado   = cl.estado || '';
+tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim();
+tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
+tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
+tag.dataset.fecha    = cl.fecha || '';
+tag.dataset.hora     = cl.hora  || '';
+tag.dataset.sede     = cl.sede  || '';
+// para PRUEBA priorizamos observacion; si está vacía, caemos a nota
+tag.dataset.nota     = (cl.observacion && String(cl.observacion).trim() !== '')
+  ? String(cl.observacion).trim()
   : (cl.nota || '');
+
 
 
     // 1) aplicar estado primero (por si esa función toca clases/estilos)
