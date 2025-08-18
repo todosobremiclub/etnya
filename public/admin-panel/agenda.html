@@ -427,7 +427,10 @@ td.addEventListener('dblclick', onSlotDblClick);
 /* ===== Datos ===== */
 async function cargarAlumnos(){
   const res=await fetch('/alumnos'); const data=await res.json();
-  alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
+  alumnos=data.map(a=>({
+   id:a.id, nombre:a.nombre, apellido:a.apellido,
+   numero:a.numero_alumno, sede:a.sede
+ }));
   poblarListaAlumnos('');
 }
 
@@ -450,8 +453,7 @@ function poblarListaAlumnos(f=''){
     const opt = document.createElement('option');
     opt.value = a.id;
 
-    const rawNum = String(a.numero || '').trim();
-    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2, '0');
+    const numVis = numConSede(a.numero, a.sede);
 
     opt.textContent = `${numVis} - ${a.apellido||''}, ${a.nombre||''}`;
     sel.appendChild(opt);
@@ -495,6 +497,7 @@ async function cargarClasesSemana(){
   estado : c.estado || null,
   alumno_id : c.alumno_id ?? null,
   nota      : (c.nota || '').trim(),
+  sede_alumno: c.sede_alumno || null,
   // 👇 SI el backend no manda tipo, lo inferimos con flags comunes
   tipo   : c.tipo ?? (
             c.es_prueba ? 'prueba' :
@@ -662,7 +665,7 @@ function pintarClases(){
       tag.dataset.id       = cl.id ?? '';
       tag.dataset.estado   = cl.estado || '';
       tag.dataset.nombre   = (cl.nombre || cl.nota || '').trim();
-      tag.dataset.numero   = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+      tag.dataset.numero   = numConSede(cl.numero_alumno, cl.sede_alumno);
       tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : '';
       tag.dataset.fecha    = cl.fecha;
       tag.dataset.hora     = cl.hora;   // (ya normalizada arriba)
@@ -952,6 +955,25 @@ function fechasHastaFinDeAnio(dow){
   return out;
 }
 
+function sedeAbbr(s){
+  switch ((s||'').trim()) {
+    case 'Craig Reformer': return 'CR';
+    case 'Craig Circuito': return 'C';
+    case 'Pedro Goyena':   return 'G';
+    default: return '';
+  }
+}
+
+function numConSede(num, sedeAlumno){
+  if (num == null) return '';
+  const raw = String(num).trim();
+  if (raw.includes('-')) return raw; // ya viene 02-C / 149-G / 225-CR
+  const suf = sedeAbbr(sedeAlumno);
+  const base = String(raw).padStart(2,'0');
+  return suf ? `${base}-${suf}` : base;
+}
+
+
 
 /* ===== Guardar ===== */
 function guardarClase(){
@@ -1111,6 +1133,7 @@ function guardarClase(){
       const alum = listaAlumnos.find(a => Number(a.id) === Number(alumno_id));
       const displayNombre = alum ? `${alum.apellido || ''} ${alum.nombre || ''}`.trim() : '';
       const numeroAlumno  = alum?.numero_alumno ?? null;
+      const sedeAlumno   = alum?.sede ?? null;
 
       // Si no vino nada útil del backend, recargamos semana
       if (creadas.length === 0 || creadas.every(c => c.id == null)) {
@@ -1134,6 +1157,7 @@ function guardarClase(){
           alumno_id,
           nombre: esPrueba ? '' : (c.nombre ?? displayNombre),
           numero_alumno: esPrueba ? null : (c.numero_alumno ?? numeroAlumno),
+          sede_alumno  : esPrueba ? null : (c.sede_alumno ?? sedeAlumno),
           nota  : esPrueba ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
           estado: c.estado ?? null,
           tipo  : c.tipo ?? tipoLocal   // 👈 fuerza 'recuperacion' rojo o 'prueba' violeta
