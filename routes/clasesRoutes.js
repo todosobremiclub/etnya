@@ -38,9 +38,10 @@ router.get('/', async (req, res) => {
     }
 
     const sql = `
-      SELECT
-        c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado,
-        a.nombre, a.apellido, a.numero_alumno
+     SELECT
+  c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado, c.tipo,
+  a.nombre, a.apellido, a.numero_alumno
+
       FROM clases c
       LEFT JOIN alumnos a ON a.id = c.alumno_id
       ${wheres.length ? 'WHERE ' + wheres.join(' AND ') : ''}
@@ -150,34 +151,35 @@ router.post('/', async (req, res) => {
 
   // validación básica y normalización de hora
   const rows = [];
-  for (const c of clases) {
-    if (!c || !c.fecha || !c.hora || !c.sede) {
-      return res.status(400).json({ error: 'Cada clase requiere fecha, hora y sede' });
-    }
-    const hora = (c.hora.length === 5) ? `${c.hora}:00` : c.hora; // HH:MM -> HH:MM:SS
-    rows.push({
-      alumno_id: alumno_id === null ? null : Number(alumno_id),
-      fecha: c.fecha.slice(0, 10),
-      hora,
-      sede: String(c.sede).trim(),
-      nota: c.nota ? String(c.nota).trim() : null,  // para clase de prueba
-    });
+for (const c of clases) {
+  if (!c || !c.fecha || !c.hora || !c.sede) {
+    return res.status(400).json({ error: 'Cada clase requiere fecha, hora y sede' });
   }
+  const hora = (c.hora.length === 5) ? `${c.hora}:00` : c.hora;
+  rows.push({
+    alumno_id: alumno_id === null ? null : Number(alumno_id),
+    fecha: c.fecha.slice(0, 10),
+    hora,
+    sede: String(c.sede).trim(),
+    nota: c.nota ? String(c.nota).trim() : null,
+    tipo: c.tipo ? String(c.tipo).trim() : null   // 👈 agregado
+  });
+}
 
-  try {
-    const insertedIds = [];
-    for (const r of rows) {
-      const q = `
-        INSERT INTO clases (alumno_id, fecha, hora, sede, nota)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id
-      `;
-      const vals = [r.alumno_id, r.fecha, r.hora, r.sede, r.nota];
-      const out = await pool.query(q, vals);
-      insertedIds.push(out.rows[0].id);
-    }
-    return res.status(201).json({ created: insertedIds.length, ids: insertedIds });
-  } catch (err) {
+try {
+  const insertedIds = [];
+  for (const r of rows) {
+    const q = `
+      INSERT INTO clases (alumno_id, fecha, hora, sede, nota, tipo)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+    `;
+    const vals = [r.alumno_id, r.fecha, r.hora, r.sede, r.nota, r.tipo];
+    const out = await pool.query(q, vals);
+    insertedIds.push(out.rows[0].id);
+  }
+  return res.status(201).json({ created: insertedIds.length, ids: insertedIds });
+} catch (err) {
     console.error('[POST /clases] error:', err);
     return res.status(500).json({ error: 'Error del servidor', detail: err.message });
   }
