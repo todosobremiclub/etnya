@@ -651,26 +651,31 @@ function pintarClases(){
       tag.dataset.sede     = cl.sede;
       tag.dataset.nota     = cl.nota || '';
 
-      // 1) aplicar estado primero (si esta función agrega/remueve clases no pisa el color luego)
-      applyEstadoClassToTag(tag, tag.dataset.estado);
+    // 1) aplicar estado primero (por si esa función toca clases/estilos)
+applyEstadoClassToTag(tag, tag.dataset.estado);
 
-      // 2) tipo visual (después del estado). Si no viene, inferimos en último recurso.
-      const tipo = cl.tipo ?? (
-        cl.es_prueba ? 'prueba'
-        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-           : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
-      );
-      tag.dataset.tipo = tipo;
+// 2) tipo visual (después del estado) — forzado con !important real
+const tipo = cl.tipo ?? (
+  cl.es_prueba ? 'prueba'
+  : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+  : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+);
+tag.dataset.tipo = tipo;
 
-      if (tipo === 'prueba') {
-        tag.classList.add('tag-prueba');       // clase CSS
-        tag.style.backgroundColor = '#8e44ad'; // refuerzo inline
-        tag.style.color = '#fff';
-      } else if (tipo === 'recuperacion') {
-        tag.classList.add('tag-recuperacion'); // clase CSS
-        tag.style.backgroundColor = '#c62828'; // refuerzo inline (rojo fuerte)
-        tag.style.color = '#fff';
-      }
+// quitar posibles clases de color que pisen el fondo
+tag.classList.remove('is-primary','is-link','is-info','is-success','is-warning','is-danger');
+
+// aplicar color definitivo
+if (tipo === 'prueba') {
+  tag.classList.add('tag-prueba');    // por coherencia con tu CSS
+  tag.style.setProperty('background-color', '#8e44ad', 'important');
+  tag.style.setProperty('color', '#fff', 'important');
+} else if (tipo === 'recuperacion') {
+  tag.classList.add('tag-recuperacion');
+  tag.style.setProperty('background-color', '#c62828', 'important'); // 👈 ahora sí, imposible de pisar
+  tag.style.setProperty('color', '#fff', 'important');
+}
+
 
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
