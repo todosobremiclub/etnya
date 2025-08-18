@@ -462,14 +462,17 @@ async function cargarClasesSemana(){
     }
 
     clasesSemana = data
-      .map(c => ({
-        ...c,
-        fecha : normDate(c.fecha),
-        hora  : normTime(c.hora),
-        sede  : (c.sede || '').trim(),
-        estado: c.estado || null
-      }))
-      .filter(c => c.sede === sedeSeleccionada);
+  .map(c => ({
+    ...c,
+    fecha : normDate(c.fecha),
+    hora  : normTime(c.hora),
+    sede  : (c.sede || '').trim(),
+    estado: c.estado || null,
+    alumno_id: c.alumno_id ?? null,   // 👈 guardar alumno_id
+    nota: (c.nota || '').trim()       // 👈 guardar nota (nombre / motivo)
+  }))
+  .filter(c => c.sede === sedeSeleccionada);
+
 
   }catch(err){
     console.error('Error de red/parseo en /clases:', err);
@@ -614,15 +617,21 @@ function pintarClases(){
 
     arr.forEach((cl, idx) => {
       const tag = document.createElement('div');
-      tag.className = 'tag is-clickable';
-      tag.textContent = chipText(cl);
-      // datos para modal de estado (si ya lo tenés)
-      tag.dataset.id      = cl.id;
-      tag.dataset.estado  = cl.estado || '';
-      tag.dataset.nombre  = (cl.nombre || cl.nota || '').trim();
-      tag.dataset.numero  = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
-      applyEstadoClassToTag(tag, tag.dataset.estado);
-      tag.addEventListener('dblclick', onTagDblClick);
+tag.className = 'tag is-clickable';
+tag.textContent = chipText(cl);
+tag.dataset.id      = cl.id;
+tag.dataset.estado  = cl.estado || '';
+tag.dataset.nombre  = (cl.nombre || cl.nota || '').trim();
+tag.dataset.numero  = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
+tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : ''; // 👈
+tag.dataset.fecha   = cl.fecha;   // 👈 para prefijar en modal
+tag.dataset.hora    = cl.hora;    // 👈 para prefijar en modal
+tag.dataset.sede    = cl.sede;    // 👈 para prefijar en modal
+tag.dataset.nota    = cl.nota || ''; // 👈 “Motivo/nota de prueba”
+// estado visual
+applyEstadoClassToTag(tag, tag.dataset.estado);
+tag.addEventListener('dblclick', onTagDblClick);
+
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
   });
@@ -634,20 +643,55 @@ let claseSelTag = null;
 function onTagDblClick(e){
   e.stopPropagation();
   const tag = e.currentTarget;
+
+  const alumnoId = parseInt(tag.dataset.alumnoId || '0', 10);
+  const esPrueba = !alumnoId; // si no tiene alumno_id, es clase de prueba
+
+  if (esPrueba){
+    // 👉 Abrir el modal de REGISTRO en modo "Clase de prueba"
+    abrirModal();
+
+    // activar modo "prueba"
+    chkPrueba.checked = true;
+    chkUnica.checked  = false;
+    toggleModo('prueba');
+
+    // prefijar sede / fecha / hora
+    selectSede.value = (tag.dataset.sede || '').trim();
+    onSedeChange(); // repuebla combos según sede
+
+    fechaPrueba.value = tag.dataset.fecha || '';
+    horaPrueba.value  = tag.dataset.hora  || '';
+
+    // nombre (si guardaste el nombre dentro de 'nota') y motivo/nota
+    const nota = (tag.dataset.nota || '').trim();
+    const nombre = (tag.dataset.nombre || '').trim();
+
+    // si usás 'nota' para el nombre de la persona de prueba:
+    if (document.getElementById('nombrePrueba')) {
+      document.getElementById('nombrePrueba').value = nombre || nota || '';
+    }
+    if (document.getElementById('notaPrueba')) {
+      document.getElementById('notaPrueba').value = nota; // 👈 Motivo/nota de prueba
+    }
+
+    // listo: usuario puede editar y volver a guardar como nueva clase de prueba
+    return;
+  }
+
+  // --------- Caso NO prueba: abrir modal de estado como siempre ---------
   claseSelTag = tag;
   claseSelId  = parseInt(tag.dataset.id, 10) || null;
 
   const nombre = tag.dataset.nombre || tag.textContent;
   const numero = tag.dataset.numero || '';
-
   document.getElementById('claseInfo').textContent = `${numero ? numero+' · ' : ''}${nombre}`;
 
   const estado = tag.dataset.estado || '';
   chkAsistio.checked   = (estado === 'asistio');
-chkSinAviso.checked  = (estado === 'sin_aviso');
-chkConAviso.checked  = (estado === 'con_aviso');
-chkSobreHora.checked = (estado === 'sobre_hora');
-
+  chkSinAviso.checked  = (estado === 'sin_aviso');
+  chkConAviso.checked  = (estado === 'con_aviso');
+  chkSobreHora.checked = (estado === 'sobre_hora');
 
   overlayClase.style.display = 'flex';
 }
