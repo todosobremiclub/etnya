@@ -841,19 +841,29 @@ function pintarClases(){
       // datasets para el modal de detalle
 tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
 tag.dataset.estado   = cl.estado || '';
-tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim();
+tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título del modal
 tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
 tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
 tag.dataset.fecha    = cl.fecha || '';
 tag.dataset.hora     = cl.hora  || '';
 tag.dataset.sede     = cl.sede  || '';
-// 👉 Guardamos la observación con todos los alias posibles
-tag.dataset.observacion = (
-  (cl.observacion && String(cl.observacion).trim()) ||
-  (cl.obs && String(cl.obs).trim()) ||
-  (cl.motivo && String(cl.motivo).trim()) ||
-  ''
-);
+
+// Motivo/nota de prueba: 1) backend, 2) cache local
+var motivo = '';
+if (cl) {
+  if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
+  else if (cl.obs && String(cl.obs).trim())            motivo = String(cl.obs).trim();
+  else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
+}
+if (!motivo && cl && cl.tipo === 'prueba') {
+  try {
+    var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+    var keyId = (cl.id != null) ? String(cl.id) : '';
+    if (keyId && cache[keyId]) motivo = String(cache[keyId]);
+  } catch(e){}
+}
+tag.dataset.observacion = motivo;
+
 
 
 
@@ -915,26 +925,21 @@ function onTagDblClick(e){
   chkConAviso.checked  = (estado === 'con_aviso');
   chkSobreHora.checked = (estado === 'sobre_hora');
 
-  // Observación / Motivo de prueba: SOLO motivo (nunca el nombre)
-  var obs = (tag.dataset.observacion || '').trim();
+ // Observación / Motivo de prueba
+var obs = (tag.dataset.observacion || '').trim();
 
-  // Fallback: si no vino en dataset, buscá en cache por id y alias (observacion/obs/motivo)
-  if (!obs) {
-    var idSel = parseInt(tag.dataset.id, 10) || 0;
-    if (idSel && Array.isArray(window.clasesSemana)) {
-      var it = null;
-      for (var i = 0; i < window.clasesSemana.length; i++) {
-        if (Number(window.clasesSemana[i].id) === idSel) { it = window.clasesSemana[i]; break; }
-      }
-      if (it) {
-        obs = ( (it.observacion && String(it.observacion).trim()) ||
-                (it.obs && String(it.obs).trim()) ||
-                (it.motivo && String(it.motivo).trim()) || '' );
-      }
-    }
+// Último recurso: buscar en cache por id
+if (!obs) {
+  var idSel = parseInt(tag.dataset.id, 10) || 0;
+  if (idSel) {
+    try {
+      var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+      if (cache[String(idSel)]) obs = String(cache[String(idSel)]);
+    } catch(e){}
   }
+}
+document.getElementById('observacionClase').value = obs;
 
-  document.getElementById('observacionClase').value = obs;
 
   // abrir modal
   overlayClase.style.display = 'flex';
@@ -943,44 +948,56 @@ function onTagDblClick(e){
 
 async function guardarEstadoClase(){
   // único estado seleccionado (o ninguno para limpiar)
-  let estado = '';
+  var estado = '';
   if (chkAsistio.checked)        estado = 'asistio';
   else if (chkSinAviso.checked)  estado = 'sin_aviso';
   else if (chkConAviso.checked)  estado = 'con_aviso';
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
   // Observación (nota de prueba o comentario)
-  const observacion = document.getElementById('observacionClase')?.value || null;
+  var obsEl = document.getElementById('observacionClase');
+  var observacion = obsEl ? obsEl.value : '';
 
- // UI inmediata
-if (claseSelTag){
-  claseSelTag.dataset.estado = estado;
-  const obs = observacion || '';
-  // Para prueba guardamos en dataset.observacion
-  const itType = (clasesSemana.find(c => c.id === claseSelId)?.tipo) || '';
-  if (itType === 'prueba') claseSelTag.dataset.observacion = obs;
-  applyEstadoClassToTag(claseSelTag, estado);
-}
+  // Buscar la clase en cache para saber el tipo
+  var it = null;
+  for (var i = 0; i < clasesSemana.length; i++) {
+    if (Number(clasesSemana[i].id) === Number(claseSelId)) { it = clasesSemana[i]; break; }
+  }
+  var tipo = it ? (it.tipo || '') : '';
 
-// Cache local
-const it = clasesSemana.find(c => c.id === claseSelId);
-if (it){
-  it.estado = estado || null;
-  if (it.tipo === 'prueba') it.observacion = observacion || '';
-  else it.nota = observacion || '';
-}
+  // ==== UI inmediata
+  if (claseSelTag){
+    claseSelTag.dataset.estado = estado;
+    if (tipo === 'prueba') {
+      claseSelTag.dataset.observacion = observacion;
+      // cache persistente del motivo por id
+      try {
+        var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+        cache[String(claseSelId)] = observacion || '';
+        localStorage.setItem('motivos_prueba', JSON.stringify(cache));
+      } catch(e){}
+    } else {
+      claseSelTag.dataset.nota = observacion || '';
+    }
+    applyEstadoClassToTag(claseSelTag, estado);
+  }
 
-
+  // ==== Cache en memoria
+  if (it){
+    it.estado = estado || null;
+    if (tipo === 'prueba') it.observacion = observacion || '';
+    else it.nota = observacion || '';
+  }
 
   try{
     if (claseSelId){
       // intenta PATCH /clases/:id con estado + observacion
-      let r = await fetch(`/clases/${claseSelId}`, {
+      var r = await fetch('/clases/' + claseSelId, {
         method: 'PATCH',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           estado: estado || null,
-          observacion: observacion  // 👈 se envía al backend
+          observacion: observacion   // motivo de prueba o comentario
         })
       });
 
@@ -989,46 +1006,38 @@ if (it){
         r = await fetch('/clases/estado', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ 
-            id: claseSelId, 
+          body: JSON.stringify({
+            id: claseSelId,
             estado: estado || null,
             observacion: observacion
           })
         });
         if (!r.ok) throw new Error('No se pudo guardar el estado/observación');
       }
-
-      // sincronizar cache local para persistir en repintados/cambios de semana
-      const it = clasesSemana.find(c => c.id === claseSelId);
-      if (it){
-  it.estado = estado || null;
-  if (it.tipo === 'prueba') {
-    it.observacion = observacion || '';   // 👈 prueba: guarda en observacion
-  } else {
-    it.nota = observacion || '';          // resto: sigue usando nota
-  }
-}
-
     }
     cerrarModalClase();
-  }catch(err){
+  } catch(err){
     console.error(err);
     alert('No se pudo guardar el estado/observación');
 
     // rollback visual si falló
     if (claseSelTag){
-      const it = clasesSemana.find(c => c.id === claseSelId);
-      const prevEstado = it ? (it.estado || '') : '';
-      const prevNota   = it ? (it.nota   || '') : '';
+      var prevEstado = it ? (it.estado || '') : '';
+      var prevObs    = '';
+      if (it){
+        prevObs = (tipo === 'prueba')
+          ? (it.observacion || '')
+          : (it.nota || '');
+      }
       claseSelTag.dataset.estado = prevEstado;
-      claseSelTag.dataset.nota   = prevNota;
+      if (tipo === 'prueba') claseSelTag.dataset.observacion = prevObs;
+      else claseSelTag.dataset.nota = prevObs;
       applyEstadoClassToTag(claseSelTag, prevEstado);
     }
   }
 }
 
-// exponer para los botones del modal
-window.cerrarModalClase = cerrarModalClase;
+// (si no lo tenías ya exportado)
 window.guardarEstadoClase = guardarEstadoClase;
 
 
@@ -1354,11 +1363,12 @@ const nota   = (elNota   ? elNota.value   : '').trim();
       const fechaLocal = clases[0].fecha;
       const horaLocal  = clases[0].hora;
 
-// tomar valores del modal una sola vez
-var inpNombrePrueba = document.getElementById('nombrePrueba');
+// cache local de motivos por id (por si el backend no lo devuelve)
 var inpNotaPrueba   = document.getElementById('notaPrueba');
-var valNombrePrueba = (inpNombrePrueba ? inpNombrePrueba.value : '').trim();
-var valMotivoPrueba = (inpNotaPrueba   ? inpNotaPrueba.value   : '').trim();
+var valMotivoPrueba = (inpNotaPrueba ? inpNotaPrueba.value : '').trim();
+var cacheMotivos = {};
+try { cacheMotivos = JSON.parse(localStorage.getItem('motivos_prueba') || '{}'); } catch(e) { cacheMotivos = {}; }
+
 
 
       for (const c of creadas){
