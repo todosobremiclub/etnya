@@ -1217,8 +1217,11 @@ function guardarClase(){
 
     const fecha  = fechaPrueba.value;
     const hora   = normTime(horaPrueba.value);
-    const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
-    const nota   = (document.getElementById('notaPrueba')?.value   || '').trim();
+    var elNombre = document.getElementById('nombrePrueba');
+var elNota   = document.getElementById('notaPrueba');
+const nombre = (elNombre ? elNombre.value : '').trim();
+const nota   = (elNota   ? elNota.value   : '').trim();
+
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
 
@@ -1335,7 +1338,8 @@ function guardarClase(){
       const listaAlumnos = (window.alumnosGlobal || window.alumnos || []);
       const alum = listaAlumnos.find(a => Number(a.id) === Number(alumno_id));
       const displayNombre = alum ? `${alum.apellido || ''} ${alum.nombre || ''}`.trim() : '';
-      const numeroAlumno  = alum?.numero_alumno ?? null;
+      const numeroAlumno  = alum && alum.numero_alumno != null ? alum.numero_alumno : null;
+
 
       // Si no vino nada útil del backend, recargamos semana
       if (creadas.length === 0 || creadas.every(c => c.id == null)) {
@@ -1359,8 +1363,10 @@ function guardarClase(){
   alumno_id,
   nombre: '', // prueba no lleva alumno
   numero_alumno: null,
-  nota  : (c.nota ?? (document.getElementById('nombrePrueba')?.value || '').trim()) || '',
-  observacion: (c.observacion || c.obs || c.motivo || '').trim(),
+  var elNombre2 = document.getElementById('nombrePrueba');
+nota: ( (c.nota != null ? c.nota : (elNombre2 ? elNombre2.value : '')) || '' ).trim(),
+observacion: ((c.observacion || c.obs || c.motivo) || '').trim(),
+
   estado: c.estado ?? null,
   tipo  : c.tipo ?? 'prueba'
 });
@@ -1473,10 +1479,11 @@ if (btnEliminarClaseUnica){
 
 /* ===== Init ===== */
 async function cargarSemana(){ actualizarHeader(); construirTablaBase(); await cargarClasesSemana(); pintarClases(); }
-window.onload = async () => {
-  await cargarAlumnos();
-  await cargarSemana(); // ← carga directamente la semana
-};
+window.addEventListener('load', function () {
+  cargarAlumnos()
+    .then(() => cargarSemana())
+    .catch(console.error);
+});
 
 
   // refs rápidas (evita document.getElementById repetido)
@@ -1519,6 +1526,11 @@ selectAlumno.addEventListener('change', () => {
   const id = parseInt(selectAlumno.value, 10) || 0;
   cargarSituacionAlumno(id);
 });
+
+function cerrarModalClase() {
+  document.getElementById('overlayClase').style.display = 'none';
+}
+
 </script>
 </body>
 </html>
