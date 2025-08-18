@@ -617,7 +617,7 @@ function pintarClases(){
   for (const c of clasesSemana){
     const sede  = (c.sede || '').trim();
     const fecha = c.fecha;
-    const hora  = normTime(c.hora);              // 👈 normalizo
+    const hora  = normTime(c.hora);              // normalizo
     const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push({ ...c, hora });          // guardo hora normalizada
@@ -635,19 +635,6 @@ function pintarClases(){
       tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
 
-      // ===== tipo visual (prioriza cl.tipo) =====
-      const tipo = cl.tipo ?? (
-        cl.es_prueba ? 'prueba' :
-        (cl.unica_vez || cl.es_recuperacion ? 'recuperacion' :
-         (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
-      );
-      tag.dataset.tipo = tipo;
-      if (tipo === 'prueba') {
-        tag.classList.add('tag-prueba');          // violeta
-      } else if (tipo === 'recuperacion') {
-        tag.classList.add('tag-recuperacion');    // rojo fuerte
-      }
-
       // ===== datasets para doble click / detalle =====
       tag.dataset.id       = cl.id ?? '';
       tag.dataset.estado   = cl.estado || '';
@@ -659,7 +646,27 @@ function pintarClases(){
       tag.dataset.sede     = cl.sede;
       tag.dataset.nota     = cl.nota || '';
 
+      // 1) aplicar estado primero (para que no borre estilos después)
       applyEstadoClassToTag(tag, tag.dataset.estado);
+
+      // 2) tipo visual (después del estado) — refuerzo inline para que no lo pisen
+      const tipo = cl.tipo ?? (
+        cl.es_prueba ? 'prueba' :
+        (cl.unica_vez || cl.es_recuperacion ? 'recuperacion' :
+         (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+      );
+      tag.dataset.tipo = tipo;
+
+      if (tipo === 'prueba') {
+        tag.classList.add('tag-prueba');          // violeta
+        tag.style.backgroundColor = '#8e44ad';    // refuerzo inline
+        tag.style.color = '#fff';
+      } else if (tipo === 'recuperacion') {
+        tag.classList.add('tag-recuperacion');    // rojo fuerte
+        tag.style.backgroundColor = '#c62828';    // refuerzo inline
+        tag.style.color = '#fff';
+      }
+
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
@@ -687,14 +694,17 @@ function onTagDblClick(e){
   chkConAviso.checked  = (estado === 'con_aviso');
   chkSobreHora.checked = (estado === 'sobre_hora');
 
-  // Observación (solo si es prueba, pero dejamos siempre visible)
+  // Observación (dejo siempre visible)
   const obs = (tag.dataset.nota || '').trim();
   document.getElementById('observacionClase').value = obs;
 
   overlayClase.style.display = 'flex';
 }
 
-function cerrarModalClase(){ overlayClase.style.display = 'none'; }
+function cerrarModalClase(){
+  overlayClase.style.display = 'none';
+}
+
 
 async function guardarEstadoClase(){
   // único estado seleccionado (o ninguno para limpiar)
