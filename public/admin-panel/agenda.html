@@ -1354,22 +1354,30 @@ const nota   = (elNota   ? elNota.value   : '').trim();
       const fechaLocal = clases[0].fecha;
       const horaLocal  = clases[0].hora;
 
-      for (const c of creadas){
-       clasesSemana.push({
-  id    : c.id ?? null,
-  fecha : normDate(c.fecha ?? fechaLocal),
-  hora  : normTime(c.hora  ?? horaLocal),
-  sede  : (c.sede ?? baseSede).trim(),
-  alumno_id,
-  nombre: '', // prueba no lleva alumno
-  numero_alumno: null,
-  var elNombre2 = document.getElementById('nombrePrueba');
-nota: ( (c.nota != null ? c.nota : (elNombre2 ? elNombre2.value : '')) || '' ).trim(),
-observacion: ((c.observacion || c.obs || c.motivo) || '').trim(),
+// tomar valores del modal una sola vez
+var inpNombrePrueba = document.getElementById('nombrePrueba');
+var inpNotaPrueba   = document.getElementById('notaPrueba');
+var valNombrePrueba = (inpNombrePrueba ? inpNombrePrueba.value : '').trim();
+var valMotivoPrueba = (inpNotaPrueba   ? inpNotaPrueba.value   : '').trim();
 
-  estado: c.estado ?? null,
-  tipo  : c.tipo ?? 'prueba'
+
+      for (const c of creadas){
+      clasesSemana.push({
+  id    : (c.id != null ? c.id : null),
+  fecha : normDate(c.fecha || fechaLocal),
+  hora  : normTime(c.hora  || horaLocal),
+  sede  : (c.sede ? String(c.sede).trim() : baseSede),
+  alumno_id,
+  nombre: '',                  // prueba no lleva alumno
+  numero_alumno: null,
+  // Nombre visible del chip (Nombre (prueba))
+  nota  : ( (c.nota != null ? c.nota : valNombrePrueba) || '' ).trim(),
+  // Motivo/observación para el modal
+  observacion: ( (c.observacion || c.obs || c.motivo || valMotivoPrueba) || '' ).trim(),
+  estado: c.estado || null,
+  tipo  : c.tipo || 'prueba'
 });
+
 
 
       }
