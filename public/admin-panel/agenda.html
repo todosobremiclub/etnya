@@ -259,6 +259,12 @@
   <button onclick="eliminarClaseSeleccionada()" style="background:#e57373">Eliminar clase</button>
 </div>
 
+<div id="detalleObservacion" style="margin-top:10px; width:100%;">
+  <label>Observación / Motivo de prueba</label>
+  <textarea id="observacionClase" rows="2" style="width:100%;"></textarea>
+</div>
+
+
 
 
   </div>
@@ -644,42 +650,6 @@ function onTagDblClick(e){
   e.stopPropagation();
   const tag = e.currentTarget;
 
-  const alumnoId = parseInt(tag.dataset.alumnoId || '0', 10);
-  const esPrueba = !alumnoId; // si no tiene alumno_id, es clase de prueba
-
-  if (esPrueba){
-    // 👉 Abrir el modal de REGISTRO en modo "Clase de prueba"
-    abrirModal();
-
-    // activar modo "prueba"
-    chkPrueba.checked = true;
-    chkUnica.checked  = false;
-    toggleModo('prueba');
-
-    // prefijar sede / fecha / hora
-    selectSede.value = (tag.dataset.sede || '').trim();
-    onSedeChange(); // repuebla combos según sede
-
-    fechaPrueba.value = tag.dataset.fecha || '';
-    horaPrueba.value  = tag.dataset.hora  || '';
-
-    // nombre (si guardaste el nombre dentro de 'nota') y motivo/nota
-    const nota = (tag.dataset.nota || '').trim();
-    const nombre = (tag.dataset.nombre || '').trim();
-
-    // si usás 'nota' para el nombre de la persona de prueba:
-    if (document.getElementById('nombrePrueba')) {
-      document.getElementById('nombrePrueba').value = nombre || nota || '';
-    }
-    if (document.getElementById('notaPrueba')) {
-      document.getElementById('notaPrueba').value = nota; // 👈 Motivo/nota de prueba
-    }
-
-    // listo: usuario puede editar y volver a guardar como nueva clase de prueba
-    return;
-  }
-
-  // --------- Caso NO prueba: abrir modal de estado como siempre ---------
   claseSelTag = tag;
   claseSelId  = parseInt(tag.dataset.id, 10) || null;
 
@@ -687,11 +657,16 @@ function onTagDblClick(e){
   const numero = tag.dataset.numero || '';
   document.getElementById('claseInfo').textContent = `${numero ? numero+' · ' : ''}${nombre}`;
 
+  // Estado
   const estado = tag.dataset.estado || '';
   chkAsistio.checked   = (estado === 'asistio');
   chkSinAviso.checked  = (estado === 'sin_aviso');
   chkConAviso.checked  = (estado === 'con_aviso');
   chkSobreHora.checked = (estado === 'sobre_hora');
+
+  // Observación (solo si es prueba, pero dejamos siempre visible)
+  const obs = (tag.dataset.nota || '').trim();
+  document.getElementById('observacionClase').value = obs;
 
   overlayClase.style.display = 'flex';
 }
@@ -706,19 +681,26 @@ async function guardarEstadoClase(){
   else if (chkConAviso.checked)  estado = 'con_aviso';
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
+  // Observación (nota de prueba o comentario)
+  const observacion = document.getElementById('observacionClase')?.value || null;
+
   // UI inmediata
   if (claseSelTag){
     claseSelTag.dataset.estado = estado;
+    claseSelTag.dataset.nota   = observacion || '';  // 👈 guardamos también en dataset
     applyEstadoClassToTag(claseSelTag, estado);
   }
 
   try{
     if (claseSelId){
-      // intenta PATCH /clases/:id
+      // intenta PATCH /clases/:id con estado + observacion
       let r = await fetch(`/clases/${claseSelId}`, {
         method: 'PATCH',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ estado: estado || null })
+        body: JSON.stringify({ 
+          estado: estado || null,
+          observacion: observacion  // 👈 se envía al backend
+        })
       });
 
       // fallback POST /clases/estado si el PATCH no existe
@@ -726,26 +708,35 @@ async function guardarEstadoClase(){
         r = await fetch('/clases/estado', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ id: claseSelId, estado: estado || null })
+          body: JSON.stringify({ 
+            id: claseSelId, 
+            estado: estado || null,
+            observacion: observacion
+          })
         });
-        if (!r.ok) throw new Error('No se pudo guardar el estado');
+        if (!r.ok) throw new Error('No se pudo guardar el estado/observación');
       }
 
       // sincronizar cache local para persistir en repintados/cambios de semana
       const it = clasesSemana.find(c => c.id === claseSelId);
-      if (it) it.estado = estado || null;
+      if (it){
+        it.estado = estado || null;
+        it.nota   = observacion || '';
+      }
     }
     cerrarModalClase();
   }catch(err){
     console.error(err);
-    alert('No se pudo guardar el estado');
+    alert('No se pudo guardar el estado/observación');
 
     // rollback visual si falló
     if (claseSelTag){
       const it = clasesSemana.find(c => c.id === claseSelId);
-      const prev = it ? (it.estado || '') : '';
-      claseSelTag.dataset.estado = prev;
-      applyEstadoClassToTag(claseSelTag, prev);
+      const prevEstado = it ? (it.estado || '') : '';
+      const prevNota   = it ? (it.nota   || '') : '';
+      claseSelTag.dataset.estado = prevEstado;
+      claseSelTag.dataset.nota   = prevNota;
+      applyEstadoClassToTag(claseSelTag, prevEstado);
     }
   }
 }
