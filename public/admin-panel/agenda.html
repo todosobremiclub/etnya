@@ -167,6 +167,9 @@
 #tablaAgenda .col-hora { position: sticky; left: 0; z-index: 3; background: #f5f7f6; }
 .agenda-wrapper { overflow-x: auto; }
 
+.agenda-wrap { overflow: visible; }  /* habilita que el hijo .agenda-wrapper pueda scrollear */
+
+
   </style>
 </head>
 <body>
@@ -214,8 +217,11 @@
   
 
   <div class="agenda-wrap">
+  <div class="agenda-wrapper">
     <table class="agenda" id="tablaAgenda"></table>
   </div>
+</div>
+
 </main>
 
 <!-- ====== Modal Registrar ====== -->
@@ -419,9 +425,7 @@ if (btnDia)    btnDia.onclick    = () => { vista = 'dia';    renderAgenda(); };
 
 // Adaptador: usamos tu render semanal actual
 const renderSemana = () => {
-  // Si tu función se llama distinto, cambiala acá:
-  renderizarAgenda(); // <--- tu función existente para ver la semana
-  // preparar selector de días para la vista día
+  cargarSemana(); // <-- esta SÍ existe y arma la semana
   if (typeof prepararSelectorDia === 'function') {
     prepararSelectorDia(obtenerFechasSemana());
   }
@@ -1428,7 +1432,8 @@ if (btnEliminarClaseUnica){
 
 /* ===== Init ===== */
 async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
-window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
+window.onload=async()=>{ await cargarAlumnos(); renderAgenda(); }
+
 
 
   // refs rápidas (evita document.getElementById repetido)
