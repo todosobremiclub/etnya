@@ -841,16 +841,17 @@ function pintarClases(){
       // datasets para el modal de detalle
 tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
 tag.dataset.estado   = cl.estado || '';
-tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim();
+tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título arriba del modal
 tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
 tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
 tag.dataset.fecha    = cl.fecha || '';
 tag.dataset.hora     = cl.hora  || '';
 tag.dataset.sede     = cl.sede  || '';
-// para PRUEBA priorizamos observacion; si está vacía, caemos a nota
-tag.dataset.nota     = (cl.observacion && String(cl.observacion).trim() !== '')
-  ? String(cl.observacion).trim()
-  : (cl.nota || '');
+// 👉 Modal debe mostrar SOLO el motivo (observación) en pruebas
+tag.dataset.observacion = (cl.observacion && String(cl.observacion).trim()) 
+  ? String(cl.observacion).trim() 
+  : '';
+
 
 
 
@@ -908,8 +909,9 @@ function onTagDblClick(e){
   chkSobreHora.checked = (estado === 'sobre_hora');
 
   // Observación (dejo siempre visible)
-  const obs = (tag.dataset.nota || '').trim();
-  document.getElementById('observacionClase').value = obs;
+  const obs = (tag.dataset.observacion || '').trim();
+document.getElementById('observacionClase').value = obs;  // 👈 solo motivo
+
 
   overlayClase.style.display = 'flex';
 }
@@ -930,12 +932,31 @@ async function guardarEstadoClase(){
   // Observación (nota de prueba o comentario)
   const observacion = document.getElementById('observacionClase')?.value || null;
 
-  // UI inmediata
-  if (claseSelTag){
-    claseSelTag.dataset.estado = estado;
-    claseSelTag.dataset.nota   = observacion || '';  // 👈 guardamos también en dataset
-    applyEstadoClassToTag(claseSelTag, estado);
+ // UI inmediata
+if (claseSelTag){
+  claseSelTag.dataset.estado = estado;
+  const obs = observacion || '';
+
+  // 👇 en pruebas guardamos dataset.observacion; en no-prueba, podés seguir usando dataset.nota si querés
+  if ((clasesSemana.find(c => c.id === claseSelId)?.tipo) === 'prueba'){
+    claseSelTag.dataset.observacion = obs;
+  } else {
+    claseSelTag.dataset.nota = obs;
   }
+  applyEstadoClassToTag(claseSelTag, estado);
+}
+
+// Cache local
+const it = clasesSemana.find(c => c.id === claseSelId);
+if (it){
+  it.estado = estado || null;
+  if (it.tipo === 'prueba') {
+    it.observacion = observacion || '';  // 👈 guardá motivo
+  } else {
+    it.nota = observacion || '';
+  }
+}
+
 
   try{
     if (claseSelId){
@@ -1325,7 +1346,7 @@ function guardarClase(){
   nombre: '', // prueba no lleva alumno
   numero_alumno: null,
   nota  : (c.nota ?? (document.getElementById('nombrePrueba')?.value || '').trim()) || '',
-  observacion: (c.observacion ?? (document.getElementById('notaPrueba')?.value || '').trim()) || '', // 👈 clave
+  observacion: (c.observacion || c.obs || c.motivo || '').trim(),
   estado: c.estado ?? null,
   tipo  : c.tipo ?? 'prueba'
 });
