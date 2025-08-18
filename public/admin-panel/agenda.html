@@ -204,18 +204,14 @@
     </div>
   </div>
 
-<div class="view-toggle" style="display:flex;gap:10px;align-items:center;">
-  <button id="btnSemana" class="tile">Semana</button>
-  <button id="btnDia" class="tile">Día</button>
-  <select id="selectorDia" style="display:none;"></select>
-</div>
-
-
   
 
   <div class="agenda-wrap">
+  <div class="agenda-wrapper">
     <table class="agenda" id="tablaAgenda"></table>
   </div>
+</div>
+
 </main>
 
 <!-- ====== Modal Registrar ====== -->
@@ -1427,8 +1423,11 @@ if (btnEliminarClaseUnica){
 
 
 /* ===== Init ===== */
-async function cargarSemana(){actualizarHeader();construirTablaBase();await cargarClasesSemana();pintarClases()}
-window.onload=async()=>{await cargarAlumnos(); await cargarSemana()}
+async function cargarSemana(){ actualizarHeader(); construirTablaBase(); await cargarClasesSemana(); pintarClases(); }
+window.onload = async () => {
+  await cargarAlumnos();
+  await cargarSemana(); // ← carga directamente la semana
+};
 
 
   // refs rápidas (evita document.getElementById repetido)
