@@ -113,6 +113,60 @@
     .modal .footer button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
     .switches{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:8px}
     @media (max-width:768px){.modal .row{grid-template-columns:1fr}}
+
+/* ====== Mobile agenda tweaks ====== */
+@media (max-width: 768px) {
+  /* Contenedor scrolleable horizontal */
+  .agenda-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Tabla más cómoda en celus */
+  #tablaAgenda { border-collapse: separate; border-spacing: 0; min-width: 900px; }
+
+  /* Encabezado pegado arriba */
+  #tablaAgenda thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: #b07a8a; /* tu violeta */
+    color: #fff;
+  }
+
+  /* Columna hora fija a la izquierda */
+  #tablaAgenda .col-hora {
+    position: sticky; left: 0; z-index: 4;
+    background: #e9f0ec; /* mismo verde claro del fondo */
+    min-width: 66px; width: 66px;
+  }
+
+  /* Cada día: ancho mínimo para que quepa el chip */
+  #tablaAgenda td.slot, #tablaAgenda th[data-fecha] { min-width: 120px; }
+
+  /* Fila por hora un poco más alta para tap cómodo */
+  #tablaAgenda td.slot { height: 68px; }
+
+  /* Botones de sede compactos y en dos filas si hace falta */
+  #sedeSelector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #sedeSelector .tile { padding: 8px 10px; font-size: 13px; }
+
+  /* Flechas de mes más pequeñas y juntas */
+  .nav-mes { display: flex; align-items: center; gap: 10px; }
+
+  /* Chips horizontales, sin texto vertical, con elipsis */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 12px; max-width: 110px;
+    font-size: 12px; line-height: 1.2; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .chip .numero { font-weight: 600; opacity: .85; }
+  .chip.recupero { /* el violeta de recupero tal como mostraste */
+    background: #7f3f74; color: #fff;
+  }
+}
+
+/* Encabezado y hora también pegados en escritorio: mejora general */
+#tablaAgenda thead th { position: sticky; top: 0; z-index: 2; }
+#tablaAgenda .col-hora { position: sticky; left: 0; z-index: 3; background: #f5f7f6; }
+.agenda-wrapper { overflow-x: auto; }
+
   </style>
 </head>
 <body>
@@ -149,6 +203,13 @@
       <button onclick="abrirModal()">+ Registrar clase</button>
     </div>
   </div>
+
+<div class="view-toggle" style="display:flex;gap:10px;align-items:center;">
+  <button id="btnSemana" class="tile">Semana</button>
+  <button id="btnDia" class="tile">Día</button>
+  <select id="selectorDia" style="display:none;"></select>
+</div>
+
 
   
 
@@ -345,6 +406,128 @@
   let sedeSeleccionada='Craig Reformer';
   let semanaInicio=getLunes(new Date());
   let alumnos=[], clasesSemana=[];
+
+// ==== VISTAS: Semana / Día ==================================================
+let vista = (window.innerWidth <= 768) ? 'dia' : 'semana';
+
+const btnSemana   = document.getElementById('btnSemana');
+const btnDia      = document.getElementById('btnDia');
+const selectorDia = document.getElementById('selectorDia');
+
+if (btnSemana) btnSemana.onclick = () => { vista = 'semana'; renderAgenda(); };
+if (btnDia)    btnDia.onclick    = () => { vista = 'dia';    renderAgenda(); };
+
+// Adaptador: usamos tu render semanal actual
+const renderSemana = () => {
+  // Si tu función se llama distinto, cambiala acá:
+  renderizarAgenda(); // <--- tu función existente para ver la semana
+  // preparar selector de días para la vista día
+  if (typeof prepararSelectorDia === 'function') {
+    prepararSelectorDia(obtenerFechasSemana());
+  }
+};
+
+function renderAgenda() {
+  if (vista === 'dia') {
+    if (selectorDia) selectorDia.style.display = 'inline-block';
+    renderDia();
+  } else {
+    if (selectorDia) selectorDia.style.display = 'none';
+    renderSemana();
+  }
+}
+
+// Devuelve array de YYYY-MM-DD de la semana visible, según tus utilidades
+function obtenerFechasSemana() {
+  const dias = diasHabilitados(sedeSeleccionada);  // ya la usás
+  const lunes = semanaInicio;                       // ya lo tenés global
+  return dias.map(d => ymd(addDays(lunes, d - 1))); // ya tenés ymd/addDays
+}
+
+// Carga el select de día
+function prepararSelectorDia(diasSemana) {
+  if (!selectorDia) return;
+  selectorDia.innerHTML = '';
+  diasSemana.forEach(d => {
+    const dt = new Date(d);
+    const label = dt.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = label;
+    selectorDia.appendChild(opt);
+  });
+  selectorDia.onchange = renderDia;
+}
+
+// Render de un solo día en formato lista por hora
+function renderDia() {
+  const cont = document.querySelector('.agenda-wrapper');
+  if (!cont) return;
+
+  const diasSemana = obtenerFechasSemana();
+  const dia = (selectorDia && selectorDia.value) ? selectorDia.value : diasSemana[0];
+
+  // Filtramos clases de ese día (y sede, si corresponde)
+  const clasesDelDia = (window.clasesSemana || []).filter(c => {
+    const sedeOK = (sedeSeleccionada === 'Todas') ? true : (String(c.sede || '').trim() === String(sedeSeleccionada).trim());
+    return c.fecha === dia && sedeOK;
+  });
+
+  // Agrupar por hora normalizada
+  const byHora = {};
+  for (const c of clasesDelDia) {
+    const h = normTime(c.hora);
+    (byHora[h] ||= []).push(c);
+  }
+
+  // Construir lista
+  cont.innerHTML = '';
+  const ul = document.createElement('ul');
+  ul.style.listStyle = 'none';
+  ul.style.padding = '0 12px';
+
+  Object.keys(byHora).sort().forEach(h => {
+    const li = document.createElement('li');
+    li.style.margin = '10px 0';
+    li.style.padding = '10px';
+    li.style.background = '#fff';
+    li.style.borderRadius = '12px';
+
+    const titulo = document.createElement('div');
+    titulo.style.fontWeight = '600';
+    titulo.textContent = h;
+
+    const fila = document.createElement('div');
+    fila.style.display = 'flex';
+    fila.style.flexWrap = 'wrap';
+    fila.style.gap = '8px';
+    fila.style.marginTop = '8px';
+
+    byHora[h].forEach(c => {
+      const chip = document.createElement('span');
+      chip.className = 'chip' + (c.recupero ? ' recupero' : '');
+      const numero = c.numero || c.numero_alumno || '';
+      const nombre = c.nombre || c.alumno_nombre || '';
+      chip.innerHTML = `<span class="numero">${numero}</span> ${nombre}`;
+      fila.appendChild(chip);
+    });
+
+    li.appendChild(titulo);
+    li.appendChild(fila);
+    ul.appendChild(li);
+  });
+
+  cont.appendChild(ul);
+}
+
+// Cambiar automáticamente según ancho
+window.addEventListener('resize', () => {
+  const nueva = (window.innerWidth <= 768) ? 'dia' : 'semana';
+  if (nueva !== vista) {
+    vista = nueva;
+    renderAgenda();
+  }
+});
+
 
 // ===== Utils =====
 function getLunes(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
