@@ -6,171 +6,143 @@
   <title>Agenda</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* ====== Base ====== */
-    body{margin:0;font-family:'Inter',sans-serif;background:#cce1d6;color:#6d6d6d}
-    .sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background:#91586d;padding-top:60px;box-shadow:2px 0 5px rgba(0,0,0,.1);z-index:1000}
-    .sidebar a{display:block;padding:10px 16px;color:#fff;text-decoration:none;font-weight:bold;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
-    .sidebar a:hover{background:#6d3e4e}
-    main{margin-left:200px;padding:16px}
-    .header{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:16px}
-    .header img{height:40px}
-    h1{color:#91586d;margin:0 0 12px;text-align:center;font-size:20px}
-    #menuToggle{display:none;position:fixed;top:10px;left:10px;z-index:1100;background:#91586d;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
-    @media (max-width:768px){#menuToggle{display:block}.sidebar{display:none;width:100%;height:auto;position:absolute;top:50px;left:0}.sidebar.mostrar{display:block}main{margin-left:0;padding:10px}.header{flex-direction:column}h1{font-size:18px}}
-
-    /* ====== Controles ====== */
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-    .sede-tabs{display:flex;gap:6px;flex-wrap:wrap}
-    .sede-tabs button,.week-nav button,.actions button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
-    .sede-tabs button.active{background:#91586d}
-    .week-nav{display:flex;align-items:center;gap:8px}
-    .week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
-    .legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
-    .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
-    .i-free{background:#cce1d6;border:1px solid #94b8a3}
-    .i-full{background:#ffd5d5;border:1px solid #ff9b9b}
-
-    /* ====== Grilla ====== */
-    .agenda-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
-    table.agenda{width:100%;border-collapse:collapse;table-layout:fixed}
-    .agenda th,.agenda td{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;vertical-align:top}
-    .agenda th:last-child,.agenda td:last-child{border-right:none}
-    .agenda th{background:#b48a99;color:#fff;font-size:13px;position:sticky;top:0;z-index:2;padding:6px}
-    .col-hora{width:70px;background:#f7f7f7;font-weight:600;text-align:center;position:sticky;left:0;z-index:1;padding:6px}
-
-    /* ====== Slot único por hora/día dividido en dos ====== */
-    td.slot{padding:0}
-    .slot-inner{
-      min-height:110px;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-    }
-    .half{
-  gap: 8px;
-  padding: 6px;
-  box-sizing: border-box;
-  min-width: 0;          /* clave en grid para que el contenido no desborde */
+/* ====== Base ====== */
+body{margin:0;font-family:'Inter',sans-serif;background:#cce1d6;color:#6d6d6d}
+.sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background:#91586d;padding-top:60px;box-shadow:2px 0 5px rgba(0,0,0,.1);z-index:1000}
+.sidebar a{display:block;padding:10px 16px;color:#fff;text-decoration:none;font-weight:bold;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
+.sidebar a:hover{background:#6d3e4e}
+main{margin-left:200px;padding:16px}
+.header{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:16px}
+.header img{height:40px}
+h1{color:#91586d;margin:0 0 12px;text-align:center;font-size:20px}
+#menuToggle{display:none;position:fixed;top:10px;left:10px;z-index:1100;background:#91586d;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:18px;cursor:pointer}
+@media (max-width:768px){
+  #menuToggle{display:block}
+  .sidebar{display:none;width:100%;height:auto;position:absolute;top:50px;left:0}
+  .sidebar.mostrar{display:block}
+  main{margin-left:0;padding:10px}
+  .header{flex-direction:column}
+  h1{font-size:18px}
 }
-    .half.left{border-right:1px solid #e0e0e0}
-  .tag{
+
+/* ====== Controles ====== */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sede-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.sede-tabs button,.week-nav button,.actions button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+.sede-tabs button.active{background:#91586d}
+.week-nav{display:flex;align-items:center;gap:8px}
+.week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
+.legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.i-free{background:#cce1d6;border:1px solid #94b8a3}
+.i-full{background:#ffd5d5;border:1px solid #ff9b9b}
+
+/* ====== Grilla ====== */
+.agenda-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:visible} /* overflow visible para que scrollee el hijo */
+.agenda-wrapper{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.agenda{width:max-content;border-collapse:collapse;table-layout:fixed;min-width:960px}
+.agenda th,.agenda td{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;vertical-align:top}
+.agenda th:last-child,.agenda td:last-child{border-right:none}
+.agenda th{background:#b48a99;color:#fff;font-size:13px;position:sticky;top:0;z-index:2;padding:6px}
+.col-hora{width:70px;background:#f7f7f7;font-weight:600;text-align:center;position:sticky;left:0;z-index:3;padding:6px}
+
+/* ====== Slot único por hora/día dividido en dos ====== */
+td.slot{padding:0}
+.slot-inner{min-height:110px;display:grid;grid-template-columns:1fr 1fr}
+.half{gap:8px;padding:6px;box-sizing:border-box;min-width:0}
+.half.left{border-right:1px solid #e0e0e0}
+.tag{
   display:block;
   width:100%;
   max-width:100%;
   box-sizing:border-box;
-  padding:6px 8px;              /* un poco menos de padding */
+  padding:6px 8px;
   border-radius:10px;
   background:#f3fbf7;
   border:1px solid #94b8a3;
   box-shadow:0 1px 0 rgba(0,0,0,.03);
-
-  /* — cambios clave — */
-  font-size:11px;               /* más chico */
+  font-size:11px;
   line-height:1.2;
-  white-space:normal;           /* permite salto de línea */
-  overflow:visible;             /* sin recorte */
-  text-overflow:clip;           /* sin '...' */
-  word-break:break-word;        /* por si un nombre es muy largo */
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  word-break:break-word;
 }
+.tag.full{background:#ffdede;border-color:#ff9b9b;text-align:center;font-weight:600}
+.tag-prueba{background-color:#8e44ad;color:#fff}
+.tag-recuperacion{background-color:#c62828;color:#fff}
 
-.tag.full{
-  background:#ffdede;
-  border-color:#ff9b9b;
-  text-align:center;
-  font-weight:600;
+/* Estados de asistencia */
+.tag.estado-asistio{background:#fff6bf;border-color:#e6d98a;color:#5a5200}
+.tag.estado-sin-aviso{background:#ffe066;border-color:#e6b800;color:#5a4b00}
+.tag.estado-con-aviso{background:#ffc2d1;border-color:#ff8fa3;color:#6d3e4e}
+.tag.estado-sobre-hora{background:#b2f2bb;border-color:#63d471;color:#245b2a}
+.tag.is-clickable{cursor:pointer;user-select:none}
+
+/* ====== Modal ====== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1200}
+.modal{width:min(900px,95vw);background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:16px;max-height:90vh;overflow:auto}
+.modal h3{margin:0 0 10px;color:#91586d;text-align:center}
+.modal .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal label{font-size:13px;font-weight:600;color:#6d6d6d}
+.modal input[type="text"],.modal input[type="date"],.modal select,.modal textarea{width:100%;padding:8px;border:1px solid #94b8a3;border-radius:6px;background:#f9f9f9;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 10px;background:#cce1d6;border:1px solid #94b8a3;border-radius:999px;cursor:pointer;font-size:12px;user-select:none}
+.chip.selected{background:#b48a99;border-color:#91586d;color:#fff}
+.modal .footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.modal .footer button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+.switches{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:8px}
+@media (max-width:768px){.modal .row{grid-template-columns:1fr}}
+
+/* ====== Chips siempre horizontales ====== */
+.chip,.clase-chip,.alumno-chip,.chip-recupero{
+  display:inline-flex!important;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:12px;
+  font-size:12px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:140px;
+  writing-mode:initial!important;
+  transform:none!important;
+  height:auto!important;
 }
-
-.tag-prueba{
-    background-color:#8e44ad;   /* violeta fuerte */
-    color:#fff;
-  }
-  .tag-recuperacion{
-    background-color:#c62828;   /* rojo fuerte */
-    color:#fff;
-  }
-
-
-/* Estados de asistencia (colores fuertes) */
-.tag.estado-asistio     { background:#fff6bf; border-color:#e6d98a; color:#5a5200; } /* amarillo clarito */
-.tag.estado-sin-aviso { background:#ffe066; border-color:#e6b800; color:#5a4b00; }
-.tag.estado-con-aviso { background:#ffc2d1; border-color:#ff8fa3; color:#6d3e4e; }
-.tag.estado-sobre-hora{ background:#b2f2bb; border-color:#63d471; color:#245b2a; }
-.tag.is-clickable { cursor: pointer; }
-.tag.is-clickable { cursor: pointer; user-select: none; }
-
-
-
-    /* ====== Modal ====== */
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:1200}
-    .modal{width:min(900px,95vw);background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:16px;max-height:90vh;overflow:auto}
-    .modal h3{margin:0 0 10px;color:#91586d;text-align:center}
-    .modal .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .modal label{font-size:13px;font-weight:600;color:#6d6d6d}
-    .modal input[type="text"],.modal input[type="date"],.modal select,.modal textarea{width:100%;padding:8px;border:1px solid #94b8a3;border-radius:6px;background:#f9f9f9;font-size:13px}
-    .chips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{padding:6px 10px;background:#cce1d6;border:1px solid #94b8a3;border-radius:999px;cursor:pointer;font-size:12px;user-select:none}
-    .chip.selected{background:#b48a99;border-color:#91586d;color:#fff}
-    .modal .footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-    .modal .footer button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
-    .switches{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:8px}
-    @media (max-width:768px){.modal .row{grid-template-columns:1fr}}
+.chip .numero{font-weight:600;opacity:.85}
+.chip.recupero{background:#7f3f74;color:#fff}
+@media (min-width:1200px){
+  .chip,.clase-chip,.alumno-chip,.chip-recupero{max-width:180px}
+}
+@media (max-width:768px){
+  .chip,.clase-chip,.alumno-chip,.chip-recupero{max-width:110px;font-size:11px}
+}
 
 /* ====== Mobile agenda tweaks ====== */
-@media (max-width: 768px) {
-  /* Contenedor scrolleable horizontal */
-  .agenda-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-  /* Tabla más cómoda en celus */
-  #tablaAgenda { border-collapse: separate; border-spacing: 0; min-width: 900px; }
-
-  /* Encabezado pegado arriba */
-  #tablaAgenda thead th {
-    position: sticky; top: 0; z-index: 3;
-    background: #b07a8a; /* tu violeta */
-    color: #fff;
+@media (max-width:768px){
+  #tablaAgenda{border-collapse:separate;border-spacing:0;min-width:900px}
+  #tablaAgenda thead th{
+    position:sticky;top:0;z-index:3;
+    background:#b07a8a;color:#fff
   }
-
-  /* Columna hora fija a la izquierda */
-  #tablaAgenda .col-hora {
-    position: sticky; left: 0; z-index: 4;
-    background: #e9f0ec; /* mismo verde claro del fondo */
-    min-width: 66px; width: 66px;
+  #tablaAgenda .col-hora{
+    position:sticky;left:0;z-index:4;
+    background:#e9f0ec;min-width:66px;width:66px
   }
-
-  /* Cada día: ancho mínimo para que quepa el chip */
-  #tablaAgenda td.slot, #tablaAgenda th[data-fecha] { min-width: 120px; }
-
-  /* Fila por hora un poco más alta para tap cómodo */
-  #tablaAgenda td.slot { height: 68px; }
-
-  /* Botones de sede compactos y en dos filas si hace falta */
-  #sedeSelector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  #sedeSelector .tile { padding: 8px 10px; font-size: 13px; }
-
-  /* Flechas de mes más pequeñas y juntas */
-  .nav-mes { display: flex; align-items: center; gap: 10px; }
-
-  /* Chips horizontales, sin texto vertical, con elipsis */
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 10px; border-radius: 12px; max-width: 110px;
-    font-size: 12px; line-height: 1.2; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-  }
-  .chip .numero { font-weight: 600; opacity: .85; }
-  .chip.recupero { /* el violeta de recupero tal como mostraste */
-    background: #7f3f74; color: #fff;
-  }
+  #tablaAgenda td.slot,#tablaAgenda th[data-fecha]{min-width:120px}
+  #tablaAgenda td.slot{height:68px}
+  #sedeSelector{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  #sedeSelector .tile{padding:8px 10px;font-size:13px}
+  .nav-mes{display:flex;align-items:center;gap:10px}
 }
 
-/* Encabezado y hora también pegados en escritorio: mejora general */
-#tablaAgenda thead th { position: sticky; top: 0; z-index: 2; }
-#tablaAgenda .col-hora { position: sticky; left: 0; z-index: 3; background: #f5f7f6; }
-.agenda-wrapper { overflow-x: auto; }
+/* ====== General sticky en escritorio ====== */
+#tablaAgenda thead th{position:sticky;top:0;z-index:2}
+#tablaAgenda .col-hora{position:sticky;left:0;z-index:3;background:#f5f7f6}
+</style>
 
-.agenda-wrap { overflow: visible; }  /* habilita que el hijo .agenda-wrapper pueda scrollear */
-
-
-  </style>
 </head>
 <body>
 <button id="menuToggle" onclick="document.querySelector('.sidebar').classList.toggle('mostrar')">☰</button>
@@ -420,8 +392,9 @@ const btnSemana   = document.getElementById('btnSemana');
 const btnDia      = document.getElementById('btnDia');
 const selectorDia = document.getElementById('selectorDia');
 
-if (btnSemana) btnSemana.onclick = () => { vista = 'semana'; renderAgenda(); };
-if (btnDia)    btnDia.onclick    = () => { vista = 'dia';    renderAgenda(); };
+if (btnSemana) btnSemana.onclick = async () => { vista = 'semana'; await renderAgenda(); };
+if (btnDia)    btnDia.onclick    = async () => { vista = 'dia';    await renderAgenda(); };
+
 
 // Adaptador: usamos tu render semanal actual
 const renderSemana = () => {
@@ -431,13 +404,28 @@ const renderSemana = () => {
   }
 };
 
-function renderAgenda() {
+// Carga la semana (trae datos) y prepara el selector de días
+async function cargarSemanaWrapper(){
+  await cargarSemana(); // <-- tu función que arma la tabla y trae /clases
+  if (typeof prepararSelectorDia === 'function') {
+    prepararSelectorDia(obtenerFechasSemana());
+  }
+}
+
+
+async function renderAgenda() {
+  const sel = document.getElementById('selectorDia');
+
   if (vista === 'dia') {
-    if (selectorDia) selectorDia.style.display = 'inline-block';
+    if (sel) sel.style.display = 'inline-block';
+    // 1) traigo datos y armo selector
+    await cargarSemanaWrapper();
+    // 2) pinto la vista día
     renderDia();
   } else {
-    if (selectorDia) selectorDia.style.display = 'none';
-    renderSemana();
+    if (sel) sel.style.display = 'none';
+    // Semana también pasa por el wrapper (trae datos y repinta)
+    await cargarSemanaWrapper();
   }
 }
 
