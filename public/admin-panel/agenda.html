@@ -621,10 +621,11 @@ function pintarClases(){
   for (const c of clasesSemana){
     const sede  = (c.sede || '').trim();
     const fecha = c.fecha;
-    const hora  = normTime(c.hora);              // normalizo
+    const hora  = normTime(c.hora);
     const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
-    mapa.get(key).push({ ...c, hora });          // guardo hora normalizada
+    // guardo hora ya normalizada para usarla después
+    mapa.get(key).push({ ...c, hora });
   }
 
   // render
@@ -639,35 +640,35 @@ function pintarClases(){
       tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
 
-      // ===== datasets para doble click / detalle =====
+      // datasets para el modal de detalle
       tag.dataset.id       = cl.id ?? '';
       tag.dataset.estado   = cl.estado || '';
       tag.dataset.nombre   = (cl.nombre || cl.nota || '').trim();
       tag.dataset.numero   = cl.numero_alumno != null ? String(cl.numero_alumno).padStart(2,'0') : '';
       tag.dataset.alumnoId = cl.alumno_id != null ? String(cl.alumno_id) : '';
       tag.dataset.fecha    = cl.fecha;
-      tag.dataset.hora     = cl.hora;             // ya normalizada
+      tag.dataset.hora     = cl.hora;   // (ya normalizada arriba)
       tag.dataset.sede     = cl.sede;
       tag.dataset.nota     = cl.nota || '';
 
-      // 1) aplicar estado primero (para que no borre estilos después)
+      // 1) aplicar estado primero (si esta función agrega/remueve clases no pisa el color luego)
       applyEstadoClassToTag(tag, tag.dataset.estado);
 
-      // 2) tipo visual (después del estado) — refuerzo inline para que no lo pisen
+      // 2) tipo visual (después del estado). Si no viene, inferimos en último recurso.
       const tipo = cl.tipo ?? (
-        cl.es_prueba ? 'prueba' :
-        (cl.unica_vez || cl.es_recuperacion ? 'recuperacion' :
-         (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+        cl.es_prueba ? 'prueba'
+        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+           : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
       );
       tag.dataset.tipo = tipo;
 
       if (tipo === 'prueba') {
-        tag.classList.add('tag-prueba');          // violeta
-        tag.style.backgroundColor = '#8e44ad';    // refuerzo inline
+        tag.classList.add('tag-prueba');       // clase CSS
+        tag.style.backgroundColor = '#8e44ad'; // refuerzo inline
         tag.style.color = '#fff';
       } else if (tipo === 'recuperacion') {
-        tag.classList.add('tag-recuperacion');    // rojo fuerte
-        tag.style.backgroundColor = '#c62828';    // refuerzo inline
+        tag.classList.add('tag-recuperacion'); // clase CSS
+        tag.style.backgroundColor = '#c62828'; // refuerzo inline (rojo fuerte)
         tag.style.color = '#fff';
       }
 
@@ -938,34 +939,46 @@ function guardarClase(){
   let alumno_id = null;
   if (!esPrueba){
     alumno_id = parseInt(selectAlumno.value, 10);
-    if (!alumno_id){ alert('Seleccioná una alumna/o'); return; }
+    if (!alumno_id){ 
+      alert('Seleccioná una alumna/o'); 
+      return; 
+    }
   }
 
   let clases = [];
 
   // === Clase de RECUPERACIÓN (antes única vez) ===
   if (esRecuperacion){
-    const sede  = (selectSede.value || '').trim(); if (!sede){ alert('Seleccioná una sede'); return; }
+    const sede  = (selectSede.value || '').trim(); 
+    if (!sede){ alert('Seleccioná una sede'); return; }
+
     const fecha = fechaUnica.value;
     const hora  = normTime(horaUnica.value);
-    if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
+    if (!fecha || !hora){ 
+      alert('Completá fecha y hora'); 
+      return; 
+    }
+
     clases.push({ fecha, hora, sede, tipo: 'recuperacion' });
   }
 
   // === Clase de PRUEBA (sin alumno) ===
   else if (esPrueba){
-    const sede   = (selectSede.value || '').trim(); if (!sede){ alert('Seleccioná una sede'); return; }
+    const sede   = (selectSede.value || '').trim(); 
+    if (!sede){ alert('Seleccioná una sede'); return; }
+
     const fecha  = fechaPrueba.value;
     const hora   = normTime(horaPrueba.value);
     const nombre = (document.getElementById('nombrePrueba')?.value || '').trim();
     const nota   = (document.getElementById('notaPrueba')?.value   || '').trim();
     if (!fecha || !hora){ alert('Completá fecha y hora'); return; }
     if (!nombre){ alert('Ingresá el nombre de la persona'); return; }
+
     // nota = nombre visible del chip; observacion = motivo
     clases.push({ fecha, hora, sede, nota: nombre, observacion: nota, tipo: 'prueba' });
   }
 
-  // === Recurrente (normal) ===
+  // === Clase RECURRENTE (normal) ===
   else {
     const sedeBase = (selectSede.value || '').trim();
     if (!sedeBase){ alert('Seleccioná una sede'); return; }
@@ -1004,8 +1017,10 @@ function guardarClase(){
         clasesNuevas.push({ fecha:f, hora:p.hora, sede:p.sede });
       }
     }
+
     if (clasesNuevas.length===0 && idsAEliminar.length===0){
-      alert('No hay cambios para aplicar.'); return;
+      alert('No hay cambios para aplicar.'); 
+      return;
     }
 
     // 5) ejecutar
@@ -1050,67 +1065,66 @@ function guardarClase(){
   }
 
   // === Guardado para PRUEBA o RECUPERACIÓN ===
-(async ()=>{
-  try{
-    const res = await fetch('/clases', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ alumno_id, clases })
-    });
-    if (!res.ok) throw new Error('No se pudo registrar la clase');
-
-    // Intentar leer respuesta
-    let data; try { data = await res.json(); } catch {}
-    let creadas = [];
-    if (Array.isArray(data)) {
-      creadas = data;
-    } else if (data && typeof data === 'object') {
-      creadas = [data];
-    }
-
-    // Datos del alumno para pintar correctamente (recuperación)
-    const listaAlumnos = (window.alumnosGlobal || window.alumnos || []);
-    const alum = listaAlumnos.find(a => Number(a.id) === Number(alumno_id));
-    const displayNombre = alum ? `${alum.apellido || ''} ${alum.nombre || ''}`.trim() : '';
-    const numeroAlumno  = alum?.numero_alumno ?? null;
-
-    // Si no vino nada útil del backend, recargamos semana
-    if (creadas.length === 0 || creadas.every(c => c.id == null)) {
-      cerrarModal();
-      await cargarSemana();
-      return;
-    }
-
-    // Insertar en cache local
-    const tipoLocal  = clases[0]?.tipo || null;
-    const baseSede   = (selectSede.value || '').trim();
-    const esP        = esPrueba;
-    const fechaLocal = clases[0].fecha;
-    const horaLocal  = clases[0].hora;
-
-    for (const c of creadas){
-      clasesSemana.push({
-        id    : c.id ?? null,
-        fecha : normDate(c.fecha ?? fechaLocal),
-        hora  : normTime(c.hora  ?? horaLocal),
-        sede  : (c.sede ?? baseSede).trim(),
-        alumno_id,
-        nombre: esP ? '' : (c.nombre ?? displayNombre),
-        numero_alumno: esP ? null : (c.numero_alumno ?? numeroAlumno),
-        nota  : esP ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
-        estado: c.estado ?? null,
-        tipo  : c.tipo ?? tipoLocal   // 👈 'recuperacion' se pinta en rojo, 'prueba' en violeta
+  (async ()=>{
+    try{
+      const res = await fetch('/clases', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ alumno_id, clases })
       });
-    }
+      if (!res.ok) throw new Error('No se pudo registrar la clase');
 
-    pintarClases();
-    cerrarModal();
-  }catch(e){
-    console.error(e);
-    alert(e.message || 'Error al guardar la clase');
-  }
-})(); // 👈 cierre del IIFE
-} // 👈 cierre de la función guardarClase
+      // Intentar leer respuesta
+      let data; try { data = await res.json(); } catch {}
+      let creadas = [];
+      if (Array.isArray(data)) {
+        creadas = data;
+      } else if (data && typeof data === 'object') {
+        creadas = [data];
+      }
+
+      // Datos del alumno para pintar correctamente (recuperación)
+      const listaAlumnos = (window.alumnosGlobal || window.alumnos || []);
+      const alum = listaAlumnos.find(a => Number(a.id) === Number(alumno_id));
+      const displayNombre = alum ? `${alum.apellido || ''} ${alum.nombre || ''}`.trim() : '';
+      const numeroAlumno  = alum?.numero_alumno ?? null;
+
+      // Si no vino nada útil del backend, recargamos semana
+      if (creadas.length === 0 || creadas.every(c => c.id == null)) {
+        cerrarModal();
+        await cargarSemana();
+        return;
+      }
+
+      // Insertar en cache local
+      const tipoLocal  = clases[0]?.tipo || null; // 👈 'recuperacion' o 'prueba'
+      const baseSede   = (selectSede.value || '').trim();
+      const fechaLocal = clases[0].fecha;
+      const horaLocal  = clases[0].hora;
+
+      for (const c of creadas){
+        clasesSemana.push({
+          id    : c.id ?? null,
+          fecha : normDate(c.fecha ?? fechaLocal),
+          hora  : normTime(c.hora  ?? horaLocal),
+          sede  : (c.sede ?? baseSede).trim(),
+          alumno_id,
+          nombre: esPrueba ? '' : (c.nombre ?? displayNombre),
+          numero_alumno: esPrueba ? null : (c.numero_alumno ?? numeroAlumno),
+          nota  : esPrueba ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
+          estado: c.estado ?? null,
+          tipo  : c.tipo ?? tipoLocal   // 👈 fuerza 'recuperacion' rojo o 'prueba' violeta
+        });
+      }
+
+      pintarClases();
+      cerrarModal();
+    }catch(e){
+      console.error(e);
+      alert(e.message || 'Error al guardar la clase');
+    }
+  })();
+} // 👈 cierre de guardarClase
 
 
 
