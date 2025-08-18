@@ -452,12 +452,14 @@ async function cargarClasesSemana(){
   const dias  = diasHabilitados(sedeSeleccionada) || [1,2,3,4,5];
   const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
 
+  // Construcción segura de la query
   const params = new URLSearchParams();
   params.set('desde', desde);
   params.set('hasta', hasta);
   params.set('sede', sedeSeleccionada || '');
 
   const url = `/clases?${params.toString()}`;
+  // console.debug('GET', url);
 
   try{
     const res = await fetch(url);
@@ -483,15 +485,10 @@ async function cargarClasesSemana(){
         sede  : (c.sede || '').trim(),
         estado: c.estado || null,
         alumno_id: c.alumno_id ?? null,
-        nota  : (c.nota || '').trim(),
-        // 👇 mapeo robusto de tipo para el pintado (rojo/ violeta)
-        tipo  : c.tipo ?? (
-                  c.es_prueba ? 'prueba' :
-                  (c.unica_vez || c.es_recuperacion ? 'recuperacion' : 'normal')
-                )
+        nota: (c.nota || '').trim(),
+        tipo: c.tipo || null    // 👈 aseguramos que venga 'prueba' o 'recuperacion'
       }))
-      // si la vista es "Todas", no filtramos por sede
-      .filter(c => !sedeSeleccionada || sedeSeleccionada === 'Todas' ? true : c.sede === sedeSeleccionada);
+      .filter(c => c.sede === sedeSeleccionada);
 
   }catch(err){
     console.error('Error de red/parseo en /clases:', err);
