@@ -666,15 +666,15 @@ async function cargarClasesSemana(){
       return;
     }
 
-    clasesSemana = data.map(c => ({
+   clasesSemana = data.map(c => ({
   ...c,
   fecha  : normDate(c.fecha),
   hora   : normTime(c.hora),
   sede   : (c.sede || '').trim(),
   estado : c.estado || null,
   alumno_id : c.alumno_id ?? null,
-  nota      : (c.nota || '').trim(),
-  observacion: (c.observacion || c.obs || '').trim(),   // 👈 A G R E G A D O
+  nota       : (c.nota || '').trim(),
+  observacion: (c.observacion || c.obs || c.motivo || '').trim(), // 👈 agregado
   tipo   : c.tipo ?? (
             c.es_prueba ? 'prueba' :
             (c.es_recuperacion || c.unica_vez || c.recuperacion ? 'recuperacion' : null)
@@ -847,7 +847,7 @@ function pintarClases(){
       tag.dataset.fecha    = cl.fecha;
       tag.dataset.hora     = cl.hora;   // (ya normalizada arriba)
       tag.dataset.sede     = cl.sede;
-      tag.dataset.nota = (cl.tipo === 'prueba')
+      tag.dataset.nota = (cl.observacion && cl.observacion.trim()) || (cl.nota || '');
   ? (cl.observacion || '')
   : (cl.nota || '');
 
@@ -1314,19 +1314,20 @@ function guardarClase(){
       const horaLocal  = clases[0].hora;
 
       for (const c of creadas){
-        clasesSemana.push({
+       clasesSemana.push({
   id    : c.id ?? null,
   fecha : normDate(c.fecha ?? fechaLocal),
   hora  : normTime(c.hora  ?? horaLocal),
   sede  : (c.sede ?? baseSede).trim(),
   alumno_id,
-  nombre: esPrueba ? '' : (c.nombre ?? displayNombre),
-  numero_alumno: esPrueba ? null : (c.numero_alumno ?? numeroAlumno),
-  nota  : esPrueba ? (c.nota ?? (document.getElementById('nombrePrueba')?.value||'').trim()) : '',
-  observacion: esPrueba ? (c.observacion ?? (document.getElementById('notaPrueba')?.value||'').trim()) : '', // 👈 A G R E G A D O
+  nombre: '', // prueba no lleva alumno
+  numero_alumno: null,
+  nota  : (c.nota ?? (document.getElementById('nombrePrueba')?.value || '').trim()) || '',
+  observacion: (c.observacion ?? (document.getElementById('notaPrueba')?.value || '').trim()) || '', // 👈 clave
   estado: c.estado ?? null,
-  tipo  : c.tipo ?? tipoLocal
+  tipo  : c.tipo ?? 'prueba'
 });
+
 
       }
 
