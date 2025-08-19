@@ -21,34 +21,44 @@
 
   /* ====== Controles (topbar en 2 filas) ====== */
   .topbar{
-    display:grid;
-    grid-template-columns: 1fr auto 1fr;             /* izq | centro | der */
+  display:grid;
+  grid-template-columns: 1fr auto 1fr; /* izq | centro | der */
+  grid-template-areas:
+    "tabs week actions"
+    "search search .";                 /* buscador + botón juntos */
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+.sede-tabs{ grid-area:tabs; display:flex; gap:6px; flex-wrap:wrap; }
+.week-nav{  grid-area:week; display:flex; align-items:center; gap:8px; justify-self:center; }
+.actions{   grid-area:actions; display:flex; gap:8px; justify-self:end; align-items:center; }
+.search-wrap{ grid-area:search; position:relative; display:flex; gap:8px; align-items:center; }
+
+/* Botones (sin center-tools) */
+.sede-tabs button,
+.week-nav button,
+.actions button{
+  background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;
+}
+.sede-tabs button.active{background:#91586d}
+.week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
+
+.legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.i-free{background:#cce1d6;border:1px solid #94b8a3}
+.i-full{background:#ffd5d5;border:1px solid #ff9b9b}
+
+/* Opcional: mobile */
+@media (max-width:768px){
+  .topbar{
+    grid-template-columns: 1fr 1fr;
     grid-template-areas:
-      "tabs week actions"
-      "search limpiar .";
-    align-items:center;
-    gap:10px;
-    margin-bottom:12px;
+      "tabs actions"
+      "week week"
+      "search search";
   }
-  .sede-tabs{ grid-area:tabs; display:flex; gap:6px; flex-wrap:wrap; }
-  .week-nav{  grid-area:week; display:flex; align-items:center; gap:8px; justify-self:center; }
-  .actions{   grid-area:actions; display:flex; gap:8px; justify-self:end; align-items:center; }
-  .search-wrap{ grid-area:search; position:relative; display:flex; gap:8px; align-items:center; }
-  .center-tools{ grid-area:limpiar; justify-self:center; }
-
-  .sede-tabs button,
-  .week-nav button,
-  .actions button,
-  .center-tools button{
-    background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px
-  }
-  .sede-tabs button.active{background:#91586d}
-  .week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
-
-  .legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
-  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
-  .i-free{background:#cce1d6;border:1px solid #94b8a3}
-  .i-full{background:#ffd5d5;border:1px solid #ff9b9b}
+}
 
   /* ====== Grilla ====== */
   .agenda-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
@@ -187,12 +197,15 @@
     <button type="button" onclick="abrirModal()">+ Registrar clase</button>
   </div>
 
-  <!-- Fila 2: izquierda buscador -->
-  <div class="search-wrap">
-    <input id="findAlumnoInput" type="text" placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
-    <select id="findAlumnoSelect" size="6"
-            style="display:none;position:absolute;z-index:1300;max-height:220px;overflow:auto;"></select>
-  </div>
+  <!-- Fila 2: buscador + limpiar juntos -->
+<div class="search-wrap">
+  <input id="findAlumnoInput" type="text"
+         placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
+  <select id="findAlumnoSelect" size="6"
+          style="display:none;position:absolute;z-index:1300;max-height:220px;overflow:auto;"></select>
+  <button id="btnLimpiarFind" type="button">Limpiar selección</button>
+</div>
+
 
   <!-- Fila 2: centro limpiar -->
   <div class="center-tools">
