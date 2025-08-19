@@ -39,8 +39,8 @@ router.get('/', async (req, res) => {
 
     const sql = `
      SELECT
- c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.estado, c.tipo,
- a.nombre, a.apellido, a.numero_alumno, a.sede AS sede_alumno
+  c.id, c.alumno_id, c.fecha, c.hora, c.sede, c.nota, c.observacion, c.estado, c.tipo,
+   a.nombre, a.apellido, a.numero_alumno, a.sede AS sede_alumno
 
       FROM clases c
       LEFT JOIN alumnos a ON a.id = c.alumno_id
@@ -104,13 +104,13 @@ router.post('/bulk-delete', async (req, res) => {
 });
 
 // PATCH /clases/:id  { estado: 'asistio'|'sin_aviso'|'con_aviso'|'sobre_hora'|null }
-router.patch('/:id', async (req, res) => {
+outer.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { estado } = req.body;
-  try {
+  const { estado, observacion } = req.body;  
+try {
     const r = await pool.query(
-      'UPDATE clases SET estado = $1 WHERE id = $2',
-      [estado ?? null, id]
+      'UPDATE clases SET estado = $1, observacion = $2 WHERE id = $3',
+      [estado ?? null, observacion ?? null, id]
     );
     res.json({ updated: r.rowCount });
   } catch (err) {
@@ -120,13 +120,12 @@ router.patch('/:id', async (req, res) => {
 });
 
 // Fallback: POST /clases/estado  { id, estado }
-router.post('/estado', async (req, res) => {
-  const { id, estado } = req.body;
-  if (!id) return res.status(400).json({ error: 'id requerido' });
+  router.post('/estado', async (req, res) => {
+  const { id, estado, observacion } = req.body;  if (!id) return res.status(400).json({ error: 'id requerido' });
   try {
     const r = await pool.query(
-      'UPDATE clases SET estado = $1 WHERE id = $2',
-      [estado ?? null, id]
+      'UPDATE clases SET estado = $1, observacion = $2 WHERE id = $3',
+      [estado ?? null, observacion ?? null, id]
     );
     res.json({ updated: r.rowCount });
   } catch (err) {
@@ -161,8 +160,9 @@ for (const c of clases) {
     fecha: c.fecha.slice(0, 10),
     hora,
     sede: String(c.sede).trim(),
-    nota: c.nota ? String(c.nota).trim() : null,
-    tipo: c.tipo ? String(c.tipo).trim() : null   // 👈 agregado
+     nota: c.nota ? String(c.nota).trim() : null,
+     observacion: c.observacion ? String(c.observacion).trim() : null,
+     tipo: c.tipo ? String(c.tipo).trim() : null
   });
 }
 
@@ -170,11 +170,11 @@ try {
   const insertedIds = [];
   for (const r of rows) {
     const q = `
-      INSERT INTO clases (alumno_id, fecha, hora, sede, nota, tipo)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO clases (alumno_id, fecha, hora, sede, nota, observacion, tipo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `;
-    const vals = [r.alumno_id, r.fecha, r.hora, r.sede, r.nota, r.tipo];
+    const vals = [r.alumno_id, r.fecha, r.hora, r.sede, r.nota, r.observacion, r.tipo];
     const out = await pool.query(q, vals);
     insertedIds.push(out.rows[0].id);
   }
