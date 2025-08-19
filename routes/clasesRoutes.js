@@ -104,7 +104,7 @@ router.post('/bulk-delete', async (req, res) => {
 });
 
 // PATCH /clases/:id  { estado: 'asistio'|'sin_aviso'|'con_aviso'|'sobre_hora'|null }
-outer.patch('/:id', async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const { estado, observacion } = req.body;  
 try {
