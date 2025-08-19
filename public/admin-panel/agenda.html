@@ -177,46 +177,42 @@
     <h1>Agenda de Clases</h1>
   </div>
 
- <div class="topbar">
-  <!-- Izquierda: sedes -->
-  <div class="sede-tabs">
-    <button id="tabReformer" class="active" onclick="cambiarSede('Craig Reformer')">Craig Reformer</button>
-    <button id="tabCircuito" onclick="cambiarSede('Craig Circuito')">Craig Circuito</button>
-    <button id="tabGoyena" onclick="cambiarSede('Pedro Goyena')">Pedro Goyena</button>
+  <div class="topbar">
+    <!-- Izquierda: sedes -->
+    <div class="sede-tabs">
+      <button id="tabReformer" class="active" onclick="cambiarSede('Craig Reformer')">Craig Reformer</button>
+      <button id="tabCircuito" onclick="cambiarSede('Craig Circuito')">Craig Circuito</button>
+      <button id="tabGoyena" onclick="cambiarSede('Pedro Goyena')">Pedro Goyena</button>
+    </div>
+
+    <!-- Centro: selector de semana -->
+    <div class="week-nav">
+      <button onclick="moverSemana(-1)">◀</button>
+      <div class="week-label" id="labelMes"></div>
+      <button onclick="moverSemana(1)">▶</button>
+    </div>
+
+    <!-- Derecha: acción -->
+    <div class="actions">
+      <button type="button" onclick="abrirModal()">+ Registrar clase</button>
+    </div>
+
+    <!-- Fila 2: buscador + limpiar juntos -->
+    <div class="search-wrap">
+      <input id="findAlumnoInput" type="text"
+             placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
+      <select id="findAlumnoSelect" size="6"
+              style="display:none;position:absolute;z-index:1300;max-height:220px;overflow:auto;"></select>
+      <button id="btnLimpiarFind" type="button">Limpiar selección</button>
+    </div>
   </div>
 
-  <!-- Centro: selector de semana -->
-  <div class="week-nav">
-    <button onclick="moverSemana(-1)">◀</button>
-    <div class="week-label" id="labelMes"></div>
-    <button onclick="moverSemana(1)">▶</button>
+  <!-- Grilla de agenda -->
+  <div class="agenda-wrap">
+    <div class="agenda-wrapper">
+      <table class="agenda" id="tablaAgenda"></table>
+    </div>
   </div>
-
-  <!-- Derecha: acción -->
-  <div class="actions">
-    <button type="button" onclick="abrirModal()">+ Registrar clase</button>
-  </div>
-
-  <!-- Fila 2: buscador + limpiar juntos -->
-<div class="search-wrap">
-  <input id="findAlumnoInput" type="text"
-         placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
-  <select id="findAlumnoSelect" size="6"
-          style="display:none;position:absolute;z-index:1300;max-height:220px;overflow:auto;"></select>
-  <button id="btnLimpiarFind" type="button">Limpiar selección</button>
-</div>
-
-
-  
-<!-- Grilla de agenda -->
-<div class="agenda-wrap">
-  <div class="agenda-wrapper">
-    <table class="agenda" id="tablaAgenda"></table>
-  </div>
-</div>
-
-
-
 </main>
 
 <!-- ====== Modal Registrar ====== -->
