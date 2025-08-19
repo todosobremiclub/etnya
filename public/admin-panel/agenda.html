@@ -570,44 +570,76 @@ function cambiarSede(s){sedeSeleccionada=s;['tabReformer','tabCircuito','tabGoye
 
 /* ========== Construcción grilla (1 slot por hora/día) ========== */
 function construirTablaBase(){
-  const tabla=document.getElementById('tablaAgenda'); tabla.innerHTML='';
-  const thead=document.createElement('thead'); const trh=document.createElement('tr');
-  const thHora=document.createElement('th'); thHora.className='col-hora'; thHora.textContent='Hora'; trh.appendChild(thHora);
+  // Asegurar que exista la tabla dentro de .agenda-wrapper
+  let tabla = document.getElementById('tablaAgenda');
+  if (!tabla) {
+    const wrap = document.querySelector('.agenda-wrapper');
+    if (!wrap) return;                          // si no existe el contenedor, salgo
+    wrap.innerHTML = '';
+    tabla = document.createElement('table');
+    tabla.id = 'tablaAgenda';
+    tabla.className = 'agenda';
+    wrap.appendChild(tabla);
+  } else {
+    tabla.innerHTML = '';
+  }
 
-  const dias=diasHabilitados(sedeSeleccionada); const lunes=semanaInicio;
-  for(const dow of dias){
-    const fecha=addDays(lunes,dow-1);
-    const th=document.createElement('th'); th.dataset.fecha=ymd(fecha);
-    th.textContent=`${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
+  // THEAD
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+
+  const thHora = document.createElement('th');
+  thHora.className = 'col-hora';
+  thHora.textContent = 'Hora';
+  trh.appendChild(thHora);
+
+  const dias = diasHabilitados(sedeSeleccionada);
+  const lunes = semanaInicio;
+
+  for (const dow of dias){
+    const fecha = addDays(lunes, dow - 1);
+    const th = document.createElement('th');
+    th.dataset.fecha = ymd(fecha);
+    th.textContent = `${DIAS[dow]} ${String(fecha.getDate()).padStart(2,'0')}/${String(fecha.getMonth()+1).padStart(2,'0')}`;
     trh.appendChild(th);
   }
   thead.appendChild(trh);
 
-  const tbody=document.createElement('tbody'); const horas=rangoHoras(sedeSeleccionada);
-  horas.forEach(hh=>{
-    const tr=document.createElement('tr');
+  // TBODY
+  const tbody = document.createElement('tbody');
+  const horas = rangoHoras(sedeSeleccionada);
 
-    const tdHora=document.createElement('td'); tdHora.className='col-hora'; tdHora.textContent=hh; tr.appendChild(tdHora);
+  horas.forEach(hh => {
+    const tr = document.createElement('tr');
 
-    dias.forEach(dow=>{
-      const td=document.createElement('td'); td.className='slot';
-      td.dataset.fecha=ymd(addDays(semanaInicio,dow-1));
-      td.dataset.hora=normTime(hh); // <-- guardamos con segundos
-      td.dataset.sede=sedeSeleccionada;
+    const tdHora = document.createElement('td');
+    tdHora.className = 'col-hora';
+    tdHora.textContent = hh;
+    tr.appendChild(tdHora);
 
-      td.innerHTML = `<div class="slot-inner">
-                        <div class="half left"></div>
-                        <div class="half right"></div>
-                      </div>`;
+    dias.forEach(dow => {
+      const td = document.createElement('td');
+      td.className = 'slot';
+      td.dataset.fecha = ymd(addDays(semanaInicio, dow - 1));
+      td.dataset.hora  = normTime(hh);      // guardamos con segundos
+      td.dataset.sede  = sedeSeleccionada;
 
-td.addEventListener('dblclick', onSlotDblClick);
+      td.innerHTML = `
+        <div class="slot-inner">
+          <div class="half left"></div>
+          <div class="half right"></div>
+        </div>
+      `;
+
+      td.addEventListener('dblclick', onSlotDblClick);
       tr.appendChild(td);
     });
 
     tbody.appendChild(tr);
   });
 
-  tabla.appendChild(thead); tabla.appendChild(tbody);
+  tabla.appendChild(thead);
+  tabla.appendChild(tbody);
 }
 
 /* ===== Datos ===== */
