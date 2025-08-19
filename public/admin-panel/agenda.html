@@ -20,12 +20,6 @@
 
     /* ====== Controles ====== */
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-    <div class="actions" style="display:flex;gap:8px;align-items:center">
-  <input id="findAlumnoInput" type="text" placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
-  <select id="findAlumnoSelect" size="5" style="display:none;position:absolute;z-index:1300;max-height:180px;overflow:auto;"></select>
-  <button id="btnLimpiarFind" type="button">Limpiar selección</button>
-</div>
-
     .sede-tabs{display:flex;gap:6px;flex-wrap:wrap}
     .sede-tabs button,.week-nav button,.actions button{background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
     .sede-tabs button.active{background:#91586d}
@@ -211,16 +205,17 @@
       <div class="week-label" id="labelMes"></div>
       <button onclick="moverSemana(1)">▶</button>
     </div>
-    <div class="actions">
-      <button onclick="abrirModal()">+ Registrar clase</button>
-    </div>
-  </div>
+    <div class="actions" style="display:flex;gap:8px;align-items:center;position:relative">
+    <!-- Buscador tipo Excel -->
+    <input id="findAlumnoInput" type="text"
+           placeholder="Buscar alumno (nro, apellido, nombre)"
+           style="min-width:260px">
+    <select id="findAlumnoSelect" size="6"
+            style="display:none;position:absolute;right:110px;top:40px;z-index:1300;max-height:220px;overflow:auto;"></select>
+    <button id="btnLimpiarFind" type="button">Limpiar selección</button>
 
-  
-
-  <div class="agenda-wrap">
-  <div class="agenda-wrapper">
-    <table class="agenda" id="tablaAgenda"></table>
+    <!-- Registrar -->
+    <button type="button" onclick="abrirModal()">+ Registrar clase</button>
   </div>
 </div>
 
