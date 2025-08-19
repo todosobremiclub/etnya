@@ -655,6 +655,7 @@ async function cargarAlumnos(){
   const res=await fetch('/alumnos'); const data=await res.json();
   alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
   poblarListaAlumnos('');
+buildIdxAlumnos();   // <-- actualizar índice del buscador
 }
 
 function poblarListaAlumnos(f=''){
@@ -1639,6 +1640,11 @@ $findIn.addEventListener('input', e => showFindOptions(e.target.value));
 $findIn.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown'){ $findDrop.focus(); if ($findDrop.options.length) $findDrop.selectedIndex = 0; }
   if (e.key === 'Escape'){ $findDrop.style.display = 'none'; }
+if (e.key === 'Enter'){
+    const t = $findIn.value.trim().toLowerCase();
+    const m = idxAlumnos.find(x => x.needle.includes(t));
+    if (m) selectAlumnoEnSemana(m.id);
+  }
 });
 
 $findDrop.addEventListener('change', () => {
