@@ -176,6 +176,26 @@
   white-space:normal; z-index:1000;
 }
 
+/* Menú rápido tipo Excel */
+.quick-menu{position:absolute;display:none;min-width:220px;background:#fff;border:1px solid #ddd;border-radius:8px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:3000;font-size:13px;overflow:hidden}
+.quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
+.quick-menu .item:hover{background:#f3f4f6}
+.quick-menu .sep{height:1px;background:#eee;margin:2px 0}
+.quick-menu .dot{width:10px;height:10px;border-radius:50%}
+.quick-menu .asistio   .dot{background:#2e7d32}
+.quick-menu .sin_aviso .dot{background:#d32f2f}
+.quick-menu .con_aviso .dot{background:#f9a825}
+.quick-menu .sobre_hora .dot{background:#6a1b9a}
+
+/* Tooltip (lo que ya usamos para prueba) */
+.tag.has-tooltip{position:relative}
+.tag.has-tooltip::before{content:"";position:absolute;right:2px;top:2px;border-width:0 7px 7px 0;border-style:solid;
+  border-color:transparent #e57373 transparent transparent}
+.tag.has-tooltip:hover::after{content:attr(data-tooltip);position:absolute;left:0;top:100%;transform:translateY(6px);
+  background:#333;color:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.2);
+  width:max-content;max-width:300px;white-space:normal;z-index:1000}
+
 
 </style>
 
@@ -311,7 +331,7 @@
             <label>Nombre (prueba)</label>
             <input type="text" id="nombrePrueba" placeholder="Ingresá nombre">
           </div>
-          <label>Motivo/nota de prueba</label>
+          <label>Observación</label>
           <textarea id="notaPrueba" rows="3" placeholder="Escribí una breve nota..."></textarea>
           <div style="margin-top:10px;" class="row">
             <div>
@@ -947,13 +967,111 @@ function applyEstadoClassToTag(tag, estado){
   if (estado==='sobre_hora')  tag.classList.add('estado-sobre-hora');
 }
 
+let quickMenu=null, quickMenuTarget=null;
+
+function initQuickMenu(){
+  if (quickMenu) return;
+  quickMenu = document.createElement('div');
+  quickMenu.id = 'quickMenu';
+  quickMenu.className = 'quick-menu';
+  quickMenu.innerHTML = `
+    <div class="item asistio"    data-estado="asistio"><span class="dot"></span>Asistió</div>
+    <div class="item sin_aviso"  data-estado="sin_aviso"><span class="dot"></span>Ausente sin aviso</div>
+    <div class="item con_aviso"  data-estado="con_aviso"><span class="dot"></span>Ausente con aviso</div>
+    <div class="item sobre_hora" data-estado="sobre_hora"><span class="dot"></span>Ausente sobre la hora</div>
+    <div class="sep"></div>
+    <div class="item" data-estado="">Limpiar estado</div>
+  `;
+  document.body.appendChild(quickMenu);
+
+  quickMenu.addEventListener('click', async (e)=>{
+    const it = e.target.closest('.item'); if (!it) return;
+    const estado = it.dataset.estado ?? '';
+    if (quickMenuTarget){
+      // pinta visualmente
+      quickMenuTarget.dataset.estado = estado;
+      if (estado) {
+        applyEstadoClassToTag(quickMenuTarget, estado);
+      } else {
+        // sin estado: aplicar color por tipo (prueba/recuperación/normal)
+        applyTipoColorToTag(quickMenuTarget);
+      }
+      // actualizar cache en memoria
+      const id = parseInt(quickMenuTarget.dataset.id,10) || 0;
+      const row = clasesSemana.find(c => c.id === id);
+      if (row) row.estado = estado || null;
+      // persistir en backend
+      if (id){
+        try{
+          const r = await fetch(`/clases/${id}`,{
+            method:'PATCH',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ estado: estado || null })
+          });
+          if (!r.ok) console.error('PATCH estado falló', await r.text());
+        }catch(err){ console.error(err); }
+      }
+    }
+    closeQuickMenu();
+  });
+
+  // cerrar si clic fuera / scroll / resize / ESC
+  document.addEventListener('click',(ev)=>{
+    if (quickMenu && quickMenu.style.display==='block'){
+      if (!quickMenu.contains(ev.target)) closeQuickMenu();
+    }
+  }, true);
+  window.addEventListener('scroll', closeQuickMenu, true);
+  window.addEventListener('resize', closeQuickMenu, true);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeQuickMenu(); });
+}
+
+function openQuickMenu(target){
+  initQuickMenu();
+  quickMenuTarget = target;
+  quickMenu.style.display = 'block';
+  // posicionar debajo del tag
+  const r = target.getBoundingClientRect();
+  const left = Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - 240);
+  const top  = r.bottom + window.scrollY + 6;
+  quickMenu.style.left = left + 'px';
+  quickMenu.style.top  = top  + 'px';
+}
+
+function closeQuickMenu(){
+  if (quickMenu) quickMenu.style.display='none';
+  quickMenuTarget = null;
+}
+
+/* Aplica color por tipo sólo cuando NO hay estado */
+function applyTipoColorToTag(tag){
+  const tipo = (tag.dataset.tipo || '').toLowerCase();
+  tag.classList.remove('is-primary','is-link','is-info','is-success','is-warning','is-danger','tag-prueba','tag-recuperacion');
+  tag.style.removeProperty('background-color');
+  tag.style.removeProperty('color');
+
+  if (tipo === 'prueba'){
+    tag.classList.add('tag-prueba');
+    tag.style.setProperty('background-color', '#8e44ad', 'important');
+    tag.style.setProperty('color', '#fff', 'important');
+  } else if (tipo === 'recuperacion'){
+    tag.classList.add('tag-recuperacion');
+    tag.style.setProperty('background-color', '#c62828', 'important');
+    tag.style.setProperty('color', '#fff', 'important');
+  }
+}
+
+/* Click en un tag: abrir menú rápido */
+function onTagClick(e){
+  e.stopPropagation();
+  openQuickMenu(e.currentTarget);
+}
+
 
 /* ===== Pintar ===== */
 function pintarClases(){
-  // limpiar
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
-  // agrupar por fecha|hora|sede (normalizando hora)
   const mapa = new Map();
   for (const c of clasesSemana){
     const sede  = (c.sede || '').trim();
@@ -961,11 +1079,9 @@ function pintarClases(){
     const hora  = normTime(c.hora);
     const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
-    // guardo hora ya normalizada para usarla después
     mapa.get(key).push({ ...c, hora });
   }
 
-  // render
   document.querySelectorAll('td.slot').forEach(td => {
     const key   = `${td.dataset.fecha}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
     const arr   = mapa.get(key) || [];
@@ -977,72 +1093,46 @@ function pintarClases(){
       tag.className = 'tag is-clickable';
       tag.textContent = chipText(cl);
 
-      // datasets para el modal de detalle
+      // datasets
       tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
       tag.dataset.estado   = cl.estado || '';
-      tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título del modal
+      tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim();
       tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
       tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
       tag.dataset.fecha    = cl.fecha || '';
       tag.dataset.hora     = cl.hora  || '';
       tag.dataset.sede     = cl.sede  || '';
 
-      // Motivo/nota de prueba: 1) backend, 2) cache local
+      // motivo/tooltip (para PRUEBA)
       let motivo = '';
-      if (cl) {
-        if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
-        else if (cl.obs && String(cl.obs).trim())            motivo = String(cl.obs).trim();
-        else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
-        else if (cl.nota && String(cl.nota).trim())          motivo = String(cl.nota).trim();
-      }
-      if (!motivo && cl && cl.tipo === 'prueba') {
-        try {
-          const cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
-          const keyId = (cl.id != null) ? String(cl.id) : '';
-          if (keyId && cache[keyId]) motivo = String(cache[keyId]);
-        } catch(e){}
-      }
+      if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
+      else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
+      else if (cl.nota && String(cl.nota).trim())          motivo = String(cl.nota).trim();
       tag.dataset.observacion = motivo;
 
-      // 1) aplicar estado primero
+      // estado visual
       applyEstadoClassToTag(tag, tag.dataset.estado);
 
-      // 2) tipo visual (después del estado)
+      // tipo (sólo si NO hay estado asignado)
       const tipo = cl.tipo ?? (
         cl.es_prueba ? 'prueba'
         : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
         : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
       );
       tag.dataset.tipo = tipo;
+      if (!tag.dataset.estado) applyTipoColorToTag(tag);
 
-      // quitar posibles clases de color que pisen el fondo
-      tag.classList.remove('is-primary','is-link','is-info','is-success','is-warning','is-danger');
-
-      // aplicar color definitivo
-      if (tipo === 'prueba') {
-        tag.classList.add('tag-prueba');
-        tag.style.setProperty('background-color', '#8e44ad', 'important');
-        tag.style.setProperty('color', '#fff', 'important');
-      } else if (tipo === 'recuperacion') {
-        tag.classList.add('tag-recuperacion');
-        tag.style.setProperty('background-color', '#c62828', 'important');
-        tag.style.setProperty('color', '#fff', 'important');
-      }
-
-      // 3) Tooltip “tipo Excel” para PRUEBA con motivo/observación
-      const esPrueba =
-        String(tipo).toLowerCase() === 'prueba' ||
-        String(cl.tipo||'').toLowerCase() === 'prueba' ||
-        (!cl.alumno_id && (cl.nota || motivo));
-      if (esPrueba && motivo) {
-        // nativo (fallback)
-        tag.title = `Observación: ${motivo}`;
-        // tooltip lindo con CSS (triangulito y globo)
+      // tooltip para prueba con motivo
+      if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
+        tag.title = `Observación/motivo de prueba: ${motivo}`;
         tag.classList.add('has-tooltip');
-        tag.dataset.tooltip = `Observación: ${motivo}`;
+        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
       }
 
-      tag.addEventListener('dblclick', onTagDblClick);
+      // eventos
+      tag.addEventListener('click', onTagClick);     // 👈 click abre menú rápido
+      tag.addEventListener('dblclick', onTagDblClick); // sigue funcionando el modal
+
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
   });
