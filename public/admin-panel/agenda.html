@@ -649,15 +649,15 @@ async function cargarAlumnos(){
   const data = await res.json();
   alumnos = data.map(a => ({
     id: a.id,
+    numero: a.numero_alumno,
     nombre: a.nombre,
     apellido: a.apellido,
-    numero: a.numero_alumno,          // puede venir con “-CR”, etc.
     telefono: a.telefono || a.celular || '',
     fecha_nacimiento: a.fecha_nacimiento || a.nacimiento || '',
     sede: a.sede || '',
     modalidad: a.modalidad || a.tipo_clase || a.modalidad_nombre || ''
   }));
-  window.alumnosGlobal = alumnos;     // por si lo usás en otros lados
+  window.alumnosGlobal = alumnos;   // 👈 útil para otras funciones
   poblarListaAlumnos('');
   buildIdxAlumnos();
 }
@@ -744,41 +744,39 @@ async function cargarClasesSemana(){
 async function cargarSituacionAlumno(alumnoId){
   const cont = document.getElementById('situacionActual');
 
-  // Limpiar si no hay selección
+  // Sin selección: limpiar todo
   if (!alumnoId){
     clasesAlumnoActual = [];
     if (cont) cont.innerHTML = '';
-    const btn = document.getElementById('btnEliminarClases');
-    if (btn){
-      btn.disabled = true;
-      btn.style.opacity = '0.5';
-      btn.style.cursor  = 'not-allowed';
+    const btn0 = document.getElementById('btnEliminarClases');
+    if (btn0){
+      btn0.disabled = true;
+      btn0.style.opacity = '0.5';
+      btn0.style.cursor  = 'not-allowed';
     }
-    // también limpiá/actualizá los datos del alumno si tenés la ficha
     if (typeof renderDatosAlumno === 'function') renderDatosAlumno(0);
     return;
   }
 
-  // Mostrar datos del alumno (número, apellido, etc.)
+  // Mostrar ficha del alumno (número, apellido, etc.)
   if (typeof renderDatosAlumno === 'function') renderDatosAlumno(alumnoId);
 
   const desde = ymd(semanaInicio);
   const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
 
   try{
-    const res  = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
+    const res = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
     if (!res.ok){
       console.error('GET /clases fallo', res.status, await res.text().catch(()=> ''));
       clasesAlumnoActual = [];
     } else {
       const data = await res.json();
-      // normalizar y quedarnos con futuras
       clasesAlumnoActual = (Array.isArray(data) ? data : [])
         .map(c => ({
           ...c,
           fecha: normDate(c.fecha),
           hora : normTime(c.hora),
-          sede : (c.sede||'').trim()
+          sede : (c.sede || '').trim()
         }))
         .filter(c => c.fecha >= desde);
     }
@@ -787,13 +785,13 @@ async function cargarSituacionAlumno(alumnoId){
     clasesAlumnoActual = [];
   }
 
-  // Render chips
+  // Render de chips agrupados por patrón (día/hora/sede)
   if (!cont) return;
   cont.innerHTML = '';
+
   if (clasesAlumnoActual.length === 0){
     cont.textContent = 'Sin clases futuras.';
   } else {
-    // Agrupar por patrón (día/hora/sede)
     const mapa = new Map(); // key: dow|hora|sede -> count
     for (const c of clasesAlumnoActual){
       const key = `${dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
@@ -808,7 +806,7 @@ async function cargarSituacionAlumno(alumnoId){
     }
   }
 
-  // Estado del botón “Eliminar todas”
+  // Estado del botón "Eliminar todas"
   const btn = document.getElementById('btnEliminarClases');
   if (btn){
     const tiene = clasesAlumnoActual.length > 0;
