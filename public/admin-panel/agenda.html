@@ -562,7 +562,9 @@ function renderDatosAlumno(alumnoId){
   if (!box){ return; }
   if (!alumnoId){ box.innerHTML = ''; return; }
 
-  const a = (window.alumnos || []).find(x => Number(x.id) === Number(alumnoId));
+  // usar el array real; si por algún motivo está vacío, caemos al global auxiliar
+  const list = (alumnos && alumnos.length) ? alumnos : (window.alumnosGlobal || []);
+  const a = list.find(x => Number(x.id) === Number(alumnoId));
   if (!a){ box.innerHTML = ''; return; }
 
   const edad = calcularEdad(a.fecha_nacimiento);
@@ -702,28 +704,32 @@ async function cargarAlumnos(){
 function poblarListaAlumnos(f=''){
   const sel = document.getElementById('selectAlumno');
   sel.innerHTML = '';
-  const t = f.trim().toLowerCase();
+  const t = (f || '').trim().toLowerCase();
   if (!t) return;
 
   const list = alumnos.filter(a => {
     const rawNum = String(a.numero || '').trim();
-    // ✅ si ya trae guion (ej: 02-C), lo dejamos así
-    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2, '0');
+    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2,'0');
     const label  = `${numVis} - ${a.apellido||''}, ${a.nombre||''}`.toLowerCase();
-
     return numVis.toLowerCase().includes(t) || label.includes(t);
   });
 
   list.slice(0, 200).forEach(a => {
     const opt = document.createElement('option');
     opt.value = a.id;
-
     const rawNum = String(a.numero || '').trim();
-    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2, '0');
-
+    const numVis = rawNum.includes('-') ? rawNum : String(rawNum).padStart(2,'0');
     opt.textContent = `${numVis} - ${a.apellido||''}, ${a.nombre||''}`;
     sel.appendChild(opt);
   });
+
+  // ⤵️ si hay resultados: elegir primero y renderizar ficha + situación
+  if (sel.options.length > 0){
+    sel.selectedIndex = 0;
+    const id = Number(sel.value) || 0;
+    renderDatosAlumno(id);
+    cargarSituacionAlumno(id);
+  }
 }
 function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAlumno').value)}
 
