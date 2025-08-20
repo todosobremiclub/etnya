@@ -354,7 +354,7 @@
 </div>
 
 <div id="detalleObservacion" style="margin-top:10px; width:100%;">
-  <label>Observación / Motivo de prueba</label>
+  <label>Observación</label>
   <textarea id="observacionClase" rows="2" style="width:100%;"></textarea>
 </div>
 
@@ -1036,10 +1036,10 @@ function pintarClases(){
         (!cl.alumno_id && (cl.nota || motivo));
       if (esPrueba && motivo) {
         // nativo (fallback)
-        tag.title = `Observación/motivo de prueba: ${motivo}`;
+        tag.title = `Observación: ${motivo}`;
         // tooltip lindo con CSS (triangulito y globo)
         tag.classList.add('has-tooltip');
-        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
+        tag.dataset.tooltip = `Observación: ${motivo}`;
       }
 
       tag.addEventListener('dblclick', onTagDblClick);
@@ -1072,7 +1072,7 @@ function onTagDblClick(e){
   chkConAviso.checked  = (estado === 'con_aviso');
   chkSobreHora.checked = (estado === 'sobre_hora');
 
- // Observación / Motivo de prueba
+ // Observación
 var obs = (tag.dataset.observacion || '').trim();
 
 // Último recurso: buscar en cache por id
@@ -1144,7 +1144,7 @@ async function guardarEstadoClase(){
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           estado: estado || null,
-          observacion: observacion   // motivo de prueba o comentario
+          observacion: observacion   // 
         })
       });
 
