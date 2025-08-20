@@ -155,6 +155,28 @@
     outline:3px solid #ff9800;
     box-shadow:0 0 0 3px rgba(255,152,0,.25);
   }
+
+/* Tooltip para chips */
+.chip.has-tooltip{ position: relative; }
+.chip.has-tooltip::before{
+  /* triángulo rojo tipo Excel en la esquina */
+  content:"";
+  position:absolute; right:2px; top:2px;
+  border-width:0 7px 7px 0; border-style:solid;
+  border-color:transparent #e57373 transparent transparent;
+}
+.chip.has-tooltip:hover::after{
+  content: attr(data-tooltip);
+  position:absolute; left:0; top:100%;
+  transform: translateY(6px);
+  background:#333; color:#fff;
+  padding:8px 10px; border-radius:6px;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+  width:max-content; max-width:300px;
+  white-space:normal; z-index:1000;
+}
+
+
 </style>
 
 </head>
@@ -956,61 +978,69 @@ function pintarClases(){
       tag.textContent = chipText(cl);
 
       // datasets para el modal de detalle
-tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
-tag.dataset.estado   = cl.estado || '';
-tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título del modal
-tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
-tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
-tag.dataset.fecha    = cl.fecha || '';
-tag.dataset.hora     = cl.hora  || '';
-tag.dataset.sede     = cl.sede  || '';
+      tag.dataset.id       = (cl.id != null) ? String(cl.id) : '';
+      tag.dataset.estado   = cl.estado || '';
+      tag.dataset.nombre   = ((cl.nombre || cl.nota || '') + '').trim(); // título del modal
+      tag.dataset.numero   = (cl.numero_alumno != null) ? String(cl.numero_alumno).padStart(2,'0') : '';
+      tag.dataset.alumnoId = (cl.alumno_id != null) ? String(cl.alumno_id) : '';
+      tag.dataset.fecha    = cl.fecha || '';
+      tag.dataset.hora     = cl.hora  || '';
+      tag.dataset.sede     = cl.sede  || '';
 
-// Motivo/nota de prueba: 1) backend, 2) cache local
-var motivo = '';
-if (cl) {
-  if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
-  else if (cl.obs && String(cl.obs).trim())            motivo = String(cl.obs).trim();
-  else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
-}
-if (!motivo && cl && cl.tipo === 'prueba') {
-  try {
-    var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
-    var keyId = (cl.id != null) ? String(cl.id) : '';
-    if (keyId && cache[keyId]) motivo = String(cache[keyId]);
-  } catch(e){}
-}
-tag.dataset.observacion = motivo;
+      // Motivo/nota de prueba: 1) backend, 2) cache local
+      let motivo = '';
+      if (cl) {
+        if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
+        else if (cl.obs && String(cl.obs).trim())            motivo = String(cl.obs).trim();
+        else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
+        else if (cl.nota && String(cl.nota).trim())          motivo = String(cl.nota).trim();
+      }
+      if (!motivo && cl && cl.tipo === 'prueba') {
+        try {
+          const cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+          const keyId = (cl.id != null) ? String(cl.id) : '';
+          if (keyId && cache[keyId]) motivo = String(cache[keyId]);
+        } catch(e){}
+      }
+      tag.dataset.observacion = motivo;
 
+      // 1) aplicar estado primero
+      applyEstadoClassToTag(tag, tag.dataset.estado);
 
+      // 2) tipo visual (después del estado)
+      const tipo = cl.tipo ?? (
+        cl.es_prueba ? 'prueba'
+        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+        : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+      );
+      tag.dataset.tipo = tipo;
 
+      // quitar posibles clases de color que pisen el fondo
+      tag.classList.remove('is-primary','is-link','is-info','is-success','is-warning','is-danger');
 
+      // aplicar color definitivo
+      if (tipo === 'prueba') {
+        tag.classList.add('tag-prueba');
+        tag.style.setProperty('background-color', '#8e44ad', 'important');
+        tag.style.setProperty('color', '#fff', 'important');
+      } else if (tipo === 'recuperacion') {
+        tag.classList.add('tag-recuperacion');
+        tag.style.setProperty('background-color', '#c62828', 'important');
+        tag.style.setProperty('color', '#fff', 'important');
+      }
 
-
-    // 1) aplicar estado primero (por si esa función toca clases/estilos)
-applyEstadoClassToTag(tag, tag.dataset.estado);
-
-// 2) tipo visual (después del estado) — forzado con !important real
-const tipo = cl.tipo ?? (
-  cl.es_prueba ? 'prueba'
-  : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-  : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
-);
-tag.dataset.tipo = tipo;
-
-// quitar posibles clases de color que pisen el fondo
-tag.classList.remove('is-primary','is-link','is-info','is-success','is-warning','is-danger');
-
-// aplicar color definitivo
-if (tipo === 'prueba') {
-  tag.classList.add('tag-prueba');    // por coherencia con tu CSS
-  tag.style.setProperty('background-color', '#8e44ad', 'important');
-  tag.style.setProperty('color', '#fff', 'important');
-} else if (tipo === 'recuperacion') {
-  tag.classList.add('tag-recuperacion');
-  tag.style.setProperty('background-color', '#c62828', 'important'); // 👈 ahora sí, imposible de pisar
-  tag.style.setProperty('color', '#fff', 'important');
-}
-
+      // 3) Tooltip “tipo Excel” para PRUEBA con motivo/observación
+      const esPrueba =
+        String(tipo).toLowerCase() === 'prueba' ||
+        String(cl.tipo||'').toLowerCase() === 'prueba' ||
+        (!cl.alumno_id && (cl.nota || motivo));
+      if (esPrueba && motivo) {
+        // nativo (fallback)
+        tag.title = `Observación/motivo de prueba: ${motivo}`;
+        // tooltip lindo con CSS (triangulito y globo)
+        tag.classList.add('has-tooltip');
+        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
+      }
 
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
