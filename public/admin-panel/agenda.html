@@ -545,6 +545,43 @@ function diasHabilitados(s){return SEDES[s].dias}
 function normTime(t){ return t && t.length===5 ? t+':00' : t; }   // '10:00' -> '10:00:00'
 function normDate(d){ return d && d.length>=10 ? d.slice(0,10) : d; } // '2025-08-19T...' -> '2025-08-19'
 
+// ===== Datos del alumno (ficha en el modal) =====
+function calcularEdad(iso){
+  if (!iso) return '';
+  const d = new Date(String(iso).slice(0,10));
+  if (isNaN(d)) return '';
+  const hoy = new Date();
+  let e = hoy.getFullYear() - d.getFullYear();
+  const m = hoy.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < d.getDate())) e--;
+  return e;
+}
+
+function renderDatosAlumno(alumnoId){
+  const box = document.getElementById('datosAlumno');
+  if (!box){ return; }
+  if (!alumnoId){ box.innerHTML = ''; return; }
+
+  const a = (window.alumnos || []).find(x => Number(x.id) === Number(alumnoId));
+  if (!a){ box.innerHTML = ''; return; }
+
+  const edad = calcularEdad(a.fecha_nacimiento);
+  const num  = (a.numero != null)
+    ? (String(a.numero).includes('-') ? String(a.numero) : String(a.numero).padStart(2,'0'))
+    : '';
+
+  box.innerHTML = `
+    <div><b>N° socio:</b> ${num || '-'}</div>
+    <div><b>Apellido:</b> ${a.apellido || '-'}</div>
+    <div><b>Nombre:</b> ${a.nombre || '-'}</div>
+    <div><b>Teléfono:</b> ${a.telefono || '-'}</div>
+    <div><b>Edad:</b> ${edad ? edad + ' años' : '-'}</div>
+    <div><b>Sede:</b> ${a.sede || '-'}</div>
+    <div><b>Modalidad:</b> ${a.modalidad || '-'}</div>
+  `;
+}
+
+
 
 let clasesAlumnoActual = [];  // clases futuras del alumno seleccionado
 
