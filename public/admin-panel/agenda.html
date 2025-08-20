@@ -256,6 +256,13 @@
   <label>Situación actual (desde la semana visible)</label>
   <div id="situacionActual" class="chips"></div>
 
+<!-- Datos del alumno -->
+<div id="boxDatosAlumno" style="margin-top:10px;border-top:1px dashed #e0e0e0;padding-top:8px;">
+  <label>Datos del alumno</label>
+  <div id="datosAlumno" style="font-size:13px; line-height:1.4; color:#555"></div>
+</div>
+
+
 <div style="margin-top:8px; display:flex; justify-content:flex-end;">
   <button id="btnEliminarClases"
           style="background:#e57373;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">
@@ -638,10 +645,21 @@ function construirTablaBase(){
 
 /* ===== Datos ===== */
 async function cargarAlumnos(){
-  const res=await fetch('/alumnos'); const data=await res.json();
-  alumnos=data.map(a=>({id:a.id,nombre:a.nombre,apellido:a.apellido,numero:a.numero_alumno}));
+  const res = await fetch('/alumnos');
+  const data = await res.json();
+  alumnos = data.map(a => ({
+    id: a.id,
+    nombre: a.nombre,
+    apellido: a.apellido,
+    numero: a.numero_alumno,          // puede venir con “-CR”, etc.
+    telefono: a.telefono || a.celular || '',
+    fecha_nacimiento: a.fecha_nacimiento || a.nacimiento || '',
+    sede: a.sede || '',
+    modalidad: a.modalidad || a.tipo_clase || a.modalidad_nombre || ''
+  }));
+  window.alumnosGlobal = alumnos;     // por si lo usás en otros lados
   poblarListaAlumnos('');
-buildIdxAlumnos();   // <-- actualizar índice del buscador
+  buildIdxAlumnos();
 }
 
 function poblarListaAlumnos(f=''){
@@ -725,53 +743,80 @@ async function cargarClasesSemana(){
 
 async function cargarSituacionAlumno(alumnoId){
   const cont = document.getElementById('situacionActual');
+
+  // Limpiar si no hay selección
   if (!alumnoId){
     clasesAlumnoActual = [];
     if (cont) cont.innerHTML = '';
+    const btn = document.getElementById('btnEliminarClases');
+    if (btn){
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor  = 'not-allowed';
+    }
+    // también limpiá/actualizá los datos del alumno si tenés la ficha
+    if (typeof renderDatosAlumno === 'function') renderDatosAlumno(0);
     return;
   }
+
+  // Mostrar datos del alumno (número, apellido, etc.)
+  if (typeof renderDatosAlumno === 'function') renderDatosAlumno(alumnoId);
 
   const desde = ymd(semanaInicio);
   const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
 
-  const res  = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
-  const data = await res.json();
+  try{
+    const res  = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
+    if (!res.ok){
+      console.error('GET /clases fallo', res.status, await res.text().catch(()=> ''));
+      clasesAlumnoActual = [];
+    } else {
+      const data = await res.json();
+      // normalizar y quedarnos con futuras
+      clasesAlumnoActual = (Array.isArray(data) ? data : [])
+        .map(c => ({
+          ...c,
+          fecha: normDate(c.fecha),
+          hora : normTime(c.hora),
+          sede : (c.sede||'').trim()
+        }))
+        .filter(c => c.fecha >= desde);
+    }
+  } catch(err){
+    console.error('Error cargando clases del alumno:', err);
+    clasesAlumnoActual = [];
+  }
 
-  // normalizar y quedarnos con futuras
-  clasesAlumnoActual = (data || [])
-    .map(c => ({ ...c, fecha: normDate(c.fecha), hora: normTime(c.hora), sede: (c.sede||'').trim() }))
-    .filter(c => c.fecha >= desde);
-
-  // render en chips agrupados por patrón (día/hora/sede)
+  // Render chips
   if (!cont) return;
   cont.innerHTML = '';
   if (clasesAlumnoActual.length === 0){
     cont.textContent = 'Sin clases futuras.';
-    return;
+  } else {
+    // Agrupar por patrón (día/hora/sede)
+    const mapa = new Map(); // key: dow|hora|sede -> count
+    for (const c of clasesAlumnoActual){
+      const key = `${dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
+      mapa.set(key, (mapa.get(key) || 0) + 1);
+    }
+    for (const [key, cant] of mapa.entries()){
+      const [dow, hora, sede] = key.split('|');
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = `${DIAS[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
+      cont.appendChild(chip);
+    }
   }
 
-  const mapa = new Map(); // key: dow|hora|sede  -> cantidad
-  for (const c of clasesAlumnoActual){
-    const key = `${dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
-    mapa.set(key, (mapa.get(key) || 0) + 1);
+  // Estado del botón “Eliminar todas”
+  const btn = document.getElementById('btnEliminarClases');
+  if (btn){
+    const tiene = clasesAlumnoActual.length > 0;
+    btn.disabled = !tiene;
+    btn.style.opacity = tiene ? '1' : '0.5';
+    btn.style.cursor  = tiene ? 'pointer' : 'not-allowed';
   }
-
-  for (const [key, cant] of mapa.entries()){
-    const [dow, hora, sede] = key.split('|');
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.textContent = `${DIAS[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
-    cont.appendChild(chip);
-
-const btn = document.getElementById('btnEliminarClases');
-if (btn){
-  const tiene = clasesAlumnoActual.length > 0;
-  btn.disabled = !tiene;
-  btn.style.opacity = tiene ? '1' : '0.5';
-  btn.style.cursor  = tiene ? 'pointer' : 'not-allowed';
 }
-
-  }
 }
 
 async function eliminarClasesAlumno(){
@@ -1487,10 +1532,10 @@ window.abrirModal = function (){
   boxPrueba.style.display = 'none';
   selectSede.value = '';
   refrescarDiasYHoras();
-// limpiar/resumir situación cuando abrís
-const idSel = parseInt(selectAlumno.value, 10) || 0;
-cargarSituacionAlumno(idSel);
 
+  const idSel = parseInt(selectAlumno.value, 10) || 0;
+  cargarSituacionAlumno(idSel);
+  renderDatosAlumno(idSel);    // <--- NUEVO
 };
 
 window.cerrarModal = function (){
@@ -1691,6 +1736,7 @@ const chkSobreHora = document.getElementById('chkSobreHora');
 selectAlumno.addEventListener('change', () => {
   const id = parseInt(selectAlumno.value, 10) || 0;
   cargarSituacionAlumno(id);
+  renderDatosAlumno(id);   // <--- NUEVO
 });
 
 function cerrarModalClase() {
