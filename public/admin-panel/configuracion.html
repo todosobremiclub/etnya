@@ -340,17 +340,20 @@ td.slot.feriado { background: #d9d9d9 !important; }
       </div>
     </form>
 
-    <table id="tablaNoClases" style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr style="background:#b48a99;color:#fff;">
-          <th style="padding:6px;text-align:left;">Sede</th>
-          <th style="padding:6px;text-align:left;">Día</th>
-          <th style="padding:6px;text-align:left;">Hora</th>
-          <th style="padding:6px;">Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+   <table id="tablaNoClases" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="background:#b48a99; color:#fff;">
+      <th style="padding:6px; text-align:left;">
+        <span id="flechaNoClases" class="toggle-icon" onclick="toggleNoClases()">▶</span> Sede
+      </th>
+      <th style="padding:6px; text-align:left;">Día</th>
+      <th style="padding:6px; text-align:left;">Hora</th>
+      <th style="padding:6px;">Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 
     <!-- Cuentas -->
     <h2 class="titulo-feriados">Cuentas</h2>
@@ -767,7 +770,7 @@ async function eliminarGasto(id) {
 
 // =================== NO CLASES (sede/día/hora) ===================
 const DIAS_TXT = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-let noClasesVisibles = true;
+let noClasesVisibles = false;
 let noClasesEditandoId = null;
 
 function poblarHorasNoClases() {
@@ -805,7 +808,9 @@ async function cargarNoClasesCfg(){
     tb.innerHTML = '';
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      tr.classList.add('fila-noclase');
+tr.classList.add('fila-noclase');
+if (!noClasesVisibles) tr.classList.add('fila-oculta'); // ⬅ oculta si está plegado
+
       const horaTxt = (r.hora || '').slice(0,5);
       tr.innerHTML = `
         <td>${(r.sede || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>

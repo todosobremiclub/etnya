@@ -900,33 +900,27 @@ async function cargarClasesSemana(){
   }
 }
 
-// ====== BLOQUES sin clase (agenda) ======
+// ---- Bloqueos "no clases" para Agenda ----
 let noClases = [];
 
-function dowFromYMD(ymd) {
-  // 1=Lun ... 7=Dom (Date.getDay(): 0=Dom..6=Sab)
+function dowFromYMD(ymd){
   const d = new Date(String(ymd).slice(0,10) + 'T00:00:00');
-  const w = d.getDay();
-  return w === 0 ? 7 : w;
+  const w = d.getDay();         // 0=Dom..6=Sáb
+  return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
 async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
-    if (!res.ok) {
-      console.warn('GET /no-clases', res.status, await res.text());
-      noClases = [];
-      return;
-    }
+    if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    // normalizamos: hora en HH:MM:SS para comparar con td.dataset.hora normalizada
-    noClases = data.map(n => ({
-      sede: String(n.sede || '').trim(),
-      dow : Number(n.dow || 0),
-      hora: (String(n.hora || '')).length === 5 ? (n.hora + ':00') : String(n.hora || '')
+    noClases = data.map(r => ({
+      sede: String(r.sede || '').trim(),
+      dow : Number(r.dow || 0),
+      hora: normTime(r.hora) // normaliza 'HH:MM' -> 'HH:MM:SS'
     }));
   } catch (e) {
-    console.error('cargarNoClases', e);
+    console.error('Error /no-clases', e);
     noClases = [];
   }
 }
@@ -1182,38 +1176,51 @@ function onTagClick(e){
 
 /* ===== Pintar ===== */
 function pintarClases(){
-  // limpiar chips dentro de cada celda
+  // 1) limpiar chips dentro de cada celda
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
-  // normalizo feriados a un Set para lookup O(1)
+  // 2) normalizo feriados a un Set para lookup O(1)
   const feriadosSet = new Set(
     Array.isArray(feriados) ? feriados.map(f => String(f).slice(0,10)) : []
   );
 
-  // agrupar clases por (fecha|hora|sede)
+  // 3) agrupar clases por (fecha|hora|sede)
   const mapa = new Map();
   for (const c of (clasesSemana || [])){
     const sede  = (c.sede || '').trim();
     const fecha = c.fecha;
-    const hora  = normTime(c.hora);
+    const hora  = normTime(c.hora); // => HH:MM:SS
     const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push({ ...c, hora });
   }
 
-  // recorrer cada celda del grid
+  // 4) recorrer cada celda del grid
   document.querySelectorAll('td.slot').forEach(td => {
     const fechaTd = String(td.dataset.fecha || '').slice(0,10);
+    const horaTd  = normTime(String(td.dataset.hora || ''));           // HH:MM:SS
+    const sedeTd  = String(td.dataset.sede || '').trim();
+    const dowTd   = typeof dowFromYMD === 'function' ? dowFromYMD(fechaTd) : null;
 
-    // ✅ marcar/limpiar fondo de feriado
+    // resetear fondo
+    td.classList.remove('feriado');
+
+    // 4.a) feriado: pinta TODO el día
     if (feriadosSet.has(fechaTd)) {
       td.classList.add('feriado');
     } else {
-      td.classList.remove('feriado');
+      // 4.b) bloque "no clases" por sede/día/hora: pinta SOLO ese slot
+      const bloques = Array.isArray(window.noClases) ? window.noClases : [];
+      const bloqueado = bloques.some(nc =>
+        Number(nc.dow) === Number(dowTd) &&
+        String(nc.sede || '').trim() === sedeTd &&
+        normTime(nc.hora) === horaTd
+      );
+      if (bloqueado) td.classList.add('feriado');
     }
 
-    // pintar chips de clases
-    const key   = `${fechaTd}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
+    // 4.c) pintar chips de clases
+    const key   = `${fechaTd}|${horaTd}|${sedeTd}`;
     const arr   = mapa.get(key) || [];
     const left  = td.querySelector('.left');
     const right = td.querySelector('.right');
