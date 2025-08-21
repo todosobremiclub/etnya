@@ -387,7 +387,7 @@
     </table>
   </main>
 
-</body>
+
 
 <script>
 // ------------------- MODALIDADES -------------------
@@ -860,6 +860,11 @@ async function eliminarNoClase(id){
   if (!r.ok){ alert('No se pudo eliminar'); return; }
   await cargarNoClasesCfg();
 }
+
+// Poblar horas apenas el DOM esté listo (además del load)
+if (document.readyState !== 'loading') poblarHorasNoClases();
+else document.addEventListener('DOMContentLoaded', poblarHorasNoClases);
+
 
 // ------------------- ONLOAD -------------------
 
