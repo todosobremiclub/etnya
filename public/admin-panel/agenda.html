@@ -1214,7 +1214,7 @@ function pintarClases(){
       td.classList.add('feriado');
     } else {
       // bloque no-clases (solo ese slot)
-      const arrBloques = Array.isArray(window.noClases) ? window.noClases : [];
+      const arrBloques = Array.isArray(noClases) ? noClases : [];
       const bloqueado = arrBloques.some(nc => {
         const sameHora  = normTime(nc.hora) === horaTd;      // normaliza HH:MM -> HH:MM:SS
         const sameDow   = Number(nc.dow) === Number(dowTd);
