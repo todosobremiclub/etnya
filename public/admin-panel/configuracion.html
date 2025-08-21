@@ -230,10 +230,10 @@
 </head>
 <body>
 
-<!-- Botón menú hamburguesa -->
-<button id="menuToggle" onclick="toggleMenu()">☰</button>
+  <!-- Botón menú hamburguesa -->
+  <button id="menuToggle" onclick="toggleMenu()">☰</button>
 
- <!-- Sidebar -->
+  <!-- Sidebar -->
   <div class="sidebar">
     <a href="index.html">📋 Alumnas/os</a>
     <a href="pagos.html">💳 Pagos</a>
@@ -241,148 +241,153 @@
     <a href="agenda.html">📅 Agenda</a>
     <a href="configuracion.html">⚙️ Configuración</a>
     <a href="reportes.html">📈 Reportes</a>
-    <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
+    <button onclick="cerrarSesion()" style="width:100%;text-align:left;padding:10px 16px;background:transparent;border:none;color:white;font-weight:bold;font-size:13px;cursor:pointer;border-top:1px solid rgba(255,255,255,.1);">
       🚪 Cerrar sesión
     </button>
   </div>
-<main>
-  <div class="header">
-    <img src="logo.jpeg" alt="Logo">
-    <h1>Configuración Etnya</h1>
-  </div>
 
-  <form id="formTipoClase">
-    <input type="text" name="modalidad" placeholder="Modalidad" required>
-    <input type="number" name="precio" placeholder="Precio ($)" required>
-    <button type="submit">Guardar</button>
-  </form>
+  <main>
+    <div class="header">
+      <img src="logo.jpeg" alt="Logo">
+      <h1>Configuración Etnya</h1>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th><span id="flechaToggle" class="toggle-icon" onclick="toggleFilas()">▶</span> Modalidad</th>
-        <th>Precio</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="tablaTipos"></tbody>
-  </table>
+    <!-- Modalidades -->
+    <form id="formTipoClase">
+      <input type="text" name="modalidad" placeholder="Modalidad" required>
+      <input type="number" name="precio" placeholder="Precio ($)" required>
+      <button type="submit">Guardar</button>
+    </form>
 
-<h2 class="titulo-feriados">Tipos de Gastos</h2>
-<form id="formGasto">
-  <input type="text" name="nombre" placeholder="Nombre del gasto" required>
-  <button type="submit">Guardar</button>
-</form>
-<table>
-  <thead>
-    <tr>
-      <th><span id="flechaGastos" class="toggle-icon" onclick="toggleGastos()">▶</span> Nombre</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody id="tbodyGastos"></tbody>
-</table>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaToggle" class="toggle-icon" onclick="toggleFilas()">▶</span> Modalidad</th>
+          <th>Precio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaTipos"></tbody>
+    </table>
 
+    <!-- Tipos de gastos -->
+    <h2 class="titulo-feriados">Tipos de Gastos</h2>
+    <form id="formGasto">
+      <input type="text" name="nombre" placeholder="Nombre del gasto" required>
+      <button type="submit">Guardar</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaGastos" class="toggle-icon" onclick="toggleGastos()">▶</span> Nombre</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyGastos"></tbody>
+    </table>
 
-  <h2 class="titulo-feriados">Feriados</h2>
-  <form id="formFeriado">
-    <input type="date" name="fecha" required>
-    <input type="text" name="descripcion" placeholder="Descripción del feriado" required>
-    <button type="submit">Guardar</button>
-  </form>
+    <!-- Feriados -->
+    <h2 class="titulo-feriados">Feriados</h2>
+    <form id="formFeriado">
+      <input type="date" name="fecha" required>
+      <input type="text" name="descripcion" placeholder="Descripción del feriado" required>
+      <button type="submit">Guardar</button>
+    </form>
 
-  <table>
-    <thead>
-      <tr>
-        <th><span id="flechaFeriados" class="toggle-icon" onclick="toggleFeriados()">▶</span> Fecha</th>
-        <th>Descripción</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="tablaFeriados"></tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaFeriados" class="toggle-icon" onclick="toggleFeriados()">▶</span> Fecha</th>
+          <th>Descripción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaFeriados"></tbody>
+    </table>
 
-<h2 class="titulo-feriados">Cuentas</h2>
-<form onsubmit="guardarCuenta(); return false;">
-  <input type="text" id="nuevaCuenta" placeholder="Nombre de la cuenta" required>
-  <button type="submit">Guardar</button>
-</form>
+    <!-- Bloques sin clase (entre Feriados y Cuentas) -->
+    <h2 class="titulo-feriados">Bloques sin clase (por sede/día/hora)</h2>
+    <form id="formNoClases" onsubmit="guardarNoClase(); return false;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;max-width:700px;margin:0 auto 8px;">
+        <div>
+          <label>Sede</label>
+          <select id="ncSede">
+            <option>Craig Reformer</option>
+            <option>Craig Circuito</option>
+            <option>Pedro Goyena</option>
+          </select>
+        </div>
+        <div>
+          <label>Día semana</label>
+          <select id="ncDow">
+            <option value="1">Lunes</option>
+            <option value="2">Martes</option>
+            <option value="3">Miércoles</option>
+            <option value="4">Jueves</option>
+            <option value="5">Viernes</option>
+            <option value="6">Sábado</option>
+            <option value="7">Domingo</option>
+          </select>
+        </div>
+        <div>
+          <label>Hora</label>
+          <!-- listado de horas redondas -->
+          <select id="ncHora"></select>
+        </div>
+        <button id="btnNcGuardar" type="submit">Guardar</button>
+      </div>
+    </form>
 
-<table>
-  <thead>
-    <tr>
-      <th><span id="flechaCuentas" class="toggle-icon" onclick="toggleCuentas()">▶</span> Cuenta</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody id="tbodyCuentas"></tbody>
-</table>
+    <table id="tablaNoClases" style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#b48a99;color:#fff;">
+          <th style="padding:6px;text-align:left;">Sede</th>
+          <th style="padding:6px;text-align:left;">Día</th>
+          <th style="padding:6px;text-align:left;">Hora</th>
+          <th style="padding:6px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-<h2 style="margin-top:18px;">Bloques sin clase (por sede/día/hora)</h2>
-<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-bottom:8px;">
-  <div>
-    <label>Sede</label>
-    <select id="ncSede">
-      <option>Craig Reformer</option>
-      <option>Craig Circuito</option>
-      <option>Pedro Goyena</option>
-    </select>
-  </div>
-  <div>
-    <label>Día semana</label>
-    <select id="ncDow">
-      <option value="1">Lunes</option>
-      <option value="2">Martes</option>
-      <option value="3">Miércoles</option>
-      <option value="4">Jueves</option>
-      <option value="5">Viernes</option>
-      <option value="6">Sábado</option>
-      <option value="7">Domingo</option>
-    </select>
-  </div>
-  <div>
-    <label>Hora</label>
-    <input type="time" id="ncHora">
-  </div>
-  <button id="btnNcGuardar">Guardar</button>
-</div>
+    <!-- Cuentas -->
+    <h2 class="titulo-feriados">Cuentas</h2>
+    <form onsubmit="guardarCuenta(); return false;">
+      <input type="text" id="nuevaCuenta" placeholder="Nombre de la cuenta" required>
+      <button type="submit">Guardar</button>
+    </form>
 
-<table id="tablaNoClases" style="width:100%; border-collapse:collapse;">
-  <thead>
-    <tr style="background:#b48a99; color:#fff;">
-      <th style="padding:6px; text-align:left;">Sede</th>
-      <th style="padding:6px; text-align:left;">Día</th>
-      <th style="padding:6px; text-align:left;">Hora</th>
-      <th style="padding:6px;">Acciones</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaCuentas" class="toggle-icon" onclick="toggleCuentas()">▶</span> Cuenta</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyCuentas"></tbody>
+    </table>
 
-<h2 class="titulo-feriados">Becados</h2>
+    <!-- Becados -->
+    <h2 class="titulo-feriados">Becados</h2>
+    <form onsubmit="agregarBecado(); return false;" style="max-width:700px;margin:10px auto;display:flex;gap:10px;">
+      <select id="selectBecado" required style="flex:1;padding:6px;">
+        <option value="">Seleccionar alumna/o...</option>
+      </select>
+      <button type="submit">Guardar</button>
+    </form>
 
-<form onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
-  <select id="selectBecado" required style="flex: 1; padding: 6px;">
-    <option value="">Seleccionar alumna/o...</option>
-  </select>
-  <button type="submit">Guardar</button>
-</form>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span> Alumnas/os Becados</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyBecados"></tbody>
+    </table>
+  </main>
 
-<table>
-  <thead>
-    <tr>
-      <th>
-        <span id="flechaBecados" class="toggle-icon" onclick="toggleBecados()">▶</span>
-        Alumnas/os Becados
-      </th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody id="tbodyBecados"></tbody>
-
-</table>
-
-</main>
+</body>
 
 <script>
 // ------------------- MODALIDADES -------------------
@@ -763,6 +768,19 @@ const DIAS_TXT = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado',
 let noClasesVisibles = false;
 let noClasesEditandoId = null;
 
+function poblarHorasNoClases() {
+  const s = document.getElementById('ncHora');
+  if (!s) return;
+  s.innerHTML = '<option value="">--:--</option>';
+  for (let h = 8; h <= 22; h++) {
+    const hh = String(h).padStart(2,'0') + ':00';
+    const op = document.createElement('option');
+    op.value = hh;
+    op.textContent = hh;
+    s.appendChild(op);
+  }
+}
+
 function toggleNoClases() {
   noClasesVisibles = !noClasesVisibles;
   const icono = document.getElementById('flechaNoClases');
@@ -798,11 +816,11 @@ async function cargarNoClasesCfg(){
 function editarNoClase(id, sede, dow, hora){
   const selSede = document.getElementById('ncSede');
   const selDow  = document.getElementById('ncDow');
-  const inpHora = document.getElementById('ncHora');
-  if (!selSede || !selDow || !inpHora) return;
+  const selHora = document.getElementById('ncHora');
+  if (!selSede || !selDow || !selHora) return;
   selSede.value = sede;
   selDow.value  = String(dow);
-  inpHora.value = hora;
+  selHora.value = String(hora).slice(0,5);
   noClasesEditandoId = id;
   const btn = document.getElementById('btnNcGuardar');
   if (btn) btn.textContent = 'Actualizar';
@@ -811,12 +829,12 @@ function editarNoClase(id, sede, dow, hora){
 async function guardarNoClase(){
   const selSede = document.getElementById('ncSede');
   const selDow  = document.getElementById('ncDow');
-  const inpHora = document.getElementById('ncHora');
-  if (!selSede || !selDow || !inpHora) return;
+  const selHora = document.getElementById('ncHora');
+  if (!selSede || !selDow || !selHora) return;
 
   const sede = (selSede.value || '').trim();
   const dow  = parseInt(selDow.value,10);
-  const hora = (inpHora.value || '').slice(0,5);
+  const hora = (selHora.value || '').slice(0,5);
   if (!sede || !dow || !hora){ alert('Completá sede, día y hora'); return; }
 
   const url = '/no-clases' + (noClasesEditandoId ? '/' + noClasesEditandoId : '');
@@ -832,7 +850,7 @@ async function guardarNoClase(){
   noClasesEditandoId = null;
   const btn = document.getElementById('btnNcGuardar');
   if (btn) btn.textContent = 'Guardar';
-  inpHora.value = '';
+  selHora.value = '';
   await cargarNoClasesCfg();
 }
 
@@ -849,7 +867,7 @@ async function eliminarNoClase(id){
 if (localStorage.getItem('etnya_login') !== 'ok') { location = 'login.html'; }
 
 // Timeout de sesión (6h) — asegurate de tener session-timeout.js incluido en el HTML
-// <script src="session-timeout.js"></script> (ya está en tu HTML)
+// <script src="session-timeout.js"></script>
 
 window.addEventListener('load', () => {
   try { cargarTiposClase(); }            catch (e) { console.error(e); }
@@ -859,6 +877,7 @@ window.addEventListener('load', () => {
   try { cargarBecados(); }               catch (e) { console.error(e); }
   try { cargarGastos(); }                catch (e) { console.error(e); }
   try { cargarNoClasesCfg(); }           catch (e) { console.error(e); }
+  try { poblarHorasNoClases(); }         catch (e) { console.error(e); }
 
   // Ocultar tablas plegables al inicio
   window.becadosVisibles = false;
@@ -869,9 +888,14 @@ window.addEventListener('load', () => {
   const flechaNC = document.getElementById('flechaNoClases');
   if (flechaNC) flechaNC.textContent = '▶';
 
-  // Hook botón guardar de No Clases
-  const btnNC = document.getElementById('btnNcGuardar');
-  if (btnNC) btnNC.addEventListener('click', guardarNoClase);
+  // Submit del formulario No Clases
+  const formNC = document.getElementById('formNoClases');
+  if (formNC) {
+    formNC.addEventListener('submit', (e) => {
+      e.preventDefault();
+      guardarNoClase();
+    });
+  }
 });
 </script>
 </body>
