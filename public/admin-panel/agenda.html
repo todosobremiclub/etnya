@@ -200,6 +200,56 @@ table.agenda td.slot + td.slot{
   border-right: 1px solid var(--grid-line);      /* mantiene la división suave */
 }
 
+/* === Grid: intermedias grises claras y bordes gris oscuro === */
+:root{
+  --grid-line:   #c8c8c8; /* intermedias */
+  --grid-border: #4f4f4f; /* bordes/contorno */
+}
+
+/* Marco exterior más oscuro */
+.agenda-wrap{
+  border: 2px solid var(--grid-border);
+  border-radius: 10px;        /* mantenemos redondeo */
+}
+
+/* Cabecera y última fila con borde oscuro */
+table.agenda thead th,
+#tablaAgenda thead th{
+  border-bottom: 2px solid var(--grid-border);
+}
+table.agenda tbody tr:last-child td,
+#tablaAgenda tbody tr:last-child td{
+  border-bottom: 2px solid var(--grid-border);
+}
+
+/* Derecha del todo más oscura */
+table.agenda tbody td.slot:last-child,
+#tablaAgenda tbody td.slot:last-child{
+  border-right: 2px solid var(--grid-border);
+}
+
+/* Separación columna de hora (borde fuerte) */
+table.agenda .col-hora,
+#tablaAgenda .col-hora{
+  border-right: 2px solid var(--grid-border);
+}
+
+/* Líneas internas (entre días y horas) más suaves en gris */
+table.agenda td.slot,
+#tablaAgenda td.slot{
+  border-bottom: 1px solid var(--grid-line);
+}
+table.agenda td.slot + td.slot,
+#tablaAgenda td.slot + td.slot{
+  border-left: 1px solid var(--grid-line);
+}
+
+/* División interna del slot (izq|der) aún más sutil */
+.half.left{
+  border-right: 1px solid #d6d6d6;
+}
+
+
 </style>
 
 
