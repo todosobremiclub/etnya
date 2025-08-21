@@ -318,6 +318,47 @@
   <tbody id="tbodyCuentas"></tbody>
 </table>
 
+<h2 style="margin-top:18px;">Bloques sin clase (por sede/día/hora)</h2>
+<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-bottom:8px;">
+  <div>
+    <label>Sede</label>
+    <select id="ncSede">
+      <option>Craig Reformer</option>
+      <option>Craig Circuito</option>
+      <option>Pedro Goyena</option>
+    </select>
+  </div>
+  <div>
+    <label>Día semana</label>
+    <select id="ncDow">
+      <option value="1">Lunes</option>
+      <option value="2">Martes</option>
+      <option value="3">Miércoles</option>
+      <option value="4">Jueves</option>
+      <option value="5">Viernes</option>
+      <option value="6">Sábado</option>
+      <option value="7">Domingo</option>
+    </select>
+  </div>
+  <div>
+    <label>Hora</label>
+    <input type="time" id="ncHora">
+  </div>
+  <button id="btnNcGuardar">Guardar</button>
+</div>
+
+<table id="tablaNoClases" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="background:#b48a99; color:#fff;">
+      <th style="padding:6px; text-align:left;">Sede</th>
+      <th style="padding:6px; text-align:left;">Día</th>
+      <th style="padding:6px; text-align:left;">Hora</th>
+      <th style="padding:6px;">Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 <h2 class="titulo-feriados">Becados</h2>
 
 <form onsubmit="agregarBecado(); return false;" style="max-width: 700px; margin: 10px auto; display: flex; gap: 10px;">
@@ -344,8 +385,6 @@
 </main>
 
 <script>
-
-
 // ------------------- MODALIDADES -------------------
 let editandoId = null;
 let filasVisibles = false;
@@ -434,9 +473,9 @@ async function cargarFeriados() {
     if (!feriadosVisibles) tr.classList.add('fila-oculta');
     tr.innerHTML = `
       <td>${formatFecha(f.fecha)}</td>
-      <td>${f.descripcion}</td>
+      <td>${(f.descripcion || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
       <td class="acciones">
-        <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${f.descripcion}\`)">✏️</button>
+        <button onclick="editarFeriado(${f.id}, '${f.fecha}', \`${(f.descripcion || '').replace(/`/g,'\\`')}\`)">✏️</button>
         <button onclick="eliminarFeriado(${f.id})">🗑️</button>
       </td>
     `;
@@ -491,6 +530,7 @@ async function eliminarFeriado(id) {
   else alert('Error al eliminar');
 }
 
+// ------------------- CUENTAS -------------------
 let listaAlumnosBecado = [];
 let cuentasVisibles = false;
 
@@ -502,7 +542,6 @@ function toggleCuentas() {
   filas.forEach(f => f.classList.toggle('fila-oculta', !cuentasVisibles));
 }
 
-// ------------------- CUENTAS -------------------
 async function cargarCuentas() {
   const res = await fetch('/cuentas');
   const cuentas = await res.json();
@@ -514,7 +553,7 @@ async function cargarCuentas() {
     tr.classList.add("fila-cuenta");
     if (!cuentasVisibles) tr.classList.add("fila-oculta");
     tr.innerHTML = `
-      <td>${c.nombre}</td>
+      <td>${(c.nombre || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
       <td><button onclick="eliminarCuenta(${c.id})">🗑️</button></td>
     `;
     tbody.appendChild(tr);
@@ -554,23 +593,21 @@ function toggleMenu() {
   sidebar.classList.toggle('mostrar');
 }
 
-
-
-
+// ------------------- BECADOS -------------------
 async function cargarAlumnosParaBecado() {
   const res = await fetch('/alumnos');
   const alumnos = await res.json();
   listaAlumnosBecado = alumnos;
 
   const select = document.getElementById('selectBecado');
-select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
-alumnos.forEach(a => {
-  const option = document.createElement('option');
-  option.value = a.id;
-  option.textContent = `${a.numero_alumno.toString().padStart(2, '0')} - ${a.apellido}, ${a.nombre}`;
-  select.appendChild(option);
-});
-
+  select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
+  alumnos.forEach(a => {
+    const option = document.createElement('option');
+    option.value = a.id;
+    const num = (a.numero_alumno ?? '').toString().padStart(2, '0');
+    option.textContent = `${num} - ${a.apellido}, ${a.nombre}`;
+    select.appendChild(option);
+  });
 }
 
 function filtrarSelectBecado() {
@@ -579,7 +616,8 @@ function filtrarSelectBecado() {
   select.innerHTML = '<option value="">Seleccionar alumna/o...</option>';
 
   listaAlumnosBecado.forEach(a => {
-    const label = `${a.numero_alumno.toString().padStart(2, '0')} - ${a.apellido}, ${a.nombre}`;
+    const num = (a.numero_alumno ?? '').toString().padStart(2, '0');
+    const label = `${num} - ${a.apellido}, ${a.nombre}`;
     if (label.toLowerCase().includes(texto)) {
       const option = document.createElement('option');
       option.value = a.id;
@@ -589,31 +627,26 @@ function filtrarSelectBecado() {
   });
 }
 
-
 async function cargarBecados() {
   const res = await fetch('/becados');
   const becados = await res.json();
-  console.log('Becados cargados:', becados); // 👈 debug
 
   const tbody = document.getElementById('tbodyBecados');
   tbody.innerHTML = '';
 
   becados.forEach(b => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${b.nombre_completo}</td>
-    <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
-  `;
-  tr.style.display = becadosVisibles ? '' : 'none'; // controla visibilidad
-  tbody.appendChild(tr);
-});
-
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${(b.nombre_completo || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+      <td><button onclick="eliminarBecado(${b.id})">🗑️</button></td>
+    `;
+    tr.style.display = becadosVisibles ? '' : 'none';
+    tbody.appendChild(tr);
+  });
 }
 
 async function agregarBecado() {
   const id = document.getElementById('selectBecado').value;
-  console.log('Alumno seleccionado:', id); // <-- debug útil
-
   if (!id) {
     alert('Seleccioná un alumno');
     return;
@@ -622,7 +655,7 @@ async function agregarBecado() {
   const res = await fetch('/becados', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ alumno_id: parseInt(id) }) // asegurate de enviar número
+    body: JSON.stringify({ alumno_id: parseInt(id) })
   });
 
   if (res.ok) {
@@ -640,17 +673,13 @@ async function eliminarBecado(id) {
   else alert('Error al eliminar becado');
 }
 
-
 let becadosVisibles = true;
 
 function toggleBecados() {
   becadosVisibles = !becadosVisibles;
   document.getElementById('flechaBecados').textContent = becadosVisibles ? '▼' : '▶';
-
   const filas = document.querySelectorAll('#tbodyBecados tr');
-  filas.forEach(el => {
-    el.style.display = becadosVisibles ? '' : 'none';
-  });
+  filas.forEach(el => { el.style.display = becadosVisibles ? '' : 'none'; });
 }
 
 function cerrarSesion() {
@@ -658,6 +687,7 @@ function cerrarSesion() {
   window.location.href = 'login.html';
 }
 
+// ------------------- GASTOS -------------------
 let gastosVisibles = false;
 let editandoGastoId = null;
 
@@ -680,9 +710,9 @@ async function cargarGastos() {
     tr.classList.add('fila-gasto');
     if (!gastosVisibles) tr.classList.add('fila-oculta');
     tr.innerHTML = `
-      <td>${g.nombre}</td>
+      <td>${(g.nombre || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
       <td class="acciones">
-        <button onclick="editarGasto(${g.id}, '${g.nombre}')">✏️</button>
+        <button onclick="editarGasto(${g.id}, '${(g.nombre || '').replace(/'/g,"\\'")}')">✏️</button>
         <button onclick="eliminarGasto(${g.id})">🗑️</button>
       </td>
     `;
@@ -728,36 +758,121 @@ async function eliminarGasto(id) {
   else alert('Error al eliminar');
 }
 
-</script>
+// =================== NO CLASES (sede/día/hora) ===================
+const DIAS_TXT = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+let noClasesVisibles = false;
+let noClasesEditandoId = null;
 
-
-<!-- ------------------- ONLOAD ------------------- -->
-
-<!-- Guardia de login -->
-<script>
-  if (localStorage.getItem('etnya_login') !== 'ok') {
-    location = 'login.html';
-  }
-</script>
-
-<!-- Timeout de sesión (6h) -->
-<script src="session-timeout.js"></script>
-
-<script>
-  // Ejecutar cuando el documento esté listo (y los elementos existan)
-  window.addEventListener('load', () => {
-    try { cargarTiposClase(); } catch (e) { console.error(e); }
-    try { cargarFeriados(); }   catch (e) { console.error(e); }
-    try { cargarCuentas(); }    catch (e) { console.error(e); }
-    try { cargarAlumnosParaBecado(); } catch (e) { console.error(e); }
-    try { cargarBecados(); }    catch (e) { console.error(e); }
-    try { cargarGastos(); }     catch (e) { console.error(e); }
-
-    // Ocultar la tabla de becados al inicio
-    window.becadosVisibles = false;
-    const flecha = document.getElementById('flechaBecados');
-    if (flecha) flecha.textContent = '▶';
+function toggleNoClases() {
+  noClasesVisibles = !noClasesVisibles;
+  const icono = document.getElementById('flechaNoClases');
+  if (icono) icono.textContent = noClasesVisibles ? '▼' : '▶';
+  document.querySelectorAll('.fila-noclase').forEach(f => {
+    f.classList.toggle('fila-oculta', !noClasesVisibles);
   });
+}
+
+async function cargarNoClasesCfg(){
+  const res = await fetch('/no-clases');
+  const rows = await res.json();
+  const tb = document.querySelector('#tablaNoClases tbody');
+  if (!tb) return;
+  tb.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.classList.add('fila-noclase');
+    if (!noClasesVisibles) tr.classList.add('fila-oculta');
+    const horaTxt = (r.hora || '').slice(0,5);
+    tr.innerHTML = `
+      <td>${(r.sede || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+      <td>${DIAS_TXT[Number(r.dow) || 0]}</td>
+      <td>${horaTxt}</td>
+      <td class="acciones" style="text-align:center;">
+        <button onclick="editarNoClase(${r.id}, '${(r.sede || '').replace(/'/g,"\\'")}', ${Number(r.dow)||0}, '${horaTxt}')">✏️</button>
+        <button onclick="eliminarNoClase(${r.id})">🗑️</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function editarNoClase(id, sede, dow, hora){
+  const selSede = document.getElementById('ncSede');
+  const selDow  = document.getElementById('ncDow');
+  const inpHora = document.getElementById('ncHora');
+  if (!selSede || !selDow || !inpHora) return;
+  selSede.value = sede;
+  selDow.value  = String(dow);
+  inpHora.value = hora;
+  noClasesEditandoId = id;
+  const btn = document.getElementById('btnNcGuardar');
+  if (btn) btn.textContent = 'Actualizar';
+}
+
+async function guardarNoClase(){
+  const selSede = document.getElementById('ncSede');
+  const selDow  = document.getElementById('ncDow');
+  const inpHora = document.getElementById('ncHora');
+  if (!selSede || !selDow || !inpHora) return;
+
+  const sede = (selSede.value || '').trim();
+  const dow  = parseInt(selDow.value,10);
+  const hora = (inpHora.value || '').slice(0,5);
+  if (!sede || !dow || !hora){ alert('Completá sede, día y hora'); return; }
+
+  const url = '/no-clases' + (noClasesEditandoId ? '/' + noClasesEditandoId : '');
+  const method = noClasesEditandoId ? 'PUT' : 'POST';
+  const r = await fetch(url, {
+    method,
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ sede, dow, hora })
+  });
+  if (!r.ok){ alert('No se pudo guardar'); return; }
+
+  // reset
+  noClasesEditandoId = null;
+  const btn = document.getElementById('btnNcGuardar');
+  if (btn) btn.textContent = 'Guardar';
+  inpHora.value = '';
+  await cargarNoClasesCfg();
+}
+
+async function eliminarNoClase(id){
+  if (!confirm('¿Eliminar este bloqueo?')) return;
+  const r = await fetch('/no-clases/'+id, { method:'DELETE' });
+  if (!r.ok){ alert('No se pudo eliminar'); return; }
+  await cargarNoClasesCfg();
+}
+
+// ------------------- ONLOAD -------------------
+
+// Guardia de login
+if (localStorage.getItem('etnya_login') !== 'ok') { location = 'login.html'; }
+
+// Timeout de sesión (6h) — asegurate de tener session-timeout.js incluido en el HTML
+// <script src="session-timeout.js"></script> (ya está en tu HTML)
+
+window.addEventListener('load', () => {
+  try { cargarTiposClase(); }            catch (e) { console.error(e); }
+  try { cargarFeriados(); }              catch (e) { console.error(e); }
+  try { cargarCuentas(); }               catch (e) { console.error(e); }
+  try { cargarAlumnosParaBecado(); }     catch (e) { console.error(e); }
+  try { cargarBecados(); }               catch (e) { console.error(e); }
+  try { cargarGastos(); }                catch (e) { console.error(e); }
+  try { cargarNoClasesCfg(); }           catch (e) { console.error(e); }
+
+  // Ocultar tablas plegables al inicio
+  window.becadosVisibles = false;
+  const flechaB = document.getElementById('flechaBecados');
+  if (flechaB) flechaB.textContent = '▶';
+
+  noClasesVisibles = false;
+  const flechaNC = document.getElementById('flechaNoClases');
+  if (flechaNC) flechaNC.textContent = '▶';
+
+  // Hook botón guardar de No Clases
+  const btnNC = document.getElementById('btnNcGuardar');
+  if (btnNC) btnNC.addEventListener('click', guardarNoClase);
+});
 </script>
 </body>
 </html>
