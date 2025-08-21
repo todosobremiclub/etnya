@@ -791,26 +791,34 @@ function toggleNoClases() {
 }
 
 async function cargarNoClasesCfg(){
-  const res = await fetch('/no-clases');
-  const rows = await res.json();
-  const tb = document.querySelector('#tablaNoClases tbody');
-  if (!tb) return;
-  tb.innerHTML = '';
-  rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.classList.add('fila-noclase');
-    if (!noClasesVisibles) tr.classList.add('fila-oculta');
-    const horaTxt = (r.hora || '').slice(0,5);
-    tr.innerHTML = `
-      <td>${(r.sede || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
-      <td>${DIAS_TXT[Number(r.dow) || 0]}</td>
-      <td>${horaTxt}</td>
-      <td class="acciones" style="text-align:center;">
-        <button onclick="editarNoClase(${r.id}, '${(r.sede || '').replace(/'/g,"\\'")}', ${Number(r.dow)||0}, '${horaTxt}')">✏️</button>
-        <button onclick="eliminarNoClase(${r.id})">🗑️</button>
-      </td>`;
-    tb.appendChild(tr);
-  });
+  try {
+    const res = await fetch('/no-clases');
+    if (!res.ok) {
+      console.error('GET /no-clases', res.status, await res.text());
+      return; // evita intentar res.json() sobre HTML 404
+    }
+    const rows = await res.json();
+    const tb = document.querySelector('#tablaNoClases tbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.classList.add('fila-noclase');
+      if (!noClasesVisibles) tr.classList.add('fila-oculta');
+      const horaTxt = (r.hora || '').slice(0,5);
+      tr.innerHTML = `
+        <td>${(r.sede || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+        <td>${DIAS_TXT[Number(r.dow) || 0]}</td>
+        <td>${horaTxt}</td>
+        <td class="acciones" style="text-align:center;">
+          <button onclick="editarNoClase(${r.id}, '${(r.sede || '').replace(/'/g,"\\'")}', ${Number(r.dow)||0}, '${horaTxt}')">✏️</button>
+          <button onclick="eliminarNoClase(${r.id})">🗑️</button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+  } catch (e) {
+    console.error('Error /no-clases', e);
+  }
 }
 
 function editarNoClase(id, sede, dow, hora){

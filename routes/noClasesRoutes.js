@@ -1,61 +1,66 @@
+// routes/noClasesRoutes.js
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// LISTAR
-router.get('/', async (req, res) => {
+// Listar
+router.get('/', async (req, res, next) => {
   try {
-    const r = await pool.query(
-      `SELECT id, sede, dow, to_char(hora, 'HH24:MI') AS hora
-       FROM no_clases
-       ORDER BY sede, dow, hora`
+    const { rows } = await pool.query(
+      "SELECT id, sede, dow, to_char(hora,'HH24:MI') AS hora FROM no_clases ORDER BY sede, dow, hora"
     );
-    res.json(r.rows);
-  } catch (e) {
-    console.error('GET /no-clases', e);
-    res.status(500).send('Error al obtener no_clases');
-  }
+    res.json(rows);
+  } catch (e) { next(e); }
 });
 
-// CREAR
-router.post('/', async (req, res) => {
+// Crear (idempotente si ya existe)
+router.post('/', async (req, res, next) => {
   try {
-    const { sede, dow, hora } = req.body; // hora 'HH:MM'
-    await pool.query(
-      `INSERT INTO no_clases (sede, dow, hora) VALUES ($1,$2,$3::time)`,
-      [sede, dow, hora]
-    );
-    res.sendStatus(201);
-  } catch (e) {
-    console.error('POST /no-clases', e);
-    res.status(500).send('Error al crear no_clase');
-  }
+    let { sede, dow, hora } = req.body;
+    sede = (sede || '').trim();
+    dow  = parseInt(dow, 10);
+    hora = (hora && hora.length === 5) ? hora + ':00' : hora;
+    if (!sede || !dow || !hora) return res.status(400).json({ error: 'faltan datos' });
+
+    const q = `INSERT INTO no_clases (sede,dow,hora)
+               VALUES ($1,$2,$3)
+               ON CONFLICT (sede,dow,hora) DO NOTHING
+               RETURNING id`;
+    let r = await pool.query(q, [sede, dow, hora]);
+    if (!r.rows.length) {
+      r = await pool.query('SELECT id FROM no_clases WHERE sede=$1 AND dow=$2 AND hora=$3', [sede, dow, hora]);
+      return res.status(200).json(r.rows[0]); // ya existía
+    }
+    res.status(201).json(r.rows[0]);
+  } catch (e) { next(e); }
 });
 
-// ACTUALIZAR
-router.put('/:id', async (req, res) => {
+// Actualizar
+router.put('/:id', async (req, res, next) => {
   try {
-    const { sede, dow, hora } = req.body;
-    await pool.query(
-      `UPDATE no_clases SET sede=$1, dow=$2, hora=$3::time WHERE id=$4`,
-      [sede, dow, hora, req.params.id]
+    const id = parseInt(req.params.id, 10);
+    let { sede, dow, hora } = req.body;
+    sede = (sede || '').trim();
+    dow  = parseInt(dow, 10);
+    hora = (hora && hora.length === 5) ? hora + ':00' : hora;
+
+    const { rows } = await pool.query(
+      'UPDATE no_clases SET sede=$1, dow=$2, hora=$3 WHERE id=$4 RETURNING id',
+      [sede, dow, hora, id]
     );
-    res.sendStatus(200);
-  } catch (e) {
-    console.error('PUT /no-clases', e);
-    res.status(500).send('Error al actualizar no_clase');
-  }
+    if (!rows.length) return res.sendStatus(404);
+    res.json(rows[0]);
+  } catch (e) { next(e); }
 });
 
-// ELIMINAR
-router.delete('/:id', async (req, res) => {
+// Eliminar
+router.delete('/:id', async (req, res, next) => {
   try {
-    await pool.query(`DELETE FROM no_clases WHERE id=$1`, [req.params.id]);
-    res.sendStatus(200);
-  } catch (e) {
-    console.error('DELETE /no-clases', e);
-    res.status(500).send('Error al eliminar no_clase');
-  }
+    const id = parseInt(req.params.id, 10);
+    const r = await pool.query('DELETE FROM no_clases WHERE id=$1', [id]);
+    if (!r.rowCount) return res.sendStatus(404);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
 });
 
 module.exports = router;

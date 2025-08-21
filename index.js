@@ -11,12 +11,26 @@ const pool = require('./db');
 // Migración automática
 (async () => {
   try {
+    // clases
     await pool.query(`ALTER TABLE clases ADD COLUMN IF NOT EXISTS estado TEXT`);
     await pool.query(`ALTER TABLE clases ADD COLUMN IF NOT EXISTS nota   TEXT`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_clases_fecha_sede ON clases(fecha, sede)`);
-    console.log('Migración: columnas estado/nota e índice creados (si no existían).');
+
+    // no_clases (bloques sin clase por sede/día/hora)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS no_clases (
+        id   SERIAL PRIMARY KEY,
+        sede TEXT NOT NULL,
+        dow  INT  NOT NULL CHECK (dow BETWEEN 1 AND 7), -- 1=Lun ... 7=Dom
+        hora TIME NOT NULL
+      )
+    `);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS uq_no_clases ON no_clases(sede, dow, hora)`);
+
+
+    console.log('Migración: clases/no_clases listas (creadas/actualizadas si no existían).');
   } catch (err) {
-    console.error('Error en migración automática de clases:', err);
+    console.error('Error en migración automática:', err);
   }
 })();
 
@@ -25,15 +39,16 @@ app.use(cors());
 app.use(express.json());
 
 // ===== Rutas =====
-const alumnosRoutes    = require('./routes/alumnosRoutes');
-const tiposClaseRoutes = require('./routes/tiposClase');
-const feriadosRoutes   = require('./routes/feriadosRoutes');
-const pagosRoutes      = require('./routes/pagosRoutes');
-const cuentasRoutes    = require('./routes/cuentasRoutes');
-const reportesRoutes   = require('./routes/reportesRoutes');
-const becadosRoutes    = require('./routes/becadosRoutes');
-const gastosRoutes     = require('./routes/gastosRoutes');
-const clasesRoutes     = require('./routes/clasesRoutes');
+const alumnosRoutes     = require('./routes/alumnosRoutes');
+const tiposClaseRoutes  = require('./routes/tiposClase');
+const feriadosRoutes    = require('./routes/feriadosRoutes');
+const pagosRoutes       = require('./routes/pagosRoutes');
+const cuentasRoutes     = require('./routes/cuentasRoutes');
+const reportesRoutes    = require('./routes/reportesRoutes');
+const becadosRoutes     = require('./routes/becadosRoutes');
+const gastosRoutes      = require('./routes/gastosRoutes');
+const clasesRoutes      = require('./routes/clasesRoutes');
+const noClasesRoutes    = require('./routes/noClasesRoutes'); // 👈 nuevo
 
 app.use('/alumnos', alumnosRoutes);
 app.use('/tipos-clase', tiposClaseRoutes);
@@ -45,6 +60,7 @@ app.use('/becados', becadosRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/gastos', gastosRoutes);
 app.use('/clases', clasesRoutes);
+app.use('/no-clases', noClasesRoutes); // 👈 nuevo
 
 // ===== PATCH TEMPORAL: POST directo para /clases =====
 app.post('/clases', async (req, res, next) => {
