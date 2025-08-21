@@ -249,6 +249,23 @@ table.agenda td.slot + td.slot,
   border-right: 1px solid #d6d6d6;
 }
 
+/* === Separadores principales con el MISMO borde que los costados === */
+table.agenda td.slot,
+#tablaAgenda td.slot{
+  border-bottom: 2px solid var(--grid-border) !important;   /* entre horas */
+}
+
+table.agenda td.slot + td.slot,
+#tablaAgenda td.slot + td.slot{
+  border-left: 2px solid var(--grid-border) !important;     /* entre días */
+}
+
+/* === Divisor interno del horario (mitades) se mantiene suave === */
+.half.left{
+  border-right: 1px solid var(--grid-line) !important;
+}
+
+
 
 </style>
 
