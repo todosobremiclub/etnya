@@ -1260,11 +1260,14 @@ function pintarClases(){
       tag.dataset.tipo = tipo;
       if (!tag.dataset.estado) applyTipoColorToTag(tag);
 
-      if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
-        tag.title = `Observación/motivo de prueba: ${motivo}`;
-        tag.classList.add('has-tooltip');
-        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
-      }
+      // tooltip (solo el CUSTOM oscuro) para prueba con motivo
+if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
+  tag.removeAttribute('title'); // evitar tooltip nativo
+  tag.classList.add('has-tooltip');
+  tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
+  tag.setAttribute('aria-label', `Observación/motivo de prueba: ${motivo}`); // accesible
+}
+
 
       tag.addEventListener('click', onTagClick);
       tag.addEventListener('dblclick', onTagDblClick);
