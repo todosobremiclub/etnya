@@ -307,7 +307,7 @@
 
     <!-- Bloques sin clase (entre Feriados y Cuentas) -->
     <h2 class="titulo-feriados">Bloques sin clase (por sede/día/hora)</h2>
-    <form id="formNoClases" onsubmit="guardarNoClase(); return false;">
+    <form id="formNoClases">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;max-width:700px;margin:0 auto 8px;">
         <div>
           <label>Sede</label>
@@ -332,7 +332,7 @@
         <div>
           <label>Hora</label>
           <!-- listado de horas redondas -->
-          <select id="ncHora"></select>
+          <select id="ncHora" required></select>
         </div>
         <button id="btnNcGuardar" type="submit">Guardar</button>
       </div>
@@ -834,44 +834,48 @@ function editarNoClase(id, sede, dow, hora){
   if (btn) btn.textContent = 'Actualizar';
 }
 
-async function guardarNoClase(){
+async function guardarNoClase() {
   const selSede = document.getElementById('ncSede');
   const selDow  = document.getElementById('ncDow');
   const selHora = document.getElementById('ncHora');
   if (!selSede || !selDow || !selHora) return;
 
   const sede = (selSede.value || '').trim();
-  const dow  = parseInt(selDow.value,10);
-  const hora = (selHora.value || '').slice(0,5);
-  if (!sede || !dow || !hora){ alert('Completá sede, día y hora'); return; }
+  const dow  = parseInt(selDow.value, 10);
+  const hora = (selHora.value || '').slice(0, 5);
+
+  if (!sede || !dow || !hora) {
+    alert('Completá sede, día y hora');
+    return;
+  }
 
   const url = '/no-clases' + (noClasesEditandoId ? '/' + noClasesEditandoId : '');
   const method = noClasesEditandoId ? 'PUT' : 'POST';
-  const r = await fetch(url, {
-    method,
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ sede, dow, hora })
-  });
-  if (!r.ok){ alert('No se pudo guardar'); return; }
 
-  // reset
-  noClasesEditandoId = null;
-  const btn = document.getElementById('btnNcGuardar');
-  if (btn) btn.textContent = 'Guardar';
-  selHora.value = '';
-  await cargarNoClasesCfg();
+  try {
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sede, dow, hora })
+    });
+    const txt = await r.text();
+    if (!r.ok) {
+      console.error('Guardar no-clases →', r.status, txt);
+      alert('No se pudo guardar (' + r.status + '): ' + (txt || ''));
+      return;
+    }
+
+    // OK
+    noClasesEditandoId = null;
+    document.getElementById('btnNcGuardar').textContent = 'Guardar';
+    selHora.value = '';
+    await cargarNoClasesCfg();
+    alert('Bloque guardado');
+  } catch (e) {
+    console.error(e);
+    alert('Error de red al guardar');
+  }
 }
-
-async function eliminarNoClase(id){
-  if (!confirm('¿Eliminar este bloqueo?')) return;
-  const r = await fetch('/no-clases/'+id, { method:'DELETE' });
-  if (!r.ok){ alert('No se pudo eliminar'); return; }
-  await cargarNoClasesCfg();
-}
-
-// Poblar horas apenas el DOM esté listo (además del load)
-if (document.readyState !== 'loading') poblarHorasNoClases();
-else document.addEventListener('DOMContentLoaded', poblarHorasNoClases);
 
 
 // ------------------- ONLOAD -------------------
@@ -891,6 +895,13 @@ window.addEventListener('load', () => {
   try { cargarGastos(); }                catch (e) { console.error(e); }
   try { cargarNoClasesCfg(); }           catch (e) { console.error(e); }
   try { poblarHorasNoClases(); }         catch (e) { console.error(e); }
+
+const btnNC = document.getElementById('btnNcGuardar');
+if (btnNC) btnNC.addEventListener('click', (e) => {
+  e.preventDefault();
+  guardarNoClase();
+});
+
 
   // Ocultar tablas plegables al inicio
   window.becadosVisibles = false;
