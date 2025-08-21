@@ -186,6 +186,20 @@
   .quick-menu .sin_aviso  .dot{ background:#ffe066; border:1px solid #e6b800; }
   .quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
   .quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
+
+/* === Líneas principales más fuertes (días y horas) === */
+table.agenda td.slot{
+  border-bottom: 2px solid var(--grid-strong);   /* horizontales entre horas */
+}
+table.agenda td.slot + td.slot{
+  border-left: 2px solid var(--grid-strong);     /* verticales entre días */
+}
+
+/* === Línea interna (separación del horario) más suave === */
+.half.left{
+  border-right: 1px solid var(--grid-line);      /* mantiene la división suave */
+}
+
 </style>
 
 
