@@ -224,6 +224,8 @@
   display: none;
 }
 
+/* Bloqueos/feriados en gris fuerte */
+td.slot.feriado { background: #d9d9d9 !important; }
 
 </style>
 
@@ -765,7 +767,7 @@ async function eliminarGasto(id) {
 
 // =================== NO CLASES (sede/día/hora) ===================
 const DIAS_TXT = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-let noClasesVisibles = false;
+let noClasesVisibles = true;
 let noClasesEditandoId = null;
 
 function poblarHorasNoClases() {
@@ -791,11 +793,11 @@ function toggleNoClases() {
 }
 
 async function cargarNoClasesCfg(){
-  try {
+  try{
     const res = await fetch('/no-clases');
     if (!res.ok) {
       console.error('GET /no-clases', res.status, await res.text());
-      return; // evita intentar res.json() sobre HTML 404
+      return;
     }
     const rows = await res.json();
     const tb = document.querySelector('#tablaNoClases tbody');
@@ -804,7 +806,6 @@ async function cargarNoClasesCfg(){
     rows.forEach(r => {
       const tr = document.createElement('tr');
       tr.classList.add('fila-noclase');
-      if (!noClasesVisibles) tr.classList.add('fila-oculta');
       const horaTxt = (r.hora || '').slice(0,5);
       tr.innerHTML = `
         <td>${(r.sede || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
@@ -816,7 +817,7 @@ async function cargarNoClasesCfg(){
         </td>`;
       tb.appendChild(tr);
     });
-  } catch (e) {
+  }catch(e){
     console.error('Error /no-clases', e);
   }
 }
@@ -834,44 +835,39 @@ function editarNoClase(id, sede, dow, hora){
   if (btn) btn.textContent = 'Actualizar';
 }
 
-async function guardarNoClase() {
+async function guardarNoClase(){
   const selSede = document.getElementById('ncSede');
   const selDow  = document.getElementById('ncDow');
   const selHora = document.getElementById('ncHora');
   if (!selSede || !selDow || !selHora) return;
 
   const sede = (selSede.value || '').trim();
-  const dow  = parseInt(selDow.value, 10);
-  const hora = (selHora.value || '').slice(0, 5);
-
-  if (!sede || !dow || !hora) {
-    alert('Completá sede, día y hora');
-    return;
-  }
+  const dow  = parseInt(selDow.value,10);
+  const hora = (selHora.value || '').slice(0,5);
+  if (!sede || !dow || !hora){ alert('Completá sede, día y hora'); return; }
 
   const url = '/no-clases' + (noClasesEditandoId ? '/' + noClasesEditandoId : '');
   const method = noClasesEditandoId ? 'PUT' : 'POST';
 
-  try {
+  try{
     const r = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ sede, dow, hora })
     });
     const txt = await r.text();
     if (!r.ok) {
-      console.error('Guardar no-clases →', r.status, txt);
-      alert('No se pudo guardar (' + r.status + '): ' + (txt || ''));
+      console.error('Guardar /no-clases →', r.status, txt);
+      alert('No se pudo guardar ('+r.status+'): ' + (txt || ''));
       return;
     }
-
-    // OK
     noClasesEditandoId = null;
-    document.getElementById('btnNcGuardar').textContent = 'Guardar';
+    const btn = document.getElementById('btnNcGuardar');
+    if (btn) btn.textContent = 'Guardar';
     selHora.value = '';
     await cargarNoClasesCfg();
     alert('Bloque guardado');
-  } catch (e) {
+  }catch(e){
     console.error(e);
     alert('Error de red al guardar');
   }

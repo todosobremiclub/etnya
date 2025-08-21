@@ -1835,6 +1835,7 @@ async function cargarSemana() {
   actualizarHeader();
   construirTablaBase();
   await cargarFeriados();   // 👈 nuevo
+  await cargarNoClases();
   await cargarClasesSemana();
   pintarClases();
 }
