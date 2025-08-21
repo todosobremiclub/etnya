@@ -903,6 +903,13 @@ if (btnNC) btnNC.addEventListener('click', (e) => {
   guardarNoClase();
 });
 
+// Exponer funciones usadas por atributos onclick del HTML
+window.toggleNoClases   = toggleNoClases;
+window.editarNoClase    = editarNoClase;
+window.eliminarNoClase  = eliminarNoClase;
+window.guardarNoClase   = guardarNoClase;   // por si la usás desde HTML
+
+
 
   // Ocultar tablas plegables al inicio
   window.becadosVisibles = false;
