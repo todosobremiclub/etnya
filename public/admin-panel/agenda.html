@@ -249,6 +249,12 @@ table.agenda td.slot + td.slot,
   border-right: 1px solid #d6d6d6;
 }
 
+/* Día feriado en la agenda */
+td.slot.feriado {
+  background-color: #d6d6d6 !important;  /* gris fuerte */
+}
+
+
 /* === Separadores principales con el MISMO borde que los costados === */
 table.agenda td.slot,
 #tablaAgenda td.slot{
@@ -1144,10 +1150,17 @@ function onTagClick(e){
 
 /* ===== Pintar ===== */
 function pintarClases(){
+  // limpiar chips dentro de cada celda
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
+  // normalizo feriados a un Set para lookup O(1)
+  const feriadosSet = new Set(
+    Array.isArray(feriados) ? feriados.map(f => String(f).slice(0,10)) : []
+  );
+
+  // agrupar clases por (fecha|hora|sede)
   const mapa = new Map();
-  for (const c of clasesSemana){
+  for (const c of (clasesSemana || [])){
     const sede  = (c.sede || '').trim();
     const fecha = c.fecha;
     const hora  = normTime(c.hora);
@@ -1156,8 +1169,19 @@ function pintarClases(){
     mapa.get(key).push({ ...c, hora });
   }
 
+  // recorrer cada celda del grid
   document.querySelectorAll('td.slot').forEach(td => {
-    const key   = `${td.dataset.fecha}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
+    const fechaTd = String(td.dataset.fecha || '').slice(0,10);
+
+    // ✅ marcar/limpiar fondo de feriado
+    if (feriadosSet.has(fechaTd)) {
+      td.classList.add('feriado');
+    } else {
+      td.classList.remove('feriado');
+    }
+
+    // pintar chips de clases
+    const key   = `${fechaTd}|${normTime(td.dataset.hora)}|${(td.dataset.sede||'').trim()}`;
     const arr   = mapa.get(key) || [];
     const left  = td.querySelector('.left');
     const right = td.querySelector('.right');
@@ -1204,8 +1228,8 @@ function pintarClases(){
       }
 
       // eventos
-      tag.addEventListener('click', onTagClick);     // 👈 click abre menú rápido
-      tag.addEventListener('dblclick', onTagDblClick); // sigue funcionando el modal
+      tag.addEventListener('click', onTagClick);
+      tag.addEventListener('dblclick', onTagDblClick);
 
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
@@ -1807,7 +1831,14 @@ if (btnEliminarClaseUnica){
 
 
 /* ===== Init ===== */
-async function cargarSemana(){ actualizarHeader(); construirTablaBase(); await cargarClasesSemana(); pintarClases(); }
+async function cargarSemana() {
+  actualizarHeader();
+  construirTablaBase();
+  await cargarFeriados();   // 👈 nuevo
+  await cargarClasesSemana();
+  pintarClases();
+}
+
 window.addEventListener('load', function () {
   cargarAlumnos()
     .then(() => cargarSemana())
@@ -1923,6 +1954,22 @@ $findDrop.addEventListener('keydown', e => {
 });
 
 $findClr.addEventListener('click', clearFindSelection);
+
+let feriados = [];
+
+async function cargarFeriados() {
+  try {
+    const res = await fetch('/feriados');
+    if (!res.ok) throw new Error(await res.text());
+    feriados = await res.json();
+    // normalizamos a YYYY-MM-DD
+    feriados = feriados.map(f => new Date(f.fecha).toISOString().slice(0,10));
+  } catch (err) {
+    console.error('Error al cargar feriados', err);
+    feriados = [];
+  }
+}
+
 
 // Si /alumnos se recarga en algún momento, reconstruir índice
 // (ya llamás cargarAlumnos() al iniciar la página) :contentReference[oaicite:2]{index=2}
