@@ -1176,50 +1176,55 @@ function onTagClick(e){
 
 /* ===== Pintar ===== */
 function pintarClases(){
-  // 1) limpiar chips dentro de cada celda
+  // limpiar chips
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
-  // 2) normalizo feriados a un Set para lookup O(1)
-  const feriadosSet = new Set(
-    Array.isArray(feriados) ? feriados.map(f => String(f).slice(0,10)) : []
-  );
+  // feriados a Set
+  const feriadosSet = new Set(Array.isArray(feriados) ? feriados.map(f => String(f).slice(0,10)) : []);
 
-  // 3) agrupar clases por (fecha|hora|sede)
+  // agrupar clases por (fecha|hora|sede)
   const mapa = new Map();
   for (const c of (clasesSemana || [])){
     const sede  = (c.sede || '').trim();
-    const fecha = c.fecha;
-    const hora  = normTime(c.hora); // => HH:MM:SS
+    const fecha = String(c.fecha).slice(0,10);
+    const hora  = normTime(c.hora); // HH:MM:SS
     const key   = `${fecha}|${hora}|${sede}`;
     if (!mapa.has(key)) mapa.set(key, []);
     mapa.get(key).push({ ...c, hora });
   }
 
-  // 4) recorrer cada celda del grid
+  // helper sede activa por si la celda no trae data-sede
+  const sedeActiva =
+    (window.sedeActiva || window.sedeSel || window.sede || '').toString().trim() ||
+    (document.querySelector('.sedes .is-selected, .sedes .selected')?.textContent || '').trim();
+
+  // recorrer celdas
   document.querySelectorAll('td.slot').forEach(td => {
+    // claves de la celda
     const fechaTd = String(td.dataset.fecha || '').slice(0,10);
-    const horaTd  = normTime(String(td.dataset.hora || ''));           // HH:MM:SS
-    const sedeTd  = String(td.dataset.sede || '').trim();
+    const horaTd  = normTime(String(td.dataset.hora || ''));         // HH:MM:SS
+    const sedeTd  = String(td.dataset.sede || sedeActiva || '').trim();
     const dowTd   = typeof dowFromYMD === 'function' ? dowFromYMD(fechaTd) : null;
 
-    // resetear fondo
+    // reset fondo
     td.classList.remove('feriado');
 
-    // 4.a) feriado: pinta TODO el día
+    // feriado (todo el día)
     if (feriadosSet.has(fechaTd)) {
       td.classList.add('feriado');
     } else {
-      // 4.b) bloque "no clases" por sede/día/hora: pinta SOLO ese slot
-      const bloques = Array.isArray(window.noClases) ? window.noClases : [];
-      const bloqueado = bloques.some(nc =>
-        Number(nc.dow) === Number(dowTd) &&
-        String(nc.sede || '').trim() === sedeTd &&
-        normTime(nc.hora) === horaTd
-      );
+      // bloque no-clases (solo ese slot)
+      const arrBloques = Array.isArray(window.noClases) ? window.noClases : [];
+      const bloqueado = arrBloques.some(nc => {
+        const sameHora  = normTime(nc.hora) === horaTd;      // normaliza HH:MM -> HH:MM:SS
+        const sameDow   = Number(nc.dow) === Number(dowTd);
+        const sameSede  = sedeTd ? (String(nc.sede||'').trim() === sedeTd) : true; // si no hay sede en la celda, matchea por hora+dow
+        return sameHora && sameDow && sameSede;
+      });
       if (bloqueado) td.classList.add('feriado');
     }
 
-    // 4.c) pintar chips de clases
+    // chips de clases
     const key   = `${fechaTd}|${horaTd}|${sedeTd}`;
     const arr   = mapa.get(key) || [];
     const left  = td.querySelector('.left');
@@ -1240,36 +1245,29 @@ function pintarClases(){
       tag.dataset.hora     = cl.hora  || '';
       tag.dataset.sede     = cl.sede  || '';
 
-      // motivo/tooltip (para PRUEBA)
+      // tooltip/motivo
       let motivo = '';
       if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
       else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
       else if (cl.nota && String(cl.nota).trim())          motivo = String(cl.nota).trim();
       tag.dataset.observacion = motivo;
 
-      // estado visual
+      // estado y tipo
       applyEstadoClassToTag(tag, tag.dataset.estado);
-
-      // tipo (sólo si NO hay estado asignado)
-      const tipo = cl.tipo ?? (
-        cl.es_prueba ? 'prueba'
-        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-        : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
-      );
+      const tipo = cl.tipo ?? (cl.es_prueba ? 'prueba'
+                  : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+                  : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal')));
       tag.dataset.tipo = tipo;
       if (!tag.dataset.estado) applyTipoColorToTag(tag);
 
-      // tooltip para prueba con motivo
       if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
         tag.title = `Observación/motivo de prueba: ${motivo}`;
         tag.classList.add('has-tooltip');
         tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
       }
 
-      // eventos
       tag.addEventListener('click', onTagClick);
       tag.addEventListener('dblclick', onTagDblClick);
-
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
   });

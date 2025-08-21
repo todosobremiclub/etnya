@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Listar
+// LISTAR
 router.get('/', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -13,29 +13,29 @@ router.get('/', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Crear (idempotente si ya existe)
+// CREAR
 router.post('/', async (req, res, next) => {
   try {
     let { sede, dow, hora } = req.body;
     sede = (sede || '').trim();
     dow  = parseInt(dow, 10);
-    hora = (hora && hora.length === 5) ? hora + ':00' : hora;
+    hora = (hora && hora.length === 5) ? hora + ':00' : hora; // HH:MM -> HH:MM:SS
     if (!sede || !dow || !hora) return res.status(400).json({ error: 'faltan datos' });
 
-    const q = `INSERT INTO no_clases (sede,dow,hora)
-               VALUES ($1,$2,$3)
-               ON CONFLICT (sede,dow,hora) DO NOTHING
-               RETURNING id`;
-    let r = await pool.query(q, [sede, dow, hora]);
-    if (!r.rows.length) {
-      r = await pool.query('SELECT id FROM no_clases WHERE sede=$1 AND dow=$2 AND hora=$3', [sede, dow, hora]);
-      return res.status(200).json(r.rows[0]); // ya existía
-    }
+    // requiere índice/constraint único (sede,dow,hora)
+    const q = `
+      INSERT INTO no_clases (sede, dow, hora)
+      VALUES ($1,$2,$3)
+      ON CONFLICT (sede, dow, hora)
+      DO UPDATE SET sede = EXCLUDED.sede
+      RETURNING id
+    `;
+    const r = await pool.query(q, [sede, dow, hora]);
     res.status(201).json(r.rows[0]);
   } catch (e) { next(e); }
 });
 
-// Actualizar
+// ACTUALIZAR
 router.put('/:id', async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -43,6 +43,7 @@ router.put('/:id', async (req, res, next) => {
     sede = (sede || '').trim();
     dow  = parseInt(dow, 10);
     hora = (hora && hora.length === 5) ? hora + ':00' : hora;
+    if (!id || !sede || !dow || !hora) return res.status(400).json({ error: 'datos inválidos' });
 
     const { rows } = await pool.query(
       'UPDATE no_clases SET sede=$1, dow=$2, hora=$3 WHERE id=$4 RETURNING id',
@@ -53,7 +54,7 @@ router.put('/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Eliminar
+// ELIMINAR
 router.delete('/:id', async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);

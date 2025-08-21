@@ -62,6 +62,13 @@ app.use('/gastos', gastosRoutes);
 app.use('/clases', clasesRoutes);
 app.use('/no-clases', noClasesRoutes); // 👈 nuevo
 
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Error interno' });
+});
+
+
 // ===== PATCH TEMPORAL: POST directo para /clases =====
 app.post('/clases', async (req, res, next) => {
   try {
