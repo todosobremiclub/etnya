@@ -7,6 +7,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
  <style>
   /* ====== Base ====== */
+  :root{
+    --grid-line: #aeb7b3;          /* líneas normales */
+    --grid-strong: #8a9790;        /* separadores fuertes (hora, bordes) */
+  }
+
   body{margin:0;font-family:'Inter',sans-serif;background:#cce1d6;color:#6d6d6d}
   .sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background:#91586d;padding-top:60px;box-shadow:2px 0 5px rgba(0,0,0,.1);z-index:1000}
   .sidebar a{display:block;padding:10px 16px;color:#fff;text-decoration:none;font-weight:bold;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
@@ -21,58 +26,57 @@
 
   /* ====== Controles (topbar en 2 filas) ====== */
   .topbar{
-  display:grid;
-  grid-template-columns: 1fr auto 1fr; /* izq | centro | der */
-  grid-template-areas:
-    "tabs week actions"
-    "search search .";                 /* buscador + botón juntos */
-  align-items:center;
-  gap:10px;
-  margin-bottom:12px;
-}
-.sede-tabs{ grid-area:tabs; display:flex; gap:6px; flex-wrap:wrap; }
-.week-nav{  grid-area:week; display:flex; align-items:center; gap:8px; justify-self:center; }
-.actions{   grid-area:actions; display:flex; gap:8px; justify-self:end; align-items:center; }
-.search-wrap{ grid-area:search; position:relative; display:flex; gap:8px; align-items:center; }
-
-/* Botones (sin center-tools) */
-.sede-tabs button,
-.week-nav button,
-.actions button{
-  background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;
-}
-.sede-tabs button.active{background:#91586d}
-.week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
-
-.legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
-.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
-.i-free{background:#cce1d6;border:1px solid #94b8a3}
-.i-full{background:#ffd5d5;border:1px solid #ff9b9b}
-
-/* Opcional: mobile */
-@media (max-width:768px){
-  .topbar{
-    grid-template-columns: 1fr 1fr;
+    display:grid;
+    grid-template-columns: 1fr auto 1fr; /* izq | centro | der */
     grid-template-areas:
-      "tabs actions"
-      "week week"
-      "search search";
+      "tabs week actions"
+      "search search .";
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
   }
-}
+  .sede-tabs{ grid-area:tabs; display:flex; gap:6px; flex-wrap:wrap; }
+  .week-nav{  grid-area:week; display:flex; align-items:center; gap:8px; justify-self:center; }
+  .actions{   grid-area:actions; display:flex; gap:8px; justify-self:end; align-items:center; }
+  .search-wrap{ grid-area:search; position:relative; display:flex; gap:8px; align-items:center; }
+
+  .sede-tabs button,
+  .week-nav button,
+  .actions button{
+    background:#b48a99;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;
+  }
+  .sede-tabs button.active{background:#91586d}
+  .week-label{font-weight:600;color:#91586d;min-width:160px;text-align:center}
+
+  .legend{margin:8px 0;font-size:12px;color:#6d6d6d;display:flex;gap:12px;justify-content:flex-end}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .i-free{background:#cce1d6;border:1px solid #94b8a3}
+  .i-full{background:#ffd5d5;border:1px solid #ff9b9b}
+
+  @media (max-width:768px){
+    .topbar{
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "tabs actions"
+        "week week"
+        "search search";
+    }
+  }
 
   /* ====== Grilla ====== */
   .agenda-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden}
   table.agenda{width:100%;border-collapse:collapse;table-layout:fixed}
-  .agenda th,.agenda td{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;vertical-align:top}
+  .agenda th,.agenda td{border-bottom:1px solid var(--grid-line);border-right:1px solid var(--grid-line);vertical-align:top}
   .agenda th:last-child,.agenda td:last-child{border-right:none}
-  .agenda th{background:#b48a99;color:#fff;font-size:13px;position:sticky;top:0;z-index:2;padding:6px}
-  .col-hora{width:70px;background:#f7f7f7;font-weight:600;text-align:center;position:sticky;left:0;z-index:3;padding:6px}
+  .agenda th{background:#b48a99;color:#fff;font-size:13px;position:sticky;top:0;z-index:2;padding:6px;border-bottom:2px solid var(--grid-strong)}
+  .col-hora{width:70px;background:#f7f7f7;font-weight:600;text-align:center;position:sticky;left:0;z-index:3;padding:6px;border-right:2px solid var(--grid-strong)}
+  .agenda tbody tr:last-child td{border-bottom:2px solid var(--grid-strong)}
 
   /* ====== Slot único por hora/día dividido en dos ====== */
   td.slot{padding:0}
   .slot-inner{min-height:110px;display:grid;grid-template-columns:1fr 1fr}
   .half{gap:8px;padding:6px;box-sizing:border-box;min-width:0}
-  .half.left{border-right:1px solid #e0e0e0}
+  .half.left{border-right:1px solid var(--grid-line)}
 
   .tag{
     display:block;width:100%;max-width:100%;box-sizing:border-box;
@@ -83,7 +87,7 @@
   .tag-prueba{background:#8e44ad;color:#fff}
   .tag-recuperacion{background:#c62828;color:#fff}
 
-  /* Estados de asistencia */
+  /* Estados de asistencia (colores oficiales) */
   .tag.estado-asistio     { background:#fff6bf; border-color:#e6d98a; color:#5a5200; }
   .tag.estado-sin-aviso   { background:#ffe066; border-color:#e6b800; color:#5a4b00; }
   .tag.estado-con-aviso   { background:#ffc2d1; border-color:#ff8fa3; color:#6d3e4e; }
@@ -114,7 +118,6 @@
     h1{font-size:18px}
     .modal .row{grid-template-columns:1fr}
 
-    /* Topbar en 3 filas en mobile */
     .topbar{
       grid-template-columns:1fr 1fr;
       grid-template-areas:
@@ -145,7 +148,7 @@
     .chip.recupero{ background:#7f3f74; color:#fff; }
   }
 
-  /* Encabezado y hora pegados también en desktop */
+  /* Encabezado y hora pegados también en desktop + wrapper */
   #tablaAgenda thead th{ position:sticky; top:0; z-index:2; }
   #tablaAgenda .col-hora{ position:sticky; left:0; z-index:3; background:#f5f7f6; }
   .agenda-wrapper{ overflow-x:auto; }
@@ -156,50 +159,35 @@
     box-shadow:0 0 0 3px rgba(255,152,0,.25);
   }
 
-/* Tooltip para chips */
-.chip.has-tooltip{ position: relative; }
-.chip.has-tooltip::before{
-  /* triángulo rojo tipo Excel en la esquina */
-  content:"";
-  position:absolute; right:2px; top:2px;
-  border-width:0 7px 7px 0; border-style:solid;
-  border-color:transparent #e57373 transparent transparent;
-}
-.chip.has-tooltip:hover::after{
-  content: attr(data-tooltip);
-  position:absolute; left:0; top:100%;
-  transform: translateY(6px);
-  background:#333; color:#fff;
-  padding:8px 10px; border-radius:6px;
-  box-shadow:0 6px 20px rgba(0,0,0,.2);
-  width:max-content; max-width:300px;
-  white-space:normal; z-index:1000;
-}
+  /* ===== Tooltip (tag/chip) ===== */
+  .tag.has-tooltip, .chip.has-tooltip{ position: relative; }
+  .tag.has-tooltip::before, .chip.has-tooltip::before{
+    content:""; position:absolute; right:2px; top:2px;
+    border-width:0 7px 7px 0; border-style:solid;
+    border-color:transparent #e57373 transparent transparent;
+  }
+  .tag.has-tooltip:hover::after, .chip.has-tooltip:hover::after{
+    content: attr(data-tooltip);
+    position:absolute; left:0; top:100%; transform: translateY(6px);
+    background:#333; color:#fff; padding:8px 10px; border-radius:6px;
+    box-shadow:0 6px 20px rgba(0,0,0,.2); width:max-content; max-width:300px;
+    white-space:normal; z-index:1000;
+  }
 
-/* Menú rápido tipo Excel */
-.quick-menu{position:absolute;display:none;min-width:220px;background:#fff;border:1px solid #ddd;border-radius:8px;
-  box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:3000;font-size:13px;overflow:hidden}
-.quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
-.quick-menu .item:hover{background:#f3f4f6}
-.quick-menu .sep{height:1px;background:#eee;margin:2px 0}
-.quick-menu .dot{width:10px;height:10px;border-radius:50%}
-/* Quick menu: colores iguales a los estados de la agenda */
-.quick-menu .asistio   .dot{ background:#fff6bf; border:1px solid #e6d98a; }  /* amarillo claro */
-.quick-menu .sin_aviso .dot{ background:#ffe066; border:1px solid #e6b800; }  /* amarillo fuerte */
-.quick-menu .con_aviso .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }  /* rosa */
-.quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; } /* verde */
-
-
-/* Tooltip (lo que ya usamos para prueba) */
-.tag.has-tooltip{position:relative}
-.tag.has-tooltip::before{content:"";position:absolute;right:2px;top:2px;border-width:0 7px 7px 0;border-style:solid;
-  border-color:transparent #e57373 transparent transparent}
-.tag.has-tooltip:hover::after{content:attr(data-tooltip);position:absolute;left:0;top:100%;transform:translateY(6px);
-  background:#333;color:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.2);
-  width:max-content;max-width:300px;white-space:normal;z-index:1000}
-
-
+  /* ===== Menú rápido tipo Excel ===== */
+  .quick-menu{position:absolute;display:none;min-width:220px;background:#fff;border:1px solid #ddd;border-radius:8px;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:3000;font-size:13px;overflow:hidden}
+  .quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
+  .quick-menu .item:hover{background:#f3f4f6}
+  .quick-menu .sep{height:1px;background:#eee;margin:2px 0}
+  .quick-menu .dot{width:10px;height:10px;border-radius:50%}
+  /* Quick menu: colores iguales a los estados */
+  .quick-menu .asistio    .dot{ background:#fff6bf; border:1px solid #e6d98a; }
+  .quick-menu .sin_aviso  .dot{ background:#ffe066; border:1px solid #e6b800; }
+  .quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
+  .quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
 </style>
+
 
 </head>
 <body>
