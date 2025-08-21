@@ -900,6 +900,38 @@ async function cargarClasesSemana(){
   }
 }
 
+// ====== BLOQUES sin clase (agenda) ======
+let noClases = [];
+
+function dowFromYMD(ymd) {
+  // 1=Lun ... 7=Dom (Date.getDay(): 0=Dom..6=Sab)
+  const d = new Date(String(ymd).slice(0,10) + 'T00:00:00');
+  const w = d.getDay();
+  return w === 0 ? 7 : w;
+}
+
+async function cargarNoClases() {
+  try {
+    const res = await fetch('/no-clases');
+    if (!res.ok) {
+      console.warn('GET /no-clases', res.status, await res.text());
+      noClases = [];
+      return;
+    }
+    const data = await res.json();
+    // normalizamos: hora en HH:MM:SS para comparar con td.dataset.hora normalizada
+    noClases = data.map(n => ({
+      sede: String(n.sede || '').trim(),
+      dow : Number(n.dow || 0),
+      hora: (String(n.hora || '')).length === 5 ? (n.hora + ':00') : String(n.hora || '')
+    }));
+  } catch (e) {
+    console.error('cargarNoClases', e);
+    noClases = [];
+  }
+}
+
+
 async function cargarSituacionAlumno(alumnoId){
   const cont = document.getElementById('situacionActual');
 
