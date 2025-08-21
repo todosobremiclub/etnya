@@ -183,10 +183,12 @@
 .quick-menu .item:hover{background:#f3f4f6}
 .quick-menu .sep{height:1px;background:#eee;margin:2px 0}
 .quick-menu .dot{width:10px;height:10px;border-radius:50%}
-.quick-menu .asistio   .dot{background:#2e7d32}
-.quick-menu .sin_aviso .dot{background:#d32f2f}
-.quick-menu .con_aviso .dot{background:#f9a825}
-.quick-menu .sobre_hora .dot{background:#6a1b9a}
+/* Quick menu: colores iguales a los estados de la agenda */
+.quick-menu .asistio   .dot{ background:#fff6bf; border:1px solid #e6d98a; }  /* amarillo claro */
+.quick-menu .sin_aviso .dot{ background:#ffe066; border:1px solid #e6b800; }  /* amarillo fuerte */
+.quick-menu .con_aviso .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }  /* rosa */
+.quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; } /* verde */
+
 
 /* Tooltip (lo que ya usamos para prueba) */
 .tag.has-tooltip{position:relative}
@@ -985,35 +987,38 @@ function initQuickMenu(){
   document.body.appendChild(quickMenu);
 
   quickMenu.addEventListener('click', async (e)=>{
-    const it = e.target.closest('.item'); if (!it) return;
-    const estado = it.dataset.estado ?? '';
-    if (quickMenuTarget){
-      // pinta visualmente
-      quickMenuTarget.dataset.estado = estado;
-      if (estado) {
-        applyEstadoClassToTag(quickMenuTarget, estado);
-      } else {
-        // sin estado: aplicar color por tipo (prueba/recuperación/normal)
-        applyTipoColorToTag(quickMenuTarget);
-      }
-      // actualizar cache en memoria
-      const id = parseInt(quickMenuTarget.dataset.id,10) || 0;
-      const row = clasesSemana.find(c => c.id === id);
-      if (row) row.estado = estado || null;
-      // persistir en backend
-      if (id){
-        try{
-          const r = await fetch(`/clases/${id}`,{
-            method:'PATCH',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ estado: estado || null })
-          });
-          if (!r.ok) console.error('PATCH estado falló', await r.text());
-        }catch(err){ console.error(err); }
-      }
+  const it = e.target.closest('.item'); if (!it) return;
+  const estado = it.dataset.estado ?? '';
+
+  if (quickMenuTarget){
+    // 1) actualizar dataset
+    quickMenuTarget.dataset.estado = estado;
+
+    // 2) SIEMPRE limpiar/aplicar clases de estado
+    applyEstadoClassToTag(quickMenuTarget, estado);
+
+    // 3) si quedó sin estado, volver al color por tipo (normal/prueba/recuperación)
+    if (!estado) applyTipoColorToTag(quickMenuTarget);
+
+    // 4) cache y persistencia
+    const id = parseInt(quickMenuTarget.dataset.id,10) || 0;
+    const row = clasesSemana.find(c => c.id === id);
+    if (row) row.estado = estado || null;
+
+    if (id){
+      try{
+        const r = await fetch(`/clases/${id}`,{
+          method:'PATCH',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ estado: estado || null })
+        });
+        if (!r.ok) console.error('PATCH estado falló', await r.text());
+      }catch(err){ console.error(err); }
     }
-    closeQuickMenu();
-  });
+  }
+  closeQuickMenu();
+});
+
 
   // cerrar si clic fuera / scroll / resize / ESC
   document.addEventListener('click',(ev)=>{
