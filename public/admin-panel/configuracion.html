@@ -879,6 +879,26 @@ async function guardarNoClase(){
 }
 
 
+// Eliminar un bloqueo (expuesta en window para onclick del HTML)
+window.eliminarNoClase = async function(id){
+  if (!confirm('¿Eliminar este bloqueo?')) return;
+
+  try {
+    const r = await fetch('/no-clases/' + id, { method: 'DELETE' });
+    const txt = await r.text();
+    if (!r.ok) {
+      console.error('DELETE /no-clases →', r.status, txt);
+      alert('No se pudo eliminar (' + r.status + '): ' + (txt || ''));
+      return;
+    }
+    await cargarNoClasesCfg();   // refresca la tabla
+  } catch (e) {
+    console.error(e);
+    alert('Error de red al eliminar');
+  }
+};
+
+
 // ------------------- ONLOAD -------------------
 
 // Guardia de login
@@ -906,7 +926,6 @@ if (btnNC) btnNC.addEventListener('click', (e) => {
 // Exponer funciones usadas por atributos onclick del HTML
 window.toggleNoClases   = toggleNoClases;
 window.editarNoClase    = editarNoClase;
-window.eliminarNoClase  = eliminarNoClase;
 window.guardarNoClase   = guardarNoClase;   // por si la usás desde HTML
 
 
