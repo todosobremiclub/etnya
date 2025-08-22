@@ -177,24 +177,53 @@
     white-space:normal; z-index:1000;
   }
 
-  /* ===== Menú rápido tipo Excel ===== */
-  .quick-menu{position:absolute;display:none;min-width:220px;background:#fff;border:1px solid #ddd;border-radius:8px;
-    box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:3000;font-size:13px;overflow:hidden}
-  .quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
-  .quick-menu .item:hover{background:#f3f4f6}
-  .quick-menu .sep{height:1px;background:#eee;margin:2px 0}
-  .quick-menu .dot{width:10px;height:10px;border-radius:50%}
-  /* Quick menu: colores iguales a los estados */
-  .quick-menu .asistio    .dot{ background:#fff6bf; border:1px solid #e6d98a; }
-  .quick-menu .sin_aviso  .dot{ background:#ffe066; border:1px solid #e6b800; }
-  .quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
-  .quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
+/* ===== Menú rápido tipo Excel ===== */
+.quick-menu{
+  position:absolute;
+  display:none;
+  min-width:220px;
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:8px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+  z-index:3000;
+  font-size:13px;
+  overflow:hidden;
+}
 
-/* Abre hacia arriba cuando no hay espacio abajo */
+/* Ítems dentro del menú */
+.quick-menu .item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  cursor:pointer;
+}
+.quick-menu .item:hover{
+  background:#f3f4f6;
+}
+
+/* Separador y puntito de color */
+.quick-menu .sep{
+  height:1px;
+  background:#eee;
+  margin:2px 0;
+}
+.quick-menu .dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+
+/* Quick menu: colores iguales a los estados */
+.quick-menu .asistio    .dot{ background:#fff6bf; border:1px solid #e6d98a; }
+.quick-menu .sin_aviso  .dot{ background:#ffe066; border:1px solid #e6b800; }
+.quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
+.quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
+
+/* Cuando no hay espacio abajo, se abre hacia ARRIBA */
 .quick-menu.drop-up{
-  top: auto !important;
-  bottom: calc(100% + 6px) !important; /* posiciona arriba del chip */
-  box-shadow: 0 -10px 25px rgba(0,0,0,.15);
+  box-shadow:0 -10px 25px rgba(0,0,0,.15);
 }
 
 
