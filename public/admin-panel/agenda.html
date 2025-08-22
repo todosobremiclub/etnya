@@ -1378,15 +1378,16 @@ function pintarClases(){
     if (feriadosSet.has(fechaTd)) {
       td.classList.add('feriado');
     } else {
-        // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
-  const bloques = Array.isArray(noClases) ? noClases : [];
-  const bloqueado = bloques.some(nc => {
-    const sameDow  = Number(nc.dow)  === Number(dowTd);
-    const sameHora = normTime(nc.hora) === horaTd;   // 'HH:MM:SS'
-    const sameSede = !nc.sede || !sedeTd || normSede(nc.sede) === normSede(sedeTd);
-    return sameDow && sameHora && sameSede;
-  });
-  if (bloqueado) td.classList.add('feriado');
+      // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
+      const bloques = Array.isArray(noClases) ? noClases : [];
+      const bloqueado = bloques.some(nc => {
+        const sameDow  = Number(nc.dow)  === Number(dowTd);
+        const sameHora = normTime(nc.hora) === horaTd;   // 'HH:MM:SS'
+        const sameSede = !nc.sede || !sedeTd || normSede(nc.sede) === normSede(sedeTd);
+        return sameDow && sameHora && sameSede;
+      });
+      if (bloqueado) td.classList.add('feriado');
+    } // 👈 cierre del else
 
     // chips de clases
     const key   = `${fechaTd}|${horaTd}|${sedeTd}`;
@@ -1438,18 +1439,19 @@ function pintarClases(){
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
- 
+  }); // 👈 cierre del forEach(td => { … })
 
-  // Forzar lila un poco más visible en 'prueba' sin estado
-document.querySelectorAll('.tag[data-tipo="prueba"]:not([data-estado]), .tag[data-tipo="prueba"][data-estado=""]').forEach(el => {
-  el.classList.remove('tag-prueba');
-  el.style.setProperty('background-color', '#E6D1FF', 'important'); // ⬅️ más marcado
-  el.style.setProperty('border-color',     '#CDB8FF', 'important'); // borde a juego
-  el.style.setProperty('color',            '#3b2b72', 'important'); // texto legible
-  el.style.setProperty('background-image', 'none', 'important');
-});
-
-}
+  // Forzar lila más visible en 'prueba' sin estado (fuera del loop)
+  document.querySelectorAll(
+    '.tag[data-tipo="prueba"]:not([data-estado]), .tag[data-tipo="prueba"][data-estado=""]'
+  ).forEach(el => {
+    el.classList.remove('tag-prueba');
+    el.style.setProperty('background-color', '#E6D1FF', 'important');
+    el.style.setProperty('border-color',     '#CDB8FF', 'important');
+    el.style.setProperty('color',            '#3b2b72', 'important');
+    el.style.setProperty('background-image', 'none', 'important');
+  });
+} // 👈 cierre de la función
 
 let claseSelId = null;
 let claseSelTag = null;
