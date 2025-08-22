@@ -299,38 +299,42 @@ table.agenda td.slot + td.slot,
 }
 
 
-/* === PRUEBA: fondo lila SIEMPRE, borde por estado (notorio) === */
+/* =================== PRUEBA: fondo lila + anillo por estado =================== */
+:root{
+  --prueba-bg:  #EBD9FF;  /* lila fondo */
+  --prueba-ring:#CDB8FF;  /* lila por defecto */
+  --ring-w:     4px;      /* grosor del anillo (subí a 5-6px si querés más) */
+}
+
+/* Fondo lila SIEMPRE y SIN borde; dejamos el anillo como “borde visual” */
 .tag[data-tipo="prueba"]{
-  background-color:#EBD9FF !important; /* lila claro y visible */
-  border-color:#CDB8FF !important;
-  border-width:2px !important;         /* borde más grueso */
+  background-color: var(--prueba-bg) !important;
+  border: none !important;
   color:#3b2b72 !important;
   background-image:none !important;
+  box-shadow: 0 0 0 var(--ring-w) var(--prueba-ring) !important; /* anillo lila */
 }
 
-/* Solo borde (y halo sutil) por estado */
+/* Anillo por estado (notorio) */
 .tag[data-tipo="prueba"].estado-asistio{
-  background-color:#EBD9FF !important;
-  border-color:#D4C34A !important;
-  box-shadow:0 0 0 2px rgba(212,195,74,.25) !important;
+  box-shadow: 0 0 0 var(--ring-w) #D4C34A !important; /* amarillo */
 }
-
 .tag[data-tipo="prueba"].estado-sin-aviso{
-  background-color:#EBD9FF !important;
-  border-color:#E6B800 !important;
-  box-shadow:0 0 0 2px rgba(230,184,0,.25) !important;
+  box-shadow: 0 0 0 var(--ring-w) #E6B800 !important; /* mostaza */
 }
-
 .tag[data-tipo="prueba"].estado-con-aviso{
-  background-color:#EBD9FF !important;
-  border-color:#FF8FA3 !important;
-  box-shadow:0 0 0 2px rgba(255,143,163,.25) !important;
+  box-shadow: 0 0 0 var(--ring-w) #FF8FA3 !important; /* rosa */
+}
+.tag[data-tipo="prueba"].estado-sobre-hora{
+  box-shadow: 0 0 0 var(--ring-w) #63D471 !important; /* verde */
 }
 
-.tag[data-tipo="prueba"].estado-sobre-hora{
-  background-color:#EBD9FF !important;
-  border-color:#63D471 !important;
-  box-shadow:0 0 0 2px rgba(99,212,113,.25) !important;
+/* Neutralizo cualquier estilo heredado de .tag-prueba que pueda colarse */
+.tag.tag-prueba{
+  background-color: var(--prueba-bg) !important;
+  border: none !important;
+  box-shadow: 0 0 0 var(--ring-w) var(--prueba-ring) !important;
+  color:#3b2b72 !important;
 }
 
 </style>
