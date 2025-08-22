@@ -287,28 +287,27 @@ table.agenda td.slot + td.slot,
   border-right: 1px solid var(--grid-line) !important;
 }
 
-/* LILA MUY CLARO para 'prueba' (forzado) */
-.tag.tag-prueba,
-.tag[data-tipo="prueba"]:not([data-estado]),
-.tag[data-tipo="prueba"][data-estado=""]{
-  background-color: #F3E9FF !important; /* lila súper claro */
-  border-color:     #DACBFF !important; /* borde a juego, clarito */
-  color:            #3f2d74 !important; /* texto legible (podés usar #fff si querés) */
+
+/* === PRUEBA: lila MUY claro, forzado === */
+:root{
+  --prueba-bg: #FAF6FF;  /* más claro aún */
+  --prueba-bd: #E9E0FF;
+  --prueba-fg: #3f2d74;
 }
 
-/* === PRUEBA: lila MUY claro, forzado y con alta especificidad === */
+/* mata cualquier violeta previo y gradientes */
 .agenda-wrap table.agenda td.slot .tag.tag-prueba,
 .agenda-wrap table.agenda td.slot .tag[data-tipo="prueba"],
 .agenda-wrap .tag[data-tipo="prueba"]:not([data-estado]),
 .agenda-wrap .tag[data-tipo="prueba"][data-estado=""]{
-  background-color: #F6EEFF !important;  /* lila bien clarito */
-  border-color:     #D8CBFF !important;  /* borde suave a juego */
-  color:            #3f2d74  !important; /* texto legible (si preferís blanco, poné #fff) */
-  /* por si algún estilo previo dejó sombra o gradiente */
+  background-color: var(--prueba-bg) !important;
+  border-color:     var(--prueba-bd) !important;
+  color:            var(--prueba-fg) !important;
   background-image: none !important;
-  box-shadow: 0 1px 0 rgba(0,0,0,.03) !important;
 }
 
+/* por las dudas, neutralizo la regla antigua */
+.tag-prueba{ background: var(--prueba-bg) !important; border-color: var(--prueba-bd) !important; color: var(--prueba-fg) !important; }
 
 
 </style>
@@ -1218,7 +1217,7 @@ function pintarClases(){
   document.querySelectorAll('td.slot .left, td.slot .right').forEach(n => n.innerHTML = '');
 
   // feriados a Set
-  const feriadosSet = new Set(Array.isArray(feriados) ? feriados.map(f => String(f).slice(0,10)) : []);
+  const feriadosSet = new Set((feriados || []).map(f => String(f).slice(0,10)));
 
   // agrupar clases por (fecha|hora|sede)
   const mapa = new Map();
@@ -1227,22 +1226,20 @@ function pintarClases(){
     const fecha = String(c.fecha).slice(0,10);
     const hora  = normTime(c.hora); // HH:MM:SS
     const key   = `${fecha}|${hora}|${sede}`;
-    if (!mapa.has(key)) mapa.set(key, []);
-    mapa.get(key).push({ ...c, hora });
+    (mapa.get(key) || mapa.set(key, []).get(key)).push({ ...c, hora });
   }
 
-  // helper sede activa por si la celda no trae data-sede
+  // sede activa por si la celda no trae data-sede
   const sedeActiva =
     (window.sedeActiva || window.sedeSel || window.sede || '').toString().trim() ||
     (document.querySelector('.sedes .is-selected, .sedes .selected')?.textContent || '').trim();
 
   // recorrer celdas
   document.querySelectorAll('td.slot').forEach(td => {
-    // claves de la celda
     const fechaTd = String(td.dataset.fecha || '').slice(0,10);
-    const horaTd  = normTime(String(td.dataset.hora || ''));         // HH:MM:SS
+    const horaTd  = normTime(String(td.dataset.hora || ''));
     const sedeTd  = String(td.dataset.sede || sedeActiva || '').trim();
-    const dowTd   = typeof dowFromYMD === 'function' ? dowFromYMD(fechaTd) : null;
+    const dowTd   = (typeof dowFromYMD === 'function') ? dowFromYMD(fechaTd) : null;
 
     // reset fondo
     td.classList.remove('feriado');
@@ -1252,13 +1249,12 @@ function pintarClases(){
       td.classList.add('feriado');
     } else {
       // bloque no-clases (solo ese slot)
-      const arrBloques = Array.isArray(noClases) ? noClases : [];
-      const bloqueado = arrBloques.some(nc => {
-        const sameHora  = normTime(nc.hora) === horaTd;      // normaliza HH:MM -> HH:MM:SS
-        const sameDow   = Number(nc.dow) === Number(dowTd);
-        const sameSede  = sedeTd ? (String(nc.sede||'').trim() === sedeTd) : true; // si no hay sede en la celda, matchea por hora+dow
-        return sameHora && sameDow && sameSede;
-      });
+      const bloques = Array.isArray(noClases) ? noClases : [];
+      const bloqueado = bloques.some(nc =>
+        Number(nc.dow) === Number(dowTd) &&
+        normTime(nc.hora) === horaTd &&
+        (sedeTd ? String(nc.sede || '').trim() === sedeTd : true)
+      );
       if (bloqueado) td.classList.add('feriado');
     }
 
@@ -1283,7 +1279,7 @@ function pintarClases(){
       tag.dataset.hora     = cl.hora  || '';
       tag.dataset.sede     = cl.sede  || '';
 
-      // tooltip/motivo
+      // motivo/tooltip
       let motivo = '';
       if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
       else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
@@ -1292,25 +1288,35 @@ function pintarClases(){
 
       // estado y tipo
       applyEstadoClassToTag(tag, tag.dataset.estado);
-      const tipo = cl.tipo ?? (cl.es_prueba ? 'prueba'
-                  : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-                  : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal')));
+      const tipo = cl.tipo ?? (
+        cl.es_prueba ? 'prueba'
+        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
+        : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
+      );
       tag.dataset.tipo = tipo;
       if (!tag.dataset.estado) applyTipoColorToTag(tag);
 
-      // tooltip (solo el CUSTOM oscuro) para prueba con motivo
-if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
-  tag.removeAttribute('title'); // evitar tooltip nativo
-  tag.classList.add('has-tooltip');
-  tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
-  tag.setAttribute('aria-label', `Observación/motivo de prueba: ${motivo}`); // accesible
-}
-
+      // tooltip custom (sin title nativo)
+      if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
+        tag.removeAttribute('title');
+        tag.classList.add('has-tooltip');
+        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
+        tag.setAttribute('aria-label', `Observación/motivo de prueba: ${motivo}`);
+      }
 
       tag.addEventListener('click', onTagClick);
       tag.addEventListener('dblclick', onTagDblClick);
       (idx % 2 === 0 ? left : right).appendChild(tag);
     });
+  });
+
+  // Forzar lila MUY claro en 'prueba' sin estado (por si alguna regla recolorea después)
+  document.querySelectorAll('.tag[data-tipo="prueba"]:not([data-estado]), .tag[data-tipo="prueba"][data-estado=""]').forEach(el => {
+    el.classList.remove('tag-prueba'); // neutraliza colores previos
+    el.style.setProperty('background-color', '#FAF6FF', 'important');
+    el.style.setProperty('border-color',     '#E9E0FF', 'important');
+    el.style.setProperty('color',            '#3f2d74', 'important');
+    el.style.setProperty('background-image', 'none', 'important');
   });
 }
 
