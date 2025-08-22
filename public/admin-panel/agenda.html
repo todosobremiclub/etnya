@@ -1358,8 +1358,8 @@ function pintarClases(){
       if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
         tag.removeAttribute('title');
         tag.classList.add('has-tooltip');
-        tag.dataset.tooltip = `Observación/motivo de prueba: ${motivo}`;
-        tag.setAttribute('aria-label', `Observación/motivo de prueba: ${motivo}`);
+        tag.dataset.tooltip = `Observación: ${motivo}`;
+        tag.setAttribute('aria-label', `Observación: ${motivo}`);
       }
 
       tag.addEventListener('click', onTagClick);
