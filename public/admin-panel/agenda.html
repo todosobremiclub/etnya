@@ -973,32 +973,40 @@ function dowFromYMD(ymd){
   return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
+/* ============== NO CLASES (bloques por sede/día/hora) ============== */
 async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    noClases = data.map(r => ({
+
+    // Normalizamos para comparaciones rápidas en agenda / combos
+    window.noClases = (Array.isArray(data) ? data : []).map(r => ({
       sede: String(r.sede || '').trim(),
       dow : Number(r.dow || 0),
-      hora: normTime(r.hora) // normaliza 'HH:MM' -> 'HH:MM:SS'
+      hora: normTime(r.hora) // 'HH:MM' -> 'HH:MM:SS'
     }));
+
+    // Si la agenda ya está dibujada, repintamos/repoblamos horas
+    if (typeof pintarClases === 'function') pintarClases();
+    if (typeof initHorasPorDia === 'function') initHorasPorDia();
   } catch (e) {
     console.error('Error /no-clases', e);
-    noClases = [];
+    window.noClases = [];
   }
 }
 
 
-async function cargarSituacionAlumno(alumnoId){
+/* ================== SITUACIÓN DEL ALUMNO (futuras) ================== */
+async function cargarSituacionAlumno(alumnoId) {
   const cont = document.getElementById('situacionActual');
 
   // Sin selección: limpiar todo
-  if (!alumnoId){
-    clasesAlumnoActual = [];
+  if (!alumnoId) {
+    window.clasesAlumnoActual = [];
     if (cont) cont.innerHTML = '';
     const btn0 = document.getElementById('btnEliminarClases');
-    if (btn0){
+    if (btn0) {
       btn0.disabled = true;
       btn0.style.opacity = '0.5';
       btn0.style.cursor  = 'not-allowed';
@@ -1010,55 +1018,73 @@ async function cargarSituacionAlumno(alumnoId){
   // Mostrar ficha del alumno (número, apellido, etc.)
   if (typeof renderDatosAlumno === 'function') renderDatosAlumno(alumnoId);
 
+  // Rango: desde inicio de la semana hasta fin de año
   const desde = ymd(semanaInicio);
   const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
 
-  try{
+  try {
     const res = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
-    if (!res.ok){
-      console.error('GET /clases fallo', res.status, await res.text().catch(()=> ''));
-      clasesAlumnoActual = [];
+    if (!res.ok) {
+      console.error('GET /clases fallo', res.status, await res.text().catch(() => ''));
+      window.clasesAlumnoActual = [];
     } else {
       const data = await res.json();
-      clasesAlumnoActual = (Array.isArray(data) ? data : [])
+      window.clasesAlumnoActual = (Array.isArray(data) ? data : [])
         .map(c => ({
           ...c,
-          fecha: normDate(c.fecha),
-          hora : normTime(c.hora),
+          fecha: normDate(c.fecha),      // 'YYYY-MM-DD'
+          hora : normTime(c.hora),       // 'HH:MM:SS'
           sede : (c.sede || '').trim()
         }))
         .filter(c => c.fecha >= desde);
     }
-  } catch(err){
+  } catch (err) {
     console.error('Error cargando clases del alumno:', err);
-    clasesAlumnoActual = [];
+    window.clasesAlumnoActual = [];
   }
 
   // Render de chips agrupados por patrón (día/hora/sede)
   if (!cont) return;
   cont.innerHTML = '';
 
-  if (clasesAlumnoActual.length === 0){
+  if (!window.clasesAlumnoActual.length) {
     cont.textContent = 'Sin clases futuras.';
   } else {
+    const DIAS_TXT_LOCAL =
+      (Array.isArray(window.DIAS) ? window.DIAS : null) ||
+      (Array.isArray(window.DIAS_TXT) ? window.DIAS_TXT : null) ||
+      ['', 'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+    // Helper dow si no existe uno global
+    const _dowNumFromYMD = (typeof dowNumFromYMD === 'function')
+      ? dowNumFromYMD
+      : (ymdStr => {
+          // ymdStr: 'YYYY-MM-DD' → 1..7 (Lun..Dom)
+          const [y,m,d] = ymdStr.split('-').map(n => parseInt(n,10));
+          const js = new Date(y, (m-1), d);
+          let w = js.getDay(); // 0..6 (Dom..Sáb)
+          return w === 0 ? 7 : w;
+        });
+
     const mapa = new Map(); // key: dow|hora|sede -> count
-    for (const c of clasesAlumnoActual){
-      const key = `${dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
+    for (const c of window.clasesAlumnoActual) {
+      const key = `${_dowNumFromYMD(c.fecha)}|${c.hora}|${c.sede}`;
       mapa.set(key, (mapa.get(key) || 0) + 1);
     }
-    for (const [key, cant] of mapa.entries()){
+
+    for (const [key, cant] of mapa.entries()) {
       const [dow, hora, sede] = key.split('|');
       const chip = document.createElement('div');
       chip.className = 'chip';
-      chip.textContent = `${DIAS[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
+      chip.textContent = `${DIAS_TXT_LOCAL[parseInt(dow,10)]} ${hora.slice(0,5)} · ${sede} (${cant})`;
       cont.appendChild(chip);
     }
   }
 
   // Estado del botón "Eliminar todas"
   const btn = document.getElementById('btnEliminarClases');
-  if (btn){
-    const tiene = clasesAlumnoActual.length > 0;
+  if (btn) {
+    const tiene = window.clasesAlumnoActual.length > 0;
     btn.disabled = !tiene;
     btn.style.opacity = tiene ? '1' : '0.5';
     btn.style.cursor  = tiene ? 'pointer' : 'not-allowed';
@@ -1066,25 +1092,26 @@ async function cargarSituacionAlumno(alumnoId){
 }
 
 
-async function eliminarClasesAlumno(){
-  const alumno_id = parseInt(selectAlumno.value, 10) || 0;
-  if (!alumno_id){ alert('Primero elegí una/o.'); return; }
+/* ===================== ELIMINAR CLASES DEL ALUMNO ==================== */
+async function eliminarClasesAlumno() {
+  const alumno_id = parseInt((window.selectAlumno?.value ?? 0), 10) || 0;
+  if (!alumno_id) { alert('Primero elegí una/o.'); return; }
 
-  const ids = (clasesAlumnoActual || []).map(c => c.id);
-  if (!ids.length){ alert('No hay clases futuras para eliminar.'); return; }
+  const ids = (window.clasesAlumnoActual || []).map(c => c.id);
+  if (!ids.length) { alert('No hay clases futuras para eliminar.'); return; }
 
   const ok = confirm(`¿Eliminar ${ids.length} clases asignadas desde esta semana en adelante?`);
   if (!ok) return;
 
-  try{
+  try {
     let del = await fetch('/clases', {
       method:'DELETE',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ ids })
     });
 
-    // fallback si tu backend expone bulk-delete como POST
-    if (del.status === 404){
+    // Fallback si tu backend expone bulk-delete como POST
+    if (del.status === 404) {
       del = await fetch('/clases/bulk-delete', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -1092,7 +1119,7 @@ async function eliminarClasesAlumno(){
       });
     }
 
-    if (!del.ok){
+    if (!del.ok) {
       const t = await del.text();
       throw new Error(t || 'No se pudo borrar');
     }
@@ -1100,30 +1127,34 @@ async function eliminarClasesAlumno(){
     await cargarSemana();
     await cargarSituacionAlumno(alumno_id);
     alert('Clases eliminadas');
-  } catch(e){
+  } catch (e) {
     console.error(e);
     alert('Error al eliminar las clases');
   }
 }
-// Texto del chip: número+nombre (alumno) o nombre de prueba (nota)
-function chipText(cl){
+
+
+/* ========================= TEXTO DEL CHIP ============================
+   - Si es PRUEBA (sin alumno) muestra el texto de la nota.
+   - Si es alumno: "NN Nombre" donde NN puede venir ya con sufijo (02-G, 149-CR)
+======================================================================= */
+function chipText(cl) {
   const nombrePrueba = (cl.nota || '').trim();
   if ((cl.alumno_id == null || cl.alumno_id === 0) && nombrePrueba) return nombrePrueba;
 
   const nombre = (cl.nombre || '').trim();
 
-  // ✅ usar numero_alumno tal cual si ya trae sede (02-C, 149-G, 225-CR)
+  // Si numero_alumno trae sufijo (02-G / 225-CR), lo dejamos tal cual.
+  // Si es solo número, lo paddeamos a 2 dígitos.
   let numTxt = '';
   if (cl.numero_alumno != null) {
     const raw = String(cl.numero_alumno).trim();
-    numTxt = raw.includes('-') ? raw : String(raw).padStart(2,'0'); // si es solo número, pad a 2
+    numTxt = raw.includes('-') ? raw : String(raw).padStart(2, '0');
   }
 
-  const base = `${numTxt ? numTxt + ' ' : ''}${nombre}`.trim();
+  const base = `${numTxt ? (numTxt + ' ') : ''}${nombre}`.trim();
   return base || nombrePrueba || 'Prueba';
 }
-
-
 // aplicar clases visuales según estado
 function applyEstadoClassToTag(tag, estado){
   tag.classList.remove('estado-asistio','estado-sin-aviso','estado-con-aviso','estado-sobre-hora');
