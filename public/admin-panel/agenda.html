@@ -179,51 +179,32 @@
 
 /* ===== Menú rápido tipo Excel ===== */
 .quick-menu{
-  position:absolute;
-  display:none;
-  min-width:220px;
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:8px;
-  box-shadow:0 10px 25px rgba(0,0,0,.15);
-  z-index:3000;
-  font-size:13px;
-  overflow:hidden;
+  position: fixed;              /* 👈 clave: relativo al viewport */
+  display: none;
+  min-width: 220px;
+  max-height: 260px;            /* para que nunca se corte */
+  overflow: auto;               /* scroll si hace falta */
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+  z-index: 3000;
+  font-size: 13px;
 }
 
-/* Ítems dentro del menú */
-.quick-menu .item{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 10px;
-  cursor:pointer;
-}
-.quick-menu .item:hover{
-  background:#f3f4f6;
-}
+.quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
+.quick-menu .item:hover{background:#f3f4f6}
+.quick-menu .sep{height:1px;background:#eee;margin:2px 0}
+.quick-menu .dot{width:10px;height:10px;border-radius:50%}
 
-/* Separador y puntito de color */
-.quick-menu .sep{
-  height:1px;
-  background:#eee;
-  margin:2px 0;
-}
-.quick-menu .dot{
-  width:10px;
-  height:10px;
-  border-radius:50%;
-}
-
-/* Quick menu: colores iguales a los estados */
 .quick-menu .asistio    .dot{ background:#fff6bf; border:1px solid #e6d98a; }
 .quick-menu .sin_aviso  .dot{ background:#ffe066; border:1px solid #e6b800; }
 .quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
 .quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
 
-/* Cuando no hay espacio abajo, se abre hacia ARRIBA */
+/* Solo cambia la sombra cuando abre hacia arriba */
 .quick-menu.drop-up{
-  box-shadow:0 -10px 25px rgba(0,0,0,.15);
+  box-shadow: 0 -10px 25px rgba(0,0,0,.15);
 }
 
 
@@ -1269,35 +1250,43 @@ function openQuickMenu(target){
   initQuickMenu();
   quickMenuTarget = target;
 
-  // mostrar para medir
+  // mostrar para medir tamaño real
   quickMenu.style.display = 'block';
   quickMenu.classList.remove('drop-up');
 
-  const r   = target.getBoundingClientRect();
-  const vw  = document.documentElement.clientWidth;
-  const vh  = document.documentElement.clientHeight;
+  const r  = target.getBoundingClientRect();           // coords en viewport
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
 
-  // evitar que se vaya a la derecha
-  const menuW = Math.min(quickMenu.offsetWidth || 240, 280);
-  const left  = Math.min(r.left + window.scrollX, window.scrollX + vw - menuW - 8);
+  // medidas del menú (con fallback)
+  const menuW = Math.min(quickMenu.offsetWidth || 240, 300);
+  const menuH = quickMenu.offsetHeight || 220;
+
+  // LEFT: no salir del viewport
+  let left = r.left;
+  if (left + menuW > vw - 8) left = vw - menuW - 8;
+  if (left < 8) left = 8;
   quickMenu.style.left = left + 'px';
 
-  // decidir drop-up si no entra abajo
-  const menuH      = quickMenu.offsetHeight || 220;
-  const spaceBelow = vh - r.bottom;
-  const spaceAbove = r.top;
+  // decidir arriba/abajo según espacio
+  const spaceBelow = vh - r.bottom;   // espacio desde el chip hacia abajo
+  const spaceAbove = r.top;           // espacio hacia arriba
+  const m = 6;                        // margen
 
-  if (spaceBelow < menuH + 12 && spaceAbove > spaceBelow){
+  let top;
+  if (spaceBelow < menuH + m && spaceAbove > spaceBelow){
     // abrir hacia ARRIBA
     quickMenu.classList.add('drop-up');
-    quickMenu.style.top    = ''; // limpio top
-    quickMenu.style.bottom = (vh - r.top + 6 + window.scrollY) + 'px';
+    top = Math.max(8, r.top - menuH - m);
   } else {
     // abrir hacia ABAJO (default)
     quickMenu.classList.remove('drop-up');
-    quickMenu.style.bottom = '';
-    quickMenu.style.top    = (r.bottom + 6 + window.scrollY) + 'px';
+    top = Math.min(vh - menuH - 8, r.bottom + m);
   }
+  quickMenu.style.top = top + 'px';
+
+  // asegurarnos de limpiar cualquier resto
+  quickMenu.style.bottom = '';
 }
 
 function closeQuickMenu(){
