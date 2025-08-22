@@ -179,18 +179,19 @@
 
 /* ===== Menú rápido tipo Excel ===== */
 .quick-menu{
-  position: fixed;              /* 👈 clave: relativo al viewport */
+  position: fixed;          /* relativo al viewport */
   display: none;
   min-width: 220px;
-  max-height: 260px;            /* para que nunca se corte */
-  overflow: auto;               /* scroll si hace falta */
+  max-height: 260px;
+  overflow: auto;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.15);
-  z-index: 3000;
+  box-shadow: 0 10px 25px rgba(0,0,0,.18);
+  z-index: 9999;            /* 👈 más alto que cualquier overlay */
   font-size: 13px;
 }
+.quick-menu.drop-up{ box-shadow: 0 -10px 25px rgba(0,0,0,.18); }
 
 .quick-menu .item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
 .quick-menu .item:hover{background:#f3f4f6}
@@ -1246,47 +1247,67 @@ function initQuickMenu(){
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeQuickMenu(); });
 }
 
+// Cierra si clic fuera del menú y del trigger
+function onDocClose(e){
+  if (!quickMenu) return;
+  if (quickMenu.contains(e.target)) return;
+  if (quickMenuTarget && quickMenuTarget.contains(e.target)) return;
+  quickMenu.style.display = 'none';
+}
+
 function openQuickMenu(target){
   initQuickMenu();
   quickMenuTarget = target;
 
-  // mostrar para medir tamaño real
+  // evitar cierre inmediato por el mismo click
+  if (window._qmListening){ 
+    document.removeEventListener('mousedown', onDocClose, true);
+    window._qmListening = false;
+  }
+
+  // evitar que el click del chip burbujee
+  // (poné este handler también donde creás cada chip si preferís)
+  target.addEventListener('mousedown', ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }, { once:true });
+
   quickMenu.style.display = 'block';
   quickMenu.classList.remove('drop-up');
 
-  const r  = target.getBoundingClientRect();           // coords en viewport
+  const r  = target.getBoundingClientRect();           // coords viewport
   const vw = document.documentElement.clientWidth;
   const vh = document.documentElement.clientHeight;
 
-  // medidas del menú (con fallback)
   const menuW = Math.min(quickMenu.offsetWidth || 240, 300);
   const menuH = quickMenu.offsetHeight || 220;
 
-  // LEFT: no salir del viewport
+  // LEFT: clamp al viewport
   let left = r.left;
   if (left + menuW > vw - 8) left = vw - menuW - 8;
   if (left < 8) left = 8;
   quickMenu.style.left = left + 'px';
 
-  // decidir arriba/abajo según espacio
-  const spaceBelow = vh - r.bottom;   // espacio desde el chip hacia abajo
-  const spaceAbove = r.top;           // espacio hacia arriba
-  const m = 6;                        // margen
+  // TOP: abre arriba si no entra abajo
+  const spaceBelow = vh - r.bottom;
+  const spaceAbove = r.top;
+  const m = 6;
 
   let top;
   if (spaceBelow < menuH + m && spaceAbove > spaceBelow){
-    // abrir hacia ARRIBA
     quickMenu.classList.add('drop-up');
     top = Math.max(8, r.top - menuH - m);
   } else {
-    // abrir hacia ABAJO (default)
     quickMenu.classList.remove('drop-up');
     top = Math.min(vh - menuH - 8, r.bottom + m);
   }
   quickMenu.style.top = top + 'px';
 
-  // asegurarnos de limpiar cualquier resto
-  quickMenu.style.bottom = '';
+  // activar listener global DESPUÉS de abrir
+  setTimeout(() => {
+    document.addEventListener('mousedown', onDocClose, true);
+    window._qmListening = true;
+  }, 0);
 }
 
 function closeQuickMenu(){
