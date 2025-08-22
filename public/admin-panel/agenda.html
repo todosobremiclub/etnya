@@ -629,8 +629,9 @@ const renderSemana = async () => {
   if (typeof prepararSelectorDia === 'function') {
     prepararSelectorDia(obtenerFechasSemana());
   }
-};
 
+};
+function normSede(s){ return String(s||''
 function renderAgenda() {
   if (vista === 'dia') {
     if (selectorDia) selectorDia.style.display = 'inline-block';
@@ -1342,30 +1343,7 @@ function onTagClick(e){
 // Normalizar sede para comparar sin problemas de mayúsculas/espacios
 function normSede(s){ return String(s||'').trim().toLowerCase(); }
 
-// DOW 1..7 (Lun..Dom) desde 'YYYY-MM-DD'
-function dowFromYMD(ymd){
-  const d = new Date(ymd);
-  const g = d.getDay();           // 0..6 (Dom..Sab)
-  return g === 0 ? 7 : g;         // 1..7 (Lun..Dom)
-}
 
-// Cargar bloques sin clase (si todavía no están)
-let noClases = Array.isArray(window.noClases) ? window.noClases : [];
-async function cargarNoClases(){
-  try{
-    const res = await fetch('/no-clases');
-    if(!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    noClases = data.map(r => ({
-      sede: String(r.sede||'').trim(),
-      dow : Number(r.dow||0),
-      hora: normTime(r.hora)        // acepta 'HH:MM' o 'HH:MM:SS'
-    }));
-  }catch(e){
-    console.error('Error /no-clases', e);
-    noClases = [];
-  }
-}
 
 
 /* ===== Pintar ===== */
