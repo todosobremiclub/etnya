@@ -296,6 +296,20 @@ table.agenda td.slot + td.slot,
   color:            #3f2d74 !important; /* texto legible (podés usar #fff si querés) */
 }
 
+/* === PRUEBA: lila MUY claro, forzado y con alta especificidad === */
+.agenda-wrap table.agenda td.slot .tag.tag-prueba,
+.agenda-wrap table.agenda td.slot .tag[data-tipo="prueba"],
+.agenda-wrap .tag[data-tipo="prueba"]:not([data-estado]),
+.agenda-wrap .tag[data-tipo="prueba"][data-estado=""]{
+  background-color: #F6EEFF !important;  /* lila bien clarito */
+  border-color:     #D8CBFF !important;  /* borde suave a juego */
+  color:            #3f2d74  !important; /* texto legible (si preferís blanco, poné #fff) */
+  /* por si algún estilo previo dejó sombra o gradiente */
+  background-image: none !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03) !important;
+}
+
+
 
 </style>
 
