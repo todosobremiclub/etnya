@@ -610,10 +610,11 @@ if (btnSemana) btnSemana.onclick = () => { vista = 'semana'; renderAgenda(); };
 if (btnDia)    btnDia.onclick    = () => { vista = 'dia';    renderAgenda(); };
 
 // Adaptador: usamos tu render semanal actual
-const renderSemana = () => {
-  // Si tu función se llama distinto, cambiala acá:
-  renderizarAgenda(); // <--- tu función existente para ver la semana
-  // preparar selector de días para la vista día
+const renderSemana = async () => {
+  // Redibuja la semana actual
+  await cargarSemana(); // construye la grilla + carga y pinta clases
+
+  // (opcional) preparar el selector de días para cuando pases a vista día
   if (typeof prepararSelectorDia === 'function') {
     prepararSelectorDia(obtenerFechasSemana());
   }
