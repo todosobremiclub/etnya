@@ -1310,14 +1310,15 @@ function pintarClases(){
     });
   });
 
-  // Forzar lila MUY claro en 'prueba' sin estado (por si alguna regla recolorea después)
-  document.querySelectorAll('.tag[data-tipo="prueba"]:not([data-estado]), .tag[data-tipo="prueba"][data-estado=""]').forEach(el => {
-    el.classList.remove('tag-prueba'); // neutraliza colores previos
-    el.style.setProperty('background-color', '#FAF6FF', 'important');
-    el.style.setProperty('border-color',     '#E9E0FF', 'important');
-    el.style.setProperty('color',            '#3f2d74', 'important');
-    el.style.setProperty('background-image', 'none', 'important');
-  });
+  // Forzar lila un poco más visible en 'prueba' sin estado
+document.querySelectorAll('.tag[data-tipo="prueba"]:not([data-estado]), .tag[data-tipo="prueba"][data-estado=""]').forEach(el => {
+  el.classList.remove('tag-prueba');
+  el.style.setProperty('background-color', '#EBD9FF', 'important'); // ⬅️ más marcado
+  el.style.setProperty('border-color',     '#CDB8FF', 'important'); // borde a juego
+  el.style.setProperty('color',            '#3b2b72', 'important'); // texto legible
+  el.style.setProperty('background-image', 'none', 'important');
+});
+
 }
 
 let claseSelId = null;
