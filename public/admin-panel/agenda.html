@@ -1339,6 +1339,34 @@ function onTagClick(e){
   openQuickMenu(e.currentTarget);
 }
 
+// Normalizar sede para comparar sin problemas de mayúsculas/espacios
+function normSede(s){ return String(s||'').trim().toLowerCase(); }
+
+// DOW 1..7 (Lun..Dom) desde 'YYYY-MM-DD'
+function dowFromYMD(ymd){
+  const d = new Date(ymd);
+  const g = d.getDay();           // 0..6 (Dom..Sab)
+  return g === 0 ? 7 : g;         // 1..7 (Lun..Dom)
+}
+
+// Cargar bloques sin clase (si todavía no están)
+let noClases = Array.isArray(window.noClases) ? window.noClases : [];
+async function cargarNoClases(){
+  try{
+    const res = await fetch('/no-clases');
+    if(!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    noClases = data.map(r => ({
+      sede: String(r.sede||'').trim(),
+      dow : Number(r.dow||0),
+      hora: normTime(r.hora)        // acepta 'HH:MM' o 'HH:MM:SS'
+    }));
+  }catch(e){
+    console.error('Error /no-clases', e);
+    noClases = [];
+  }
+}
+
 
 /* ===== Pintar ===== */
 function pintarClases(){
@@ -1377,15 +1405,15 @@ function pintarClases(){
     if (feriadosSet.has(fechaTd)) {
       td.classList.add('feriado');
     } else {
-      // bloque no-clases (solo ese slot)
-      const bloques = Array.isArray(noClases) ? noClases : [];
-      const bloqueado = bloques.some(nc =>
-        Number(nc.dow) === Number(dowTd) &&
-        normTime(nc.hora) === horaTd &&
-        (sedeTd ? String(nc.sede || '').trim() === sedeTd : true)
-      );
-      if (bloqueado) td.classList.add('feriado');
-    }
+        // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
+  const bloques = Array.isArray(noClases) ? noClases : [];
+  const bloqueado = bloques.some(nc => {
+    const sameDow  = Number(nc.dow)  === Number(dowTd);
+    const sameHora = normTime(nc.hora) === horaTd;   // 'HH:MM:SS'
+    const sameSede = !nc.sede || !sedeTd || normSede(nc.sede) === normSede(sedeTd);
+    return sameDow && sameHora && sameSede;
+  });
+  if (bloqueado) td.classList.add('feriado');
 
     // chips de clases
     const key   = `${fechaTd}|${horaTd}|${sedeTd}`;
