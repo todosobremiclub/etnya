@@ -994,27 +994,26 @@ function dowFromYMD(ymd){
   return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
-// ---- Bloqueos "no clases" para Agenda ----
-let noClases = [];
-
+/* ============== NO CLASES (bloques por sede/día/hora) ============== */
 async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
 
-    // Normalizamos y sincronizamos variable local + window
-    window.noClases = noClases = (Array.isArray(data) ? data : []).map(r => ({
+    // Normalizamos para comparaciones rápidas en agenda / combos
+    window.noClases = (Array.isArray(data) ? data : []).map(r => ({
       sede: String(r.sede || '').trim(),
       dow : Number(r.dow || 0),
-      hora: normTime(r.hora) // 'HH:MM' o 'HH:MM:SS' -> 'HH:MM:SS'
+      hora: normTime(r.hora) // 'HH:MM' -> 'HH:MM:SS'
     }));
 
+    // Si la agenda ya está dibujada, repintamos/repoblamos horas
     if (typeof pintarClases === 'function') pintarClases();
     if (typeof initHorasPorDia === 'function') initHorasPorDia();
   } catch (e) {
     console.error('Error /no-clases', e);
-    window.noClases = noClases = [];
+    window.noClases = [];
   }
 }
 
