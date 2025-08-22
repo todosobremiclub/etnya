@@ -1240,33 +1240,33 @@ function openQuickMenu(target){
   initQuickMenu();
   quickMenuTarget = target;
 
-  // mostrar para poder medir altura real
+  // mostrar para medir
   quickMenu.style.display = 'block';
   quickMenu.classList.remove('drop-up');
 
-  const r = target.getBoundingClientRect();
-  const vw = document.documentElement.clientWidth;
-  const vh = document.documentElement.clientHeight;
+  const r   = target.getBoundingClientRect();
+  const vw  = document.documentElement.clientWidth;
+  const vh  = document.documentElement.clientHeight;
 
-  // ancho: que no se vaya a la derecha
-  const menuW   = Math.min(quickMenu.offsetWidth || 240, 280);
-  const left    = Math.min(r.left + window.scrollX, window.scrollX + vw - menuW - 8);
+  // evitar que se vaya a la derecha
+  const menuW = Math.min(quickMenu.offsetWidth || 240, 280);
+  const left  = Math.min(r.left + window.scrollX, window.scrollX + vw - menuW - 8);
   quickMenu.style.left = left + 'px';
 
-  // alto y decisión de abrir arriba/abajo
-  const menuH        = quickMenu.offsetHeight || 220;
-  const spaceBelow   = vh - r.bottom;
-  const spaceAbove   = r.top;
+  // decidir drop-up si no entra abajo
+  const menuH      = quickMenu.offsetHeight || 220;
+  const spaceBelow = vh - r.bottom;
+  const spaceAbove = r.top;
 
   if (spaceBelow < menuH + 12 && spaceAbove > spaceBelow){
     // abrir hacia ARRIBA
     quickMenu.classList.add('drop-up');
-    quickMenu.style.top    = ''; // limpiamos
+    quickMenu.style.top    = ''; // limpio top
     quickMenu.style.bottom = (vh - r.top + 6 + window.scrollY) + 'px';
   } else {
-    // abrir hacia ABAJO (por defecto)
+    // abrir hacia ABAJO (default)
     quickMenu.classList.remove('drop-up');
-    quickMenu.style.bottom = ''; // limpiamos
+    quickMenu.style.bottom = '';
     quickMenu.style.top    = (r.bottom + 6 + window.scrollY) + 'px';
   }
 }
