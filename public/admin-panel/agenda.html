@@ -190,6 +190,14 @@
   .quick-menu .con_aviso  .dot{ background:#ffc2d1; border:1px solid #ff8fa3; }
   .quick-menu .sobre_hora .dot{ background:#b2f2bb; border:1px solid #63d471; }
 
+/* Abre hacia arriba cuando no hay espacio abajo */
+.quick-menu.drop-up{
+  top: auto !important;
+  bottom: calc(100% + 6px) !important; /* posiciona arriba del chip */
+  box-shadow: 0 -10px 25px rgba(0,0,0,.15);
+}
+
+
 /* === Líneas principales más fuertes (días y horas) === */
 table.agenda td.slot{
   border-bottom: 2px solid var(--grid-strong);   /* horizontales entre horas */
@@ -1230,13 +1238,36 @@ function initQuickMenu(){
 function openQuickMenu(target){
   initQuickMenu();
   quickMenuTarget = target;
+
+  // mostrar para poder medir altura real
   quickMenu.style.display = 'block';
-  // posicionar debajo del tag
+  quickMenu.classList.remove('drop-up');
+
   const r = target.getBoundingClientRect();
-  const left = Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - 240);
-  const top  = r.bottom + window.scrollY + 6;
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+
+  // ancho: que no se vaya a la derecha
+  const menuW   = Math.min(quickMenu.offsetWidth || 240, 280);
+  const left    = Math.min(r.left + window.scrollX, window.scrollX + vw - menuW - 8);
   quickMenu.style.left = left + 'px';
-  quickMenu.style.top  = top  + 'px';
+
+  // alto y decisión de abrir arriba/abajo
+  const menuH        = quickMenu.offsetHeight || 220;
+  const spaceBelow   = vh - r.bottom;
+  const spaceAbove   = r.top;
+
+  if (spaceBelow < menuH + 12 && spaceAbove > spaceBelow){
+    // abrir hacia ARRIBA
+    quickMenu.classList.add('drop-up');
+    quickMenu.style.top    = ''; // limpiamos
+    quickMenu.style.bottom = (vh - r.top + 6 + window.scrollY) + 'px';
+  } else {
+    // abrir hacia ABAJO (por defecto)
+    quickMenu.classList.remove('drop-up');
+    quickMenu.style.bottom = ''; // limpiamos
+    quickMenu.style.top    = (r.bottom + 6 + window.scrollY) + 'px';
+  }
 }
 
 function closeQuickMenu(){
