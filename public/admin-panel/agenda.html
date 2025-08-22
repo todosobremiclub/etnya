@@ -287,6 +287,14 @@ table.agenda td.slot + td.slot,
   border-right: 1px solid var(--grid-line) !important;
 }
 
+/* LILA MUY CLARO para 'prueba' (forzado) */
+.tag.tag-prueba,
+.tag[data-tipo="prueba"]:not([data-estado]),
+.tag[data-tipo="prueba"][data-estado=""]{
+  background-color: #F3E9FF !important; /* lila súper claro */
+  border-color:     #DACBFF !important; /* borde a juego, clarito */
+  color:            #3f2d74 !important; /* texto legible (podés usar #fff si querés) */
+}
 
 
 </style>
