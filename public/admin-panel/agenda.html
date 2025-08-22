@@ -299,6 +299,39 @@ table.agenda td.slot + td.slot,
 }
 
 
+/* === PRUEBA: fondo lila SIEMPRE, borde por estado (notorio) === */
+.tag[data-tipo="prueba"]{
+  background-color:#EBD9FF !important; /* lila claro y visible */
+  border-color:#CDB8FF !important;
+  border-width:2px !important;         /* borde más grueso */
+  color:#3b2b72 !important;
+  background-image:none !important;
+}
+
+/* Solo borde (y halo sutil) por estado */
+.tag[data-tipo="prueba"].estado-asistio{
+  background-color:#EBD9FF !important;
+  border-color:#D4C34A !important;
+  box-shadow:0 0 0 2px rgba(212,195,74,.25) !important;
+}
+
+.tag[data-tipo="prueba"].estado-sin-aviso{
+  background-color:#EBD9FF !important;
+  border-color:#E6B800 !important;
+  box-shadow:0 0 0 2px rgba(230,184,0,.25) !important;
+}
+
+.tag[data-tipo="prueba"].estado-con-aviso{
+  background-color:#EBD9FF !important;
+  border-color:#FF8FA3 !important;
+  box-shadow:0 0 0 2px rgba(255,143,163,.25) !important;
+}
+
+.tag[data-tipo="prueba"].estado-sobre-hora{
+  background-color:#EBD9FF !important;
+  border-color:#63D471 !important;
+  box-shadow:0 0 0 2px rgba(99,212,113,.25) !important;
+}
 
 </style>
 
