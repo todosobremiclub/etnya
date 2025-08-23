@@ -997,7 +997,7 @@ function dowFromYMD(ymd){
   return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
-/async function cargarNoClases() {
+async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
     if (!res.ok) throw new Error(await res.text());
@@ -2071,7 +2071,6 @@ window.addEventListener('load', function () {
     .catch(console.error);
 });
 
-uscador tipo Excel (s
 
 let feriados = [];
 
