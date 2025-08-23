@@ -886,6 +886,34 @@ function construirTablaBase(){
   tabla.appendChild(tbody);
 }
 
+// ===== Fallback: índice para el buscador de alumnos (si no está definido) =====
+window.idxAlumnos = window.idxAlumnos || [];
+
+window.buildIdxAlumnos = window.buildIdxAlumnos || function(){
+  const src = Array.isArray(window.alumnos) ? window.alumnos : [];
+  window.idxAlumnos = src.map(a => {
+    const raw = String(a.numero ?? a.numero_alumno ?? '').trim();
+    const num = raw ? (raw.includes('-') ? raw : String(raw).padStart(2,'0')) : '';
+    const label = `${num ? num + ' - ' : ''}${(a.apellido||'')}, ${(a.nombre||'')}`.trim();
+    return {
+      id: a.id,
+      numero: num,
+      label,
+      needle: (num + ' ' + label).toLowerCase()
+    };
+  });
+
+  // Si el buscador ya está en pantalla, actualizá las opciones
+  try{
+    const inEl   = document.getElementById('findAlumnoInput');
+    const dropEl = document.getElementById('findAlumnoSelect');
+    if (inEl && dropEl && typeof window.showFindOptions === 'function'){
+      window.showFindOptions(inEl.value || '');
+    }
+  }catch(_e){}
+};
+
+
 /* ===== Datos ===== */
 async function cargarAlumnos(){
   const res = await fetch('/alumnos');
