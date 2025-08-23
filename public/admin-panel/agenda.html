@@ -997,10 +997,7 @@ function dowFromYMD(ymd){
   return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
-// ---- Bloqueos "no clases" para Agenda ----
-let noClases = [];  // fuente local para pintar
-
-async function cargarNoClases() {
+/async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
     if (!res.ok) throw new Error(await res.text());
