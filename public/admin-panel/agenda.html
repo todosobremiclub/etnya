@@ -743,7 +743,10 @@ function rangoHoras(s){const {desde,hasta}=SEDES[s];const a=[];for(let h=desde;h
 function diasHabilitados(s){return SEDES[s].dias}
 // ⚠️ Normalizar: '10:00' -> '10:00:00'
 
+function normSede(s){ return String(s || '').trim().toLowerCase(); }  // ← agregar acá
+
 function normTime(t){ return t && t.length===5 ? t+':00' : t; }   // '10:00' -> '10:00:00'
+
 function normDate(d){ return d && d.length>=10 ? d.slice(0,10) : d; } // '2025-08-19T...' -> '2025-08-19'
 
 // ===== Datos del alumno (ficha en el modal) =====
@@ -994,26 +997,28 @@ function dowFromYMD(ymd){
   return w === 0 ? 7 : w;       // 1=Lun..7=Dom
 }
 
-/* ============== NO CLASES (bloques por sede/día/hora) ============== */
+// ---- Bloqueos "no clases" para Agenda ----
+let noClases = [];  // fuente local para pintar
+
 async function cargarNoClases() {
   try {
     const res = await fetch('/no-clases');
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
 
-    // Normalizamos para comparaciones rápidas en agenda / combos
-    window.noClases = (Array.isArray(data) ? data : []).map(r => ({
+    // Normalizamos y sincronizamos local + global
+    window.noClases = noClases = (Array.isArray(data) ? data : []).map(r => ({
       sede: String(r.sede || '').trim(),
-      dow : Number(r.dow || 0),
-      hora: normTime(r.hora) // 'HH:MM' -> 'HH:MM:SS'
+      dow : Number(r.dow || 0),   // 1..7 (Lun..Dom)
+      hora: normTime(r.hora)      // 'HH:MM' o 'HH:MM:SS' -> 'HH:MM:SS'
     }));
 
-    // Si la agenda ya está dibujada, repintamos/repoblamos horas
+    // Si la agenda ya está dibujada, repintamos
     if (typeof pintarClases === 'function') pintarClases();
     if (typeof initHorasPorDia === 'function') initHorasPorDia();
   } catch (e) {
     console.error('Error /no-clases', e);
-    window.noClases = [];
+    window.noClases = noClases = [];
   }
 }
 
@@ -1379,14 +1384,18 @@ function pintarClases(){
       td.classList.add('feriado');
     } else {
       // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
-      const bloques = Array.isArray(noClases) ? noClases : [];
-      const bloqueado = bloques.some(nc => {
-        const sameDow  = Number(nc.dow)  === Number(dowTd);
-        const sameHora = normTime(nc.hora) === horaTd;   // 'HH:MM:SS'
-        const sameSede = !nc.sede || !sedeTd || normSede(nc.sede) === normSede(sedeTd);
-        return sameDow && sameHora && sameSede;
-      });
-      if (bloqueado) td.classList.add('feriado');
+const bloques = (Array.isArray(noClases) && noClases.length)
+  ? noClases
+  : (Array.isArray(window.noClases) ? window.noClases : []);
+
+const bloqueado = bloques.some(nc => {
+  const sameDow  = Number(nc.dow) === Number(dowTd);
+  const sameHora = normTime(nc.hora) === horaTd;        // 'HH:MM:SS'
+  const sameSede = !nc.sede || !sedeTd || normSede(nc.sede) === normSede(sedeTd);
+  return sameDow && sameHora && sameSede;
+});
+if (bloqueado) td.classList.add('feriado');
+
     } // 👈 cierre del else
 
     // chips de clases
