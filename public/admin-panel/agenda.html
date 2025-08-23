@@ -1003,12 +1003,13 @@ function dowFromYMD(ymd){
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
 
-    // Normalizamos y sincronizamos local + global
-    window.noClases = noClases = (Array.isArray(data) ? data : []).map(r => ({
-      sede: String(r.sede || '').trim(),
-      dow : Number(r.dow || 0),   // 1..7 (Lun..Dom)
-      hora: normTime(r.hora)      // 'HH:MM' o 'HH:MM:SS' -> 'HH:MM:SS'
-    }));
+    // Normalizamos para comparaciones rápidas en agenda / combos
+window.noClases = noClases = (Array.isArray(data) ? data : []).map(r => ({
+  sede: String(r.sede || '').trim(),
+  dow : Number(r.dow || 0),
+  hora: normTime(r.hora) // 'HH:MM' -> 'HH:MM:SS'
+}));
+
 
     // Si la agenda ya está dibujada, repintamos
     if (typeof pintarClases === 'function') pintarClases();
@@ -1380,7 +1381,7 @@ function pintarClases(){
     if (feriadosSet.has(fechaTd)) {
       td.classList.add('feriado');
     } else {
-      // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
+     // BLOQUES SIN CLASE (coincidencia robusta por sede/día/hora)
 const bloques = (Array.isArray(noClases) && noClases.length)
   ? noClases
   : (Array.isArray(window.noClases) ? window.noClases : []);
@@ -1392,6 +1393,7 @@ const bloqueado = bloques.some(nc => {
   return sameDow && sameHora && sameSede;
 });
 if (bloqueado) td.classList.add('feriado');
+
 
     } // 👈 cierre del else
 
