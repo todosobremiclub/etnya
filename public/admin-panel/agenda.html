@@ -897,146 +897,160 @@ function normTxt(s){
 
 // ===== Buscador de agenda (nro / apellido / nombre) =====
 
-// Helper de normalización (minúsculas + sin acentos)
-window.normTxt = window.normTxt || function(s){
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-};
+// Normaliza (minúsculas + sin acentos)
+function normTxt(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
-// 1) Índice de alumnos (reconoce varios nombres de campos)
+// Índice (preferimos /alumnos; si no está, lo armamos desde los chips)
 window.idxAlumnos = window.idxAlumnos || [];
-window.buildIdxAlumnos = function(){
+
+function buildIdxFromAlumnos(){
   const src = Array.isArray(window.alumnos) ? window.alumnos : [];
   window.idxAlumnos = src.map(a => {
-    const id   = a.id ?? a.alumno_id ?? 0;
-
-    const numR = String(a.numero ?? a.numero_alumno ?? a.nro ?? a.nro_alumno ?? '').trim();
-    const num  = numR ? (numR.includes('-') ? numR : numR.padStart(2,'0')) : '';
-
-    const ape  = String(a.apellido ?? a.last_name ?? '').trim();
-    const nom  = String(a.nombre   ?? a.first_name ?? '').trim();
-    const full = String(a.apellido_nombre ?? a.nombre_completo ?? a.fullname ?? '').trim();
-
-    const labelBase = full || (ape && nom ? `${ape}, ${nom}` : `${ape}${ape && nom ? ' ' : ''}${nom}`);
-    const label     = `${num ? num + ' - ' : ''}${labelBase}`.trim();
-
-    // needle: número (con y sin padding) + variantes de nombre
-    const needle = window.normTxt(
-      `${num} ${numR} ${ape} ${nom} ${labelBase} ${full}`
-    );
-
+    const id  = a.id ?? a.alumno_id ?? 0;
+    const raw = String(a.numero ?? a.numero_alumno ?? '').trim();
+    const num = raw ? (raw.includes('-') ? raw : raw.padStart(2,'0')) : '';
+    const ape = String(a.apellido || '').trim();
+    const nom = String(a.nombre   || '').trim();
+    const labelBase = ape && nom ? `${ape}, ${nom}` : `${ape}${ape && nom ? ' ' : ''}${nom}`;
+    const label = `${num ? num + ' - ' : ''}${labelBase}`.trim();
+    const needle = normTxt(`${num} ${raw} ${ape} ${nom} ${labelBase}`);
     return { id, numero: num, label, needle };
   });
-};
+}
 
-// 2) Lógica del buscador
-(function(){
-  const $findIn   = document.getElementById('findAlumnoInput');
-  const $findDrop = document.getElementById('findAlumnoSelect');
-  const $findClr  = document.getElementById('btnLimpiarFind');
-  if (!$findIn || !$findDrop || !$findClr) return;
+function buildIdxFromDOM(){
+  const map = new Map(); // id -> {id, numero, label, needle}
+  document.querySelectorAll('.tag[data-alumno-id]').forEach(tag => {
+    const id  = Number(tag.dataset.alumnoId || 0);
+    if (!id) return;
+    const numero = String(tag.dataset.numero || '').trim();
+    const nombre = String(tag.dataset.nombre || tag.textContent || '').trim();
+    const label  = `${numero ? numero + ' - ' : ''}${nombre}`;
+    const needle = normTxt(`${numero} ${nombre}`);
+    if (!map.has(id)) map.set(id, { id, numero, label, needle });
+  });
+  window.idxAlumnos = Array.from(map.values());
+}
 
-  let alumnoFindSel = null; // id seleccionado para mantener resaltado
-
-  function ensureIndex(){
-    if (!Array.isArray(window.idxAlumnos) || window.idxAlumnos.length === 0){
-      if (typeof window.buildIdxAlumnos === 'function') window.buildIdxAlumnos();
-    }
+// Asegura tener índice (alumnos o DOM)
+function ensureIndex(){
+  if (Array.isArray(window.alumnos) && window.alumnos.length){
+    buildIdxFromAlumnos();
+  } else if (!Array.isArray(window.idxAlumnos) || window.idxAlumnos.length === 0){
+    buildIdxFromDOM();
   }
+}
 
-  function showFindOptions(text){
-    ensureIndex();
-    const t = window.normTxt(text);
-    const items = t ? window.idxAlumnos.filter(x => x.needle.includes(t)).slice(0, 60) : [];
-    $findDrop.innerHTML = '';
-    if (!items.length){ $findDrop.style.display = 'none'; return; }
+// Elementos UI
+const $findIn   = document.getElementById('findAlumnoInput');
+const $findDrop = document.getElementById('findAlumnoSelect');
+const $findClr  = document.getElementById('btnLimpiarFind');
 
-    for (const x of items){
-      const opt = document.createElement('option');
-      opt.value = String(x.id);
-      opt.textContent = x.label; // "NN - Apellido, Nombre"
-      $findDrop.appendChild(opt);
-    }
+let alumnoFindSel = null;
 
-    const r = $findIn.getBoundingClientRect();
-    $findDrop.style.left   = r.left + 'px';
-    $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
-    $findDrop.style.width  = r.width + 'px';
-    $findDrop.style.display = 'block';
+// Sugerencias
+function showFindOptions(text){
+  if (!$findIn || !$findDrop) return;
+  ensureIndex();
+  const t = normTxt(text);
+  const items = t ? window.idxAlumnos.filter(x => x.needle.includes(t)).slice(0, 60) : [];
+  $findDrop.innerHTML = '';
+  if (!items.length){ $findDrop.style.display = 'none'; return; }
+  for (const x of items){
+    const opt = document.createElement('option');
+    opt.value = String(x.id);
+    opt.textContent = x.label; // "NN - Apellido, Nombre"
+    $findDrop.appendChild(opt);
   }
+  const r = $findIn.getBoundingClientRect();
+  $findDrop.style.position = 'absolute';
+  $findDrop.style.zIndex   = '4000';
+  $findDrop.style.left     = r.left + 'px';
+  $findDrop.style.top      = (r.bottom + window.scrollY) + 'px';
+  $findDrop.style.width    = r.width + 'px';
+  $findDrop.style.display  = 'block';
+}
 
-  function clearFindSelection(){
-    alumnoFindSel = null;
-    $findIn.value = '';
-    $findDrop.style.display = 'none';
-    document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
+// Limpiar
+function clearFindSelection(){
+  alumnoFindSel = null;
+  if ($findIn)   $findIn.value = '';
+  if ($findDrop) $findDrop.style.display = 'none';
+  document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
+}
+
+// Resaltar en la semana
+function selectAlumnoEnSemana(alumnoId){
+  alumnoFindSel = Number(alumnoId) || null;
+  document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
+  if (!alumnoFindSel) return;
+  let hits = 0;
+  document.querySelectorAll('.tag').forEach(tag => {
+    const aid = Number(tag.dataset.alumnoId || 0);
+    if (aid === alumnoFindSel){ tag.classList.add('find-hit'); hits++; }
+  });
+  if (hits){
+    const first = document.querySelector('.tag.find-hit');
+    if (first) first.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
   }
+}
 
-  function selectAlumnoEnSemana(alumnoId){
-    alumnoFindSel = Number(alumnoId) || null;
-    document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
-    if (!alumnoFindSel) return;
+// Mantener resaltado tras repintar (envolvemos una sola vez)
+if (!window._agendaSearchWrapped){
+  const _pintarClases = pintarClases;
+  window.pintarClases = function(){
+    _pintarClases.apply(this, arguments);
+    if (alumnoFindSel) selectAlumnoEnSemana(alumnoFindSel);
+  };
+  window._agendaSearchWrapped = true;
+}
 
-    let hits = 0;
-    document.querySelectorAll('.tag').forEach(tag => {
-      const aid = Number(tag.dataset.alumnoId || 0);
-      if (aid === alumnoFindSel){ tag.classList.add('find-hit'); hits++; }
-    });
-    if (hits){
-      const first = document.querySelector('.tag.find-hit');
-      if (first) first.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
-    }
-  }
-
-  // Wrap de pintarClases (solo una vez)
-  if (!window._agendaSearchWrapped){
-    const _pintarClases = pintarClases;
-    window.pintarClases = function(){
-      _pintarClases.apply(this, arguments);
-      if (alumnoFindSel) selectAlumnoEnSemana(alumnoFindSel);
-    };
-    window._agendaSearchWrapped = true;
-  }
-
-  // Eventos
+// Eventos
+if ($findIn){
   $findIn.addEventListener('input', e => showFindOptions(e.target.value));
   $findIn.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown'){
-      ensureIndex();
-      if ($findDrop.options.length === 0) showFindOptions($findIn.value);
-      $findDrop.style.display = 'block';
-      $findDrop.focus();
-      if ($findDrop.options.length) $findDrop.selectedIndex = 0;
+      if ($findDrop && $findDrop.options.length === 0) showFindOptions($findIn.value);
+      if ($findDrop){ $findDrop.style.display = 'block'; $findDrop.focus(); if ($findDrop.options.length) $findDrop.selectedIndex = 0; }
     }
-    if (e.key === 'Escape'){ $findDrop.style.display = 'none'; }
+    if (e.key === 'Escape'){ if ($findDrop) $findDrop.style.display = 'none'; }
     if (e.key === 'Enter'){
       ensureIndex();
-      const t = window.normTxt($findIn.value);
+      const t = normTxt($findIn.value);
       const m = window.idxAlumnos.find(x => x.needle.includes(t));
       if (m) selectAlumnoEnSemana(m.id);
     }
   });
-
+}
+if ($findDrop){
   $findDrop.addEventListener('change', () => {
-    const id = Number($findDrop.value || 0);
+    const id  = Number($findDrop.value || 0);
     const opt = $findDrop.options[$findDrop.selectedIndex];
-    if (opt) $findIn.value = opt.textContent || '';
+    if (opt && $findIn) $findIn.value = opt.textContent || '';
     $findDrop.style.display = 'none';
     if (id) selectAlumnoEnSemana(id);
   });
-
   $findDrop.addEventListener('keydown', e => {
     if (e.key === 'Enter'){ $findDrop.dispatchEvent(new Event('change')); }
-    if (e.key === 'Escape'){ $findDrop.style.display = 'none'; $findIn.focus(); }
+    if (e.key === 'Escape'){ $findDrop.style.display = 'none'; $findIn?.focus(); }
   });
+}
+$findClr?.addEventListener('click', clearFindSelection);
 
-  $findClr.addEventListener('click', clearFindSelection);
-
-  // Construir índice si todavía no está
-  ensureIndex();
-})();
+// Si al cargar alumnos (fetch) actualizás window.alumnos, llamá a:
+if (typeof window.cargarAlumnos === 'function'){
+  const _cargarAlumnos = window.cargarAlumnos;
+  window.cargarAlumnos = async function(){
+    const r = await _cargarAlumnos.apply(this, arguments);
+    // reconstruir índice a partir de /alumnos
+    buildIdxFromAlumnos();
+    // refrescar sugerencias si el usuario ya comenzó a tipear
+    if ($findIn && $findIn.value) showFindOptions($findIn.value);
+    return r;
+  };
+}
 
 
 /* ===== Datos ===== */
