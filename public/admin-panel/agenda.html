@@ -1052,6 +1052,20 @@ if (typeof window.cargarAlumnos === 'function'){
   };
 }
 
+// === Alias para compatibilidad con cargarAlumnos() ===
+// Si no existe buildIdxAlumnos, la definimos usando los constructores nuevos.
+if (typeof window.buildIdxAlumnos !== 'function'){
+  window.buildIdxAlumnos = function(){
+    // Preferimos el índice desde /alumnos; si aún no llegó, lo armamos desde los chips de la agenda
+    if (Array.isArray(window.alumnos) && window.alumnos.length) {
+      if (typeof window.buildIdxFromAlumnos === 'function') window.buildIdxFromAlumnos();
+    } else {
+      if (typeof window.buildIdxFromDOM === 'function') window.buildIdxFromDOM();
+    }
+  };
+}
+
+
 
 /* ===== Datos ===== */
 async function cargarAlumnos(){
