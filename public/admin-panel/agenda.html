@@ -886,6 +886,15 @@ function construirTablaBase(){
   tabla.appendChild(tbody);
 }
 
+// Normaliza strings para búsquedas (minúsculas + sin acentos)
+function normTxt(s){
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // quita tildes
+}
+
+
 // ===== Buscador de agenda (nro / apellido / nombre) =====
 // Requiere los elementos: #findAlumnoInput, #findAlumnoSelect, #btnLimpiarFind
 
@@ -893,17 +902,21 @@ function construirTablaBase(){
 if (typeof window.buildIdxAlumnos !== 'function'){
   window.idxAlumnos = [];
   window.buildIdxAlumnos = function(){
-    const src = Array.isArray(window.alumnos) ? window.alumnos : [];
-    window.idxAlumnos = src.map(a => {
-      const raw = String(a.numero ?? a.numero_alumno ?? '').trim();
-      const num = raw ? (raw.includes('-') ? raw : String(raw).padStart(2,'0')) : '';
-      const apellido = String(a.apellido||'').trim();
-      const nombre   = String(a.nombre||'').trim();
-      const label    = `${num ? num + ' - ' : ''}${apellido}, ${nombre}`.trim();
-      // needle = número + apellido + nombre (todo en minúsculas)
-      return { id: a.id, numero: num, label, needle: `${num} ${apellido} ${nombre}`.toLowerCase() };
-    });
-  };
+  const src = Array.isArray(window.alumnos) ? window.alumnos : [];
+  window.idxAlumnos = src.map(a => {
+    const raw = String(a.numero ?? a.numero_alumno ?? '').trim();
+    const num = raw ? (raw.includes('-') ? raw : String(raw).padStart(2,'0')) : '';
+    const apellido = String(a.apellido||'').trim();
+    const nombre   = String(a.nombre||'').trim();
+    const label    = `${num ? num + ' - ' : ''}${apellido}, ${nombre}`.trim();
+
+    // needle normalizado (número + apellido + nombre)
+    const needle = normTxt(`${num} ${apellido} ${nombre}`);
+
+    return { id: a.id, numero: num, label, needle };
+  });
+};
+
 }
 
 // 2) Lógica del buscador (sin regex; usa includes)
@@ -915,24 +928,29 @@ if (typeof window.buildIdxAlumnos !== 'function'){
 
   let alumnoFindSel = null; // id seleccionado para mantener resaltado
 
-  function showFindOptions(text){
-    const t = String(text || '').trim().toLowerCase();
-    const items = t ? (window.idxAlumnos || []).filter(x => x.needle.includes(t)).slice(0, 60) : [];
-    $findDrop.innerHTML = '';
-    if (!items.length){ $findDrop.style.display = 'none'; return; }
-    for (const x of items){
-      const opt = document.createElement('option');
-      opt.value = String(x.id);
-      opt.textContent = x.label; // "NN - Apellido, Nombre"
-      $findDrop.appendChild(opt);
-    }
-    // posicionar dropdown bajo el input
-    const r = $findIn.getBoundingClientRect();
-    $findDrop.style.left   = r.left + 'px';
-    $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
-    $findDrop.style.width  = r.width + 'px';
-    $findDrop.style.display = 'block';
+ function showFindOptions(text){
+  const t = normTxt(text);
+  const items = t
+    ? (window.idxAlumnos || []).filter(x => x.needle.includes(t)).slice(0, 60)
+    : [];
+
+  $findDrop.innerHTML = '';
+  if (!items.length){ $findDrop.style.display = 'none'; return; }
+
+  for (const x of items){
+    const opt = document.createElement('option');
+    opt.value = String(x.id);
+    opt.textContent = x.label; // "NN - Apellido, Nombre"
+    $findDrop.appendChild(opt);
   }
+
+  const r = $findIn.getBoundingClientRect();
+  $findDrop.style.left   = r.left + 'px';
+  $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
+  $findDrop.style.width  = r.width + 'px';
+  $findDrop.style.display = 'block';
+}
+
 
   function clearFindSelection(){
     alumnoFindSel = null;
