@@ -913,6 +913,107 @@ window.buildIdxAlumnos = window.buildIdxAlumnos || function(){
   }catch(_e){}
 };
 
+// ====== Buscador de agenda (nro / apellido / nombre) ======
+const $findIn   = document.getElementById('findAlumnoInput');
+const $findDrop = document.getElementById('findAlumnoSelect');
+const $findClr  = document.getElementById('btnLimpiarFind');
+
+let alumnoFindSel = null; // id seleccionado para mantener resaltado
+
+// Muestra opciones bajo el input (sin regex, usa includes)
+function showFindOptions(text){
+  const t = String(text || '').trim().toLowerCase();
+  $findDrop.innerHTML = '';
+  if (!t){
+    $findDrop.style.display = 'none';
+    return;
+  }
+  // idxAlumnos lo arma buildIdxAlumnos() cuando se cargan los alumnos
+  const items = (window.idxAlumnos || []).filter(x => x.needle.includes(t)).slice(0, 60);
+  if (!items.length){
+    $findDrop.style.display = 'none';
+    return;
+  }
+  items.forEach(x => {
+    const opt = document.createElement('option');
+    opt.value = String(x.id);
+    opt.textContent = x.label; // "NN - Apellido, Nombre"
+    $findDrop.appendChild(opt);
+  });
+  // posicionar el dropdown debajo del input
+  const r = $findIn.getBoundingClientRect();
+  $findDrop.style.left   = r.left + 'px';
+  $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
+  $findDrop.style.width  = r.width + 'px';
+  $findDrop.style.display = 'block';
+}
+
+// Limpia selección y resaltados
+function clearFindSelection(){
+  alumnoFindSel = null;
+  if ($findIn) $findIn.value = '';
+  if ($findDrop) $findDrop.style.display = 'none';
+  document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
+}
+
+// Resalta todas las clases del alumno en la semana visible
+function selectAlumnoEnSemana(alumnoId){
+  alumnoFindSel = Number(alumnoId) || null;
+  document.querySelectorAll('.tag.find-hit').forEach(el => el.classList.remove('find-hit'));
+  if (!alumnoFindSel) return;
+
+  let hits = 0;
+  document.querySelectorAll('.tag').forEach(tag => {
+    const aid = Number(tag.dataset.alumnoId || 0);
+    if (aid === alumnoFindSel){
+      tag.classList.add('find-hit');
+      hits++;
+    }
+  });
+  if (hits){
+    const first = document.querySelector('.tag.find-hit');
+    if (first) first.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
+  }
+}
+
+// Mantener resaltado tras repintar
+const _pintarClases = pintarClases;
+pintarClases = function(){
+  _pintarClases();
+  if (alumnoFindSel) selectAlumnoEnSemana(alumnoFindSel);
+};
+
+// Eventos del buscador
+$findIn.addEventListener('input', e => showFindOptions(e.target.value));
+$findIn.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown'){
+    $findDrop.style.display = 'block';
+    $findDrop.focus();
+    if ($findDrop.options.length) $findDrop.selectedIndex = 0;
+  }
+  if (e.key === 'Escape'){ $findDrop.style.display = 'none'; }
+  if (e.key === 'Enter'){
+    const t = ($findIn.value || '').trim().toLowerCase();
+    const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
+    if (m) selectAlumnoEnSemana(m.id);
+  }
+});
+$findDrop.addEventListener('change', () => {
+  const id = Number($findDrop.value || 0);
+  const opt = $findDrop.options[$findDrop.selectedIndex];
+  if (opt) $findIn.value = opt.textContent || '';
+  $findDrop.style.display = 'none';
+  if (id) selectAlumnoEnSemana(id);
+});
+$findDrop.addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ $findDrop.dispatchEvent(new Event('change')); }
+  if (e.key === 'Escape'){ $findDrop.style.display = 'none'; $findIn.focus(); }
+});
+$findClr.addEventListener('click', clearFindSelection);
+
+// Exponer para que buildIdxAlumnos pueda refrescar el dropdown si cambia el input
+window.showFindOptions = showFindOptions;
+
 
 /* ===== Datos ===== */
 async function cargarAlumnos(){
