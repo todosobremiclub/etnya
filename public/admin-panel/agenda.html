@@ -896,61 +896,76 @@ function normTxt(s){
 
 
 // ===== Buscador de agenda (nro / apellido / nombre) =====
-// Requiere los elementos: #findAlumnoInput, #findAlumnoSelect, #btnLimpiarFind
 
-// 1) Índice de alumnos (lo rehace cuando cambian los alumnos)
-if (typeof window.buildIdxAlumnos !== 'function'){
-  window.idxAlumnos = [];
-  window.buildIdxAlumnos = function(){
+// Helper de normalización (minúsculas + sin acentos)
+window.normTxt = window.normTxt || function(s){
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
+
+// 1) Índice de alumnos (reconoce varios nombres de campos)
+window.idxAlumnos = window.idxAlumnos || [];
+window.buildIdxAlumnos = function(){
   const src = Array.isArray(window.alumnos) ? window.alumnos : [];
   window.idxAlumnos = src.map(a => {
-    const raw = String(a.numero ?? a.numero_alumno ?? '').trim();
-    const num = raw ? (raw.includes('-') ? raw : String(raw).padStart(2,'0')) : '';
-    const apellido = String(a.apellido||'').trim();
-    const nombre   = String(a.nombre||'').trim();
-    const label    = `${num ? num + ' - ' : ''}${apellido}, ${nombre}`.trim();
+    const id   = a.id ?? a.alumno_id ?? 0;
 
-    // needle normalizado (número + apellido + nombre)
-    const needle = normTxt(`${num} ${apellido} ${nombre}`);
+    const numR = String(a.numero ?? a.numero_alumno ?? a.nro ?? a.nro_alumno ?? '').trim();
+    const num  = numR ? (numR.includes('-') ? numR : numR.padStart(2,'0')) : '';
 
-    return { id: a.id, numero: num, label, needle };
+    const ape  = String(a.apellido ?? a.last_name ?? '').trim();
+    const nom  = String(a.nombre   ?? a.first_name ?? '').trim();
+    const full = String(a.apellido_nombre ?? a.nombre_completo ?? a.fullname ?? '').trim();
+
+    const labelBase = full || (ape && nom ? `${ape}, ${nom}` : `${ape}${ape && nom ? ' ' : ''}${nom}`);
+    const label     = `${num ? num + ' - ' : ''}${labelBase}`.trim();
+
+    // needle: número (con y sin padding) + variantes de nombre
+    const needle = window.normTxt(
+      `${num} ${numR} ${ape} ${nom} ${labelBase} ${full}`
+    );
+
+    return { id, numero: num, label, needle };
   });
 };
 
-}
-
-// 2) Lógica del buscador (sin regex; usa includes)
+// 2) Lógica del buscador
 (function(){
   const $findIn   = document.getElementById('findAlumnoInput');
   const $findDrop = document.getElementById('findAlumnoSelect');
   const $findClr  = document.getElementById('btnLimpiarFind');
-  if (!$findIn || !$findDrop || !$findClr) return; // por si el HTML no está
+  if (!$findIn || !$findDrop || !$findClr) return;
 
   let alumnoFindSel = null; // id seleccionado para mantener resaltado
 
- function showFindOptions(text){
-  const t = normTxt(text);
-  const items = t
-    ? (window.idxAlumnos || []).filter(x => x.needle.includes(t)).slice(0, 60)
-    : [];
-
-  $findDrop.innerHTML = '';
-  if (!items.length){ $findDrop.style.display = 'none'; return; }
-
-  for (const x of items){
-    const opt = document.createElement('option');
-    opt.value = String(x.id);
-    opt.textContent = x.label; // "NN - Apellido, Nombre"
-    $findDrop.appendChild(opt);
+  function ensureIndex(){
+    if (!Array.isArray(window.idxAlumnos) || window.idxAlumnos.length === 0){
+      if (typeof window.buildIdxAlumnos === 'function') window.buildIdxAlumnos();
+    }
   }
 
-  const r = $findIn.getBoundingClientRect();
-  $findDrop.style.left   = r.left + 'px';
-  $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
-  $findDrop.style.width  = r.width + 'px';
-  $findDrop.style.display = 'block';
-}
+  function showFindOptions(text){
+    ensureIndex();
+    const t = window.normTxt(text);
+    const items = t ? window.idxAlumnos.filter(x => x.needle.includes(t)).slice(0, 60) : [];
+    $findDrop.innerHTML = '';
+    if (!items.length){ $findDrop.style.display = 'none'; return; }
 
+    for (const x of items){
+      const opt = document.createElement('option');
+      opt.value = String(x.id);
+      opt.textContent = x.label; // "NN - Apellido, Nombre"
+      $findDrop.appendChild(opt);
+    }
+
+    const r = $findIn.getBoundingClientRect();
+    $findDrop.style.left   = r.left + 'px';
+    $findDrop.style.top    = (r.bottom + window.scrollY) + 'px';
+    $findDrop.style.width  = r.width + 'px';
+    $findDrop.style.display = 'block';
+  }
 
   function clearFindSelection(){
     alumnoFindSel = null;
@@ -975,7 +990,7 @@ if (typeof window.buildIdxAlumnos !== 'function'){
     }
   }
 
-  // Mantener resaltado tras repintar (envolver una sola vez)
+  // Wrap de pintarClases (solo una vez)
   if (!window._agendaSearchWrapped){
     const _pintarClases = pintarClases;
     window.pintarClases = function(){
@@ -989,6 +1004,7 @@ if (typeof window.buildIdxAlumnos !== 'function'){
   $findIn.addEventListener('input', e => showFindOptions(e.target.value));
   $findIn.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown'){
+      ensureIndex();
       if ($findDrop.options.length === 0) showFindOptions($findIn.value);
       $findDrop.style.display = 'block';
       $findDrop.focus();
@@ -996,8 +1012,9 @@ if (typeof window.buildIdxAlumnos !== 'function'){
     }
     if (e.key === 'Escape'){ $findDrop.style.display = 'none'; }
     if (e.key === 'Enter'){
-      const t = ($findIn.value || '').trim().toLowerCase();
-      const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
+      ensureIndex();
+      const t = window.normTxt($findIn.value);
+      const m = window.idxAlumnos.find(x => x.needle.includes(t));
       if (m) selectAlumnoEnSemana(m.id);
     }
   });
@@ -1017,13 +1034,8 @@ if (typeof window.buildIdxAlumnos !== 'function'){
 
   $findClr.addEventListener('click', clearFindSelection);
 
-  // Exponer para que otras partes puedan refrescar sugerencias
-  window.showFindOptions = showFindOptions;
-
-  // Construir índice si aún no existe
-  if (!Array.isArray(window.idxAlumnos) || !window.idxAlumnos.length){
-    if (typeof window.buildIdxAlumnos === 'function') window.buildIdxAlumnos();
-  }
+  // Construir índice si todavía no está
+  ensureIndex();
 })();
 
 
