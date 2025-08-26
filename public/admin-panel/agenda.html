@@ -927,9 +927,9 @@ function buildIdxFromAlumnos(){
     const label = `${num ? num + ' - ' : ''}${labelBase}`.trim();
     const needle = normTxt(`${num} ${raw} ${ape} ${nom} ${labelBase}`);
     return { id, numero: num, label, needle };
-    window._idxSource = 'alumnos';
-
+   
   });
+window._idxSource = 'alumnos';
 }
 
 function buildIdxFromDOM(){
@@ -1075,6 +1075,8 @@ if ($findIn){
 }
 
   });
+
+}
 
 if ($findDrop){
   $findDrop.addEventListener('change', () => {
