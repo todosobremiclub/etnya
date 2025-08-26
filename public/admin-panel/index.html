@@ -958,36 +958,7 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
   tbodyCraig.innerHTML = '';
   tbodyGoyena.innerHTML = '';
 
-  alumnosGlobal.forEach(alumno => {
-console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
-    const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
-    if (!mostrarInactivos && !alumno.activo) return;
-    if (filtroClase && alumno.tipo_clase !== filtroClase) return;
-    if (!textoCompleto.includes(filtroTexto)) return;
-    if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
-
-    const numero = alumno.numero_alumno.toString().padStart(2, '0');
-    const sede = alumno.sede === 'Craig' ? 'C' : 'G';
-    const estadoPago = calcularEstadoPago(alumno);
-    const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
-
-    const tr = document.createElement('tr');
-    tr.ondblclick = () => abrirFichaAlumno(alumno.id);
-    tr.innerHTML = `
-      <td>${numero}-${sede}</td>
-      <td>${alumno.apellido}</td>
-      <td>${alumno.nombre}</td>
-      <td>
-        ${alumno.telefono || ''}
-        ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px; margin-left: 4px;"></i></a>` : ''}
-      </td>
-      <td>${alumno.edad || ''}</td>
-      <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
-      <td>
-        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
-      </td>
-      <td>
-  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}  let lastNumCraig = 0;
+  let lastNumCraig = 0;
   let lastNumGoyena = 0;
 
   alumnosGlobal.forEach(alumno => {
@@ -1050,24 +1021,6 @@ console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
     }
   });
 
-
-</td>
-
-
-      <td class="acciones">
-        <button onclick="editarAlumno(${alumno.id})">🖉</button>
-        <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
-      </td>
-    `;
-
-    if (sedeSeleccionada === 'Todas' || alumno.sede === sedeSeleccionada) {
-      if (alumno.sede === 'Craig') {
-        tbodyCraig.appendChild(tr);
-      } else if (alumno.sede === 'Goyena') {
-        tbodyGoyena.appendChild(tr);
-      }
-    }
-  });
 }
 
 
