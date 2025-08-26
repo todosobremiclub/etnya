@@ -973,23 +973,26 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
     const estadoPago = calcularEstadoPago(alumno);
     const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
 
-    // ⚠️ Chequear faltantes por sede
-    if (alumno.sede === 'Craig' && lastNumCraig && numero > lastNumCraig + 1) {
-      for (let n = lastNumCraig + 1; n < numero; n++) {
-        const trFaltante = document.createElement('tr');
-        trFaltante.classList.add('faltante');
-        trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-C</td><td colspan="8">❌ Falta este número</td>`;
-        tbodyCraig.appendChild(trFaltante);
-      }
+    // ⚠️ Chequear faltantes por sede SOLO si NO está activo el filtro "con deuda"
+if (!mostrarConDeuda) {
+  if (alumno.sede === 'Craig' && lastNumCraig && numero > lastNumCraig + 1) {
+    for (let n = lastNumCraig + 1; n < numero; n++) {
+      const trFaltante = document.createElement('tr');
+      trFaltante.classList.add('faltante');
+      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-C</td><td colspan="8">❌ Falta este número</td>`;
+      tbodyCraig.appendChild(trFaltante);
     }
-    if (alumno.sede === 'Goyena' && lastNumGoyena && numero > lastNumGoyena + 1) {
-      for (let n = lastNumGoyena + 1; n < numero; n++) {
-        const trFaltante = document.createElement('tr');
-        trFaltante.classList.add('faltante');
-        trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-G</td><td colspan="8">❌ Falta este número</td>`;
-        tbodyGoyena.appendChild(trFaltante);
-      }
+  }
+  if (alumno.sede === 'Goyena' && lastNumGoyena && numero > lastNumGoyena + 1) {
+    for (let n = lastNumGoyena + 1; n < numero; n++) {
+      const trFaltante = document.createElement('tr');
+      trFaltante.classList.add('faltante');
+      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-G</td><td colspan="8">❌ Falta este número</td>`;
+      tbodyGoyena.appendChild(trFaltante);
     }
+  }
+}
+
 
     // Fila normal
     const tr = document.createElement('tr');
