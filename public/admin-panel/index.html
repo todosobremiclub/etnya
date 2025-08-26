@@ -25,6 +25,13 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+
+tr.faltante td {
+  background-color: #fdeaea !important;
+  color: #c62828 !important;
+  font-weight: bold;
+}
+
   body {
     margin: 0;
     font-family: 'Inter', sans-serif;
@@ -980,7 +987,69 @@ console.log(`${alumno.apellido} - becado: ${alumno.becado}`);
         <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${color};"></span>
       </td>
       <td>
-  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}
+  ${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}  let lastNumCraig = 0;
+  let lastNumGoyena = 0;
+
+  alumnosGlobal.forEach(alumno => {
+    const textoCompleto = `${alumno.numero_alumno} ${alumno.nombre} ${alumno.apellido}`.toLowerCase();
+    if (filtroClase && alumno.tipo_clase !== filtroClase) return;
+    if (!textoCompleto.includes(filtroTexto)) return;
+    if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
+
+    const numero = parseInt(alumno.numero_alumno, 10);
+    const numeroStr = numero.toString().padStart(2, '0');
+    const sede = alumno.sede === 'Craig' ? 'C' : 'G';
+    const estadoPago = calcularEstadoPago(alumno);
+    const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
+
+    // ⚠️ Chequear faltantes por sede
+    if (alumno.sede === 'Craig' && lastNumCraig && numero > lastNumCraig + 1) {
+      for (let n = lastNumCraig + 1; n < numero; n++) {
+        const trFaltante = document.createElement('tr');
+        trFaltante.classList.add('faltante');
+        trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-C</td><td colspan="8">❌ Falta este número</td>`;
+        tbodyCraig.appendChild(trFaltante);
+      }
+    }
+    if (alumno.sede === 'Goyena' && lastNumGoyena && numero > lastNumGoyena + 1) {
+      for (let n = lastNumGoyena + 1; n < numero; n++) {
+        const trFaltante = document.createElement('tr');
+        trFaltante.classList.add('faltante');
+        trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-G</td><td colspan="8">❌ Falta este número</td>`;
+        tbodyGoyena.appendChild(trFaltante);
+      }
+    }
+
+    // Fila normal
+    const tr = document.createElement('tr');
+    tr.ondblclick = () => abrirFichaAlumno(alumno.id);
+    tr.innerHTML = `
+      <td>${numeroStr}-${sede}</td>
+      <td>${alumno.apellido}</td>
+      <td>${alumno.nombre}</td>
+      <td>
+        ${alumno.telefono || ''}
+        ${alumno.telefono ? `<a href="https://wa.me/54${alumno.telefono.replace(/\D/g, '')}" target="_blank" title="Enviar WhatsApp"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px; margin-left: 4px;"></i></a>` : ''}
+      </td>
+      <td>${alumno.edad || ''}</td>
+      <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
+      <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:${color};"></span></td>
+      <td>${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}</td>
+      <td class="acciones">
+        <button onclick="editarAlumno(${alumno.id})">🖉</button>
+        <button onclick="eliminarAlumno(${alumno.id})">🗑</button>
+      </td>
+    `;
+
+    if (alumno.sede === 'Craig') {
+      tbodyCraig.appendChild(tr);
+      lastNumCraig = numero;
+    } else if (alumno.sede === 'Goyena') {
+      tbodyGoyena.appendChild(tr);
+      lastNumGoyena = numero;
+    }
+  });
+
 
 </td>
 
