@@ -125,10 +125,10 @@
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
-  <a href="gastos.html">🧾 Gastos</a>
+  <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
   <a href="agenda.html">📅 Agenda</a>
   <a href="configuracion.html">⚙️ Configuración</a>
-  <a href="reportes.html" class="active">📈 Reportes</a>
+  <a href="reportes.html" class="menu-reportes active">📈 Reportes</a>
   <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
 </div>
 
@@ -208,6 +208,29 @@
 
 
 <script>
+  // 🔒 Chequeo de login y rol
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      location = 'login.html';
+      return;
+    }
+
+    const rol = localStorage.getItem('etnya_role');
+    const restr = ['reportes.html', 'gastos.html'];
+    const actual = (location.pathname || '').split('/').pop().toLowerCase();
+
+    // Bloquear acceso directo si no es admin
+    if (rol !== 'admin' && restr.includes(actual)) {
+      alert('No autorizado');
+      location = 'index.html';
+    }
+
+    // Ocultar opciones de menú
+    if (rol !== 'admin') {
+      document.querySelectorAll('.menu-reportes, .menu-gastos').forEach(el => el.style.display = 'none');
+    }
+  });
+
   if (localStorage.getItem('etnya_login') !== 'ok') { window.location.href = 'login.html'; }
   function cerrarSesion(){ localStorage.removeItem('etnya_login'); window.location.href='login.html'; }
 
