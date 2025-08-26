@@ -356,6 +356,16 @@ table.agenda td.slot + td.slot,
   color:#3b2b72 !important;
 }
 
+/* Dropdown del buscador de agenda: pegar al input */
+#findAlumnoSelect{
+  position: fixed;     /* relativo al viewport */
+  z-index: 5000;
+  display: none;
+  max-height: 260px;   /* por si hay muchos resultados */
+  overflow: auto;
+}
+
+
 </style>
 
 
@@ -950,27 +960,64 @@ const $findClr  = document.getElementById('btnLimpiarFind');
 
 let alumnoFindSel = null;
 
+// Garantiza índice con apellido si el usuario escribe letras
+async function ensureIndexReady(queryNorm){
+  // si ya hay índice, listo
+  if (Array.isArray(window.idxAlumnos) && window.idxAlumnos.length) return;
+
+  // si ya tenemos alumnos cargados, construir índice desde /alumnos (tiene apellido)
+  if (Array.isArray(window.alumnos) && window.alumnos.length){
+    if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
+    return;
+  }
+
+  // si el usuario está buscando con letras, intentá cargar /alumnos una sola vez
+  const hasLetters = /[a-z]/i.test(queryNorm || '');
+  if (hasLetters && typeof window.cargarAlumnos === 'function' && !window._loadingAlumnosForSearch){
+    window._loadingAlumnosForSearch = true;
+    try{
+      await window.cargarAlumnos();     // tu función existente
+    }catch(_e){}
+    finally{
+      window._loadingAlumnosForSearch = false;
+    }
+    if (Array.isArray(window.alumnos) && window.alumnos.length){
+      if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
+      return;
+    }
+  }
+
+  // último recurso: armar índice desde los chips (sólo tiene nombre)
+  if (typeof buildIdxFromDOM === 'function') buildIdxFromDOM();
+}
+
+
 // Sugerencias
-function showFindOptions(text){
+async function showFindOptions(text){
   if (!$findIn || !$findDrop) return;
-  ensureIndex();
-  const t = normTxt(text);
-  const items = t ? window.idxAlumnos.filter(x => x.needle.includes(t)).slice(0, 60) : [];
+
+  const q = normTxt(text);
+  await ensureIndexReady(q);  // 👈 garantiza índice con apellido si se puede
+
+  const items = q
+    ? (window.idxAlumnos || []).filter(x => x.needle.includes(q)).slice(0, 60)
+    : [];
+
   $findDrop.innerHTML = '';
   if (!items.length){ $findDrop.style.display = 'none'; return; }
+
   for (const x of items){
     const opt = document.createElement('option');
     opt.value = String(x.id);
     opt.textContent = x.label; // "NN - Apellido, Nombre"
     $findDrop.appendChild(opt);
   }
+
   const r = $findIn.getBoundingClientRect();
-  $findDrop.style.position = 'absolute';
-  $findDrop.style.zIndex   = '4000';
-  $findDrop.style.left     = r.left + 'px';
-  $findDrop.style.top      = (r.bottom + window.scrollY) + 'px';
-  $findDrop.style.width    = r.width + 'px';
-  $findDrop.style.display  = 'block';
+  $findDrop.style.left   = r.left + 'px';
+  $findDrop.style.top    = r.bottom + 'px';   // 👈 fixed
+  $findDrop.style.width  = r.width + 'px';
+  $findDrop.style.display = 'block';
 }
 
 // Limpiar
