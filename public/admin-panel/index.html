@@ -635,6 +635,21 @@ button:hover {
 </div>
 
 <script>
+ // 🔒 Guard de rol (oculta menú a operadores y no muestra alert)
+  (function () {
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      location = 'login.html';
+      return;
+    }
+
+    const rol = localStorage.getItem('etnya_role') || '';
+    if (rol !== 'admin') {
+      document.querySelectorAll('.menu-reportes, .menu-gastos')
+        .forEach(el => el.style.display = 'none');
+    }
+    // Nota: index.html no es página restringida, por eso no redirigimos.
+  })();
+
 if (localStorage.getItem('etnya_login') !== 'ok') {
     window.location.href = 'login.html';
 }
@@ -1207,9 +1222,11 @@ function seleccionarSede(sede) {
 
 function cerrarSesion() {
   localStorage.removeItem('etnya_login');
+  localStorage.removeItem('etnya_token');
+  localStorage.removeItem('etnya_role');
+  localStorage.removeItem('etnya_user');
   window.location.href = 'login.html';
 }
-
 function toggleObservaciones() {
   const panel = document.getElementById('observacionesPanel');
   const flecha = document.getElementById('observacionesFlecha');
