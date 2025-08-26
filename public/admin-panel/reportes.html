@@ -270,7 +270,7 @@
     try{
       let url='/reportes/por-cuenta';
       if(mes && anio) url=`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`;
-      const r=await fetch(url); const d=await r.json();
+      const r=await fetchConToken(url); const d=await r.json();
       renderTabla('reporte-cuenta',['Cuenta','Total'],d);
     }catch(e){ console.error('Error cuenta:',e); }
   }
@@ -400,8 +400,10 @@
 
 async function cargarReporteGastosPorCuenta(){
   try {
-    const r = await fetchConToken('/reportes/gastos-por-cuenta-mensual');
-    const d = await r.json();
+    const r = await fetchConToken(url);   // ✅ ahora envía Authorization: Bearer <token>
+if (!r.ok) throw new Error(await r.text());  // evita el JSON.parse de un texto "Falta token"
+const d = await r.json();
+
     // d = [{ mes: 'YYYY-MM', cuenta: 'x', total: 'nnn' }, ...]
 
     const rows = d.map(row => ({
