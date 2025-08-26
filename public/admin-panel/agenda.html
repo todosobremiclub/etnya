@@ -414,7 +414,7 @@ table.agenda td.slot + td.slot,
       <input id="findAlumnoInput" type="text"
              placeholder="Buscar alumno (nro, apellido, nombre)" style="min-width:260px">
       <select id="findAlumnoSelect" size="6"
-              style="display:none;position:absolute;z-index:1300;max-height:220px;overflow:auto;"></select>
+        style="display:none;z-index:1300;max-height:220px;overflow:auto;"></select>
       <button id="btnLimpiarFind" type="button">Limpiar selección</button>
     </div>
   </div>
@@ -927,6 +927,8 @@ function buildIdxFromAlumnos(){
     const label = `${num ? num + ' - ' : ''}${labelBase}`.trim();
     const needle = normTxt(`${num} ${raw} ${ape} ${nom} ${labelBase}`);
     return { id, numero: num, label, needle };
+    window._idxSource = 'alumnos';
+
   });
 }
 
@@ -942,6 +944,8 @@ function buildIdxFromDOM(){
     if (!map.has(id)) map.set(id, { id, numero, label, needle });
   });
   window.idxAlumnos = Array.from(map.values());
+  window._idxSource = 'dom';
+
 }
 
 // Asegura tener índice (alumnos o DOM)
@@ -962,33 +966,32 @@ let alumnoFindSel = null;
 
 // Garantiza índice con apellido si el usuario escribe letras
 async function ensureIndexReady(queryNorm){
-  // si ya hay índice, listo
-  if (Array.isArray(window.idxAlumnos) && window.idxAlumnos.length) return;
-
-  // si ya tenemos alumnos cargados, construir índice desde /alumnos (tiene apellido)
-  if (Array.isArray(window.alumnos) && window.alumnos.length){
-    if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
-    return;
-  }
-
-  // si el usuario está buscando con letras, intentá cargar /alumnos una sola vez
   const hasLetters = /[a-z]/i.test(queryNorm || '');
-  if (hasLetters && typeof window.cargarAlumnos === 'function' && !window._loadingAlumnosForSearch){
+
+  // Si ya tenemos índice desde /alumnos, listo
+  if (window._idxSource === 'alumnos' && Array.isArray(window.idxAlumnos) && window.idxAlumnos.length) return;
+
+  // Si hay letras y el índice es del DOM (sin apellidos), intentá “upgradearlo”
+  if (hasLetters && window._idxSource !== 'alumnos' && typeof window.cargarAlumnos === 'function' && !window._loadingAlumnosForSearch){
     window._loadingAlumnosForSearch = true;
     try{
-      await window.cargarAlumnos();     // tu función existente
+      await window.cargarAlumnos();   // arma window.alumnos
+      if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
+      if (Array.isArray(window.idxAlumnos) && window.idxAlumnos.length){
+        return; // ya quedamos con apellidos
+      }
     }catch(_e){}
     finally{
       window._loadingAlumnosForSearch = false;
     }
-    if (Array.isArray(window.alumnos) && window.alumnos.length){
-      if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
-      return;
-    }
   }
 
-  // último recurso: armar índice desde los chips (sólo tiene nombre)
-  if (typeof buildIdxFromDOM === 'function') buildIdxFromDOM();
+  // Fallbacks
+  if (Array.isArray(window.alumnos) && window.alumnos.length){
+    if (typeof buildIdxFromAlumnos === 'function') buildIdxFromAlumnos();
+  } else if (!Array.isArray(window.idxAlumnos) || !window.idxAlumnos.length){
+    if (typeof buildIdxFromDOM === 'function') buildIdxFromDOM();
+  }
 }
 
 
@@ -1014,6 +1017,7 @@ async function showFindOptions(text){
   }
 
   const r = $findIn.getBoundingClientRect();
+  $findDrop.style.position = 'fixed';    // asegura que no lo pise nada
   $findDrop.style.left   = r.left + 'px';
   $findDrop.style.top    = r.bottom + 'px';   // 👈 fixed
   $findDrop.style.width  = r.width + 'px';
@@ -1064,11 +1068,12 @@ if ($findIn){
     }
     if (e.key === 'Escape'){ if ($findDrop) $findDrop.style.display = 'none'; }
     if (e.key === 'Enter'){
-      ensureIndex();
-      const t = normTxt($findIn.value);
-      const m = window.idxAlumnos.find(x => x.needle.includes(t));
-      if (m) selectAlumnoEnSemana(m.id);
-    }
+  const t = normTxt($findIn.value);
+  await ensureIndexReady(t);
+  const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
+  if (m) selectAlumnoEnSemana(m.id);
+}
+
   });
 }
 if ($findDrop){
