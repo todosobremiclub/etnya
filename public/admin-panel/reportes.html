@@ -400,11 +400,9 @@
 
 async function cargarReporteGastosPorCuenta(){
   try {
-    const r = await fetchConToken(url);   // ✅ ahora envía Authorization: Bearer <token>
-if (!r.ok) throw new Error(await r.text());  // evita el JSON.parse de un texto "Falta token"
-const d = await r.json();
-
-    // d = [{ mes: 'YYYY-MM', cuenta: 'x', total: 'nnn' }, ...]
+    const r = await fetchConToken('/reportes/gastos-por-cuenta-mensual'); // ✅ sin variable url
+    if (!r.ok) throw new Error(await r.text());                             // mejor manejo de error
+    const d = await r.json();
 
     const rows = d.map(row => ({
       Mes: formatearMesYYYYMM(row.mes),
@@ -417,7 +415,6 @@ const d = await r.json();
     console.error('Error gastos por cuenta:', e);
   }
 }
-
 
   /* Botonera: mostrar/ocultar */
   const REPORTES=['gastos-cuenta','cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede'];
