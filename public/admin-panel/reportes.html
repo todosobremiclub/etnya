@@ -208,6 +208,15 @@
 
 
 <script>
+
+// Helper para enviar el JWT en cada request
+  function fetchConToken(url, opts = {}) {
+    const token = localStorage.getItem('etnya_token') || '';
+    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...opts, headers });
+  }
+
+
   // 🔒 Chequeo de login y rol
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('etnya_login') !== 'ok') {
@@ -268,7 +277,7 @@
 
   async function cargarReporteMesPagado(){
     try{
-      const [ra,rt,rr]=await Promise.all([fetch('/alumnos'),fetch('/tipos-clase'),fetch('/reportes/por-mes-pagado')]);
+      const [ra,rt,rr]=await Promise.all([fetchConToken('/alumnos'),fetchConToken('/tipos-clase'),fetchConToken('/reportes/por-mes-pagado')]);
       const da=await ra.json(), dt=await rt.json(), dr=await rr.json();
       window.alumnos=da; window.tiposClase=dt;
       const esperado=calcularMontoEsperadoPorMes();
@@ -278,20 +287,20 @@
   }
 
   async function cargarReporteFechaPago(){
-    try{ const r=await fetch('/reportes/por-fecha-pago'); const d=await r.json();
+    try{ const r=await fetchConToken('/reportes/por-fecha-pago'); const d=await r.json();
       renderTabla('reporte-fecha-pago',['Mes','Total'],d);
     }catch(e){ console.error('Error fecha pago:',e); }
   }
 
   async function cargarReporteAlumnosSede(){
-    try{ const r=await fetch('/reportes/alumnos-por-sede'); const d=await r.json();
+    try{ const r=await fetchConToken('/reportes/alumnos-por-sede'); const d=await r.json();
       renderTabla('reporte-alumnos-sede',['Sede','Cantidad'],d);
     }catch(e){ console.error('Error alumnos sede:',e); }
   }
 
   async function cargarReporteAlumnosModalidad(){
     try{
-      const r=await fetch('/reportes/alumnos-por-modalidad'); const data=await r.json();
+      const r=await fetchConToken('/reportes/alumnos-por-modalidad'); const data=await r.json();
       const c=document.getElementById('reporte-alumnos-modalidad'); c.innerHTML='';
       const t=document.createElement('table'); t.createTHead().innerHTML='<tr><th>Modalidad</th><th>Cantidad</th></tr>';
       const tb=document.createElement('tbody');
@@ -317,7 +326,7 @@
 
   async function cargarReporteIngresos(){
     try{
-      const r=await fetch('/reportes/ingresos-por-mes'); const data=await r.json();
+      const r=await fetchConToken('/reportes/ingresos-por-mes'); const data=await r.json();
       const cont=document.getElementById('reporte-ingresos'); cont.innerHTML='';
       if(!data.length){ cont.innerHTML='<p>No hay datos disponibles.</p>'; return; }
       const porAnio={};
@@ -355,7 +364,7 @@
   async function verDetalleIngresos(mes){
     mesMostrado=mes; document.getElementById('modalDetalleIngresos').style.display='flex';
     document.getElementById('tituloDetalleIngreso').textContent=`Ingresos en ${formatearMesYYYYMM(mes)}`;
-    try{ const r=await fetch(`/reportes/detalle-ingresos?mes=${mes}`); const d=await r.json();
+    try{ const r=await fetchConToken(`/reportes/detalle-ingresos?mes=${mes}`); const d=await r.json();
       renderTabla('contenidoDetalleIngreso',['Número','Nombre','Apellido','Fecha ingreso'],d);
     }catch(e){ console.error('Detalle ingresos:',e); document.getElementById('contenidoDetalleIngreso').innerHTML='<p>Error al cargar datos.</p>'; }
   }
@@ -364,7 +373,7 @@
   async function verDetalleModalidad(modalidad){
     document.getElementById('modalDetalleIngresos').style.display='flex';
     document.getElementById('tituloDetalleIngreso').textContent=`Alumnos en: ${modalidad}`;
-    try{ const r=await fetch(`/reportes/detalle-modalidad?modalidad=${encodeURIComponent(modalidad)}`); const d=await r.json();
+    try{ const r=await fetchConToken(`/reportes/detalle-modalidad?modalidad=${encodeURIComponent(modalidad)}`); const d=await r.json();
       renderTabla('contenidoDetalleIngreso',['Número','Nombre','Apellido'],d);
     }catch(e){ console.error('Detalle modalidad:',e); document.getElementById('contenidoDetalleIngreso').innerHTML='<p>Error al cargar datos.</p>'; }
   }
@@ -383,7 +392,7 @@
 
   async function cargarReporteRecaudacionPorSede(){
     try{
-      const r=await fetch('/reportes/recaudacion-por-sede'); const d=await r.json();
+      const r=await fetchConToken('/reportes/recaudacion-por-sede'); const d=await r.json();
       const datos=d.map(row=>({mes:formatearMesYYYYMM(row.mes),sede:row.sede,total:row.total,esperado:row.esperado}));
       renderTabla('reporte-recaudacion-sede',['Mes','Sede','Total','Esperado'],datos);
     }catch(e){ console.error('Error recaudación sede:',e); }
@@ -391,7 +400,7 @@
 
 async function cargarReporteGastosPorCuenta(){
   try {
-    const r = await fetch('/reportes/gastos-por-cuenta-mensual');
+    const r = await fetchConToken('/reportes/gastos-por-cuenta-mensual');
     const d = await r.json();
     // d = [{ mes: 'YYYY-MM', cuenta: 'x', total: 'nnn' }, ...]
 
