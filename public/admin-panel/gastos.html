@@ -224,11 +224,13 @@
     }
   });
 
-  // ✅ Helper para enviar el JWT en cada request
+   // Usar SIEMPRE el fetch nativo del navegador
+  const nativeFetch = window.fetch.bind(window);
+
   function fetchConToken(url, opts = {}) {
     const token = localStorage.getItem('etnya_token') || '';
     const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
-    return fetchConToken(url, { ...opts, headers });
+    return nativeFetch(url, { ...opts, headers });
   }
 
 let gastosById = {};
