@@ -164,10 +164,10 @@
   <div class="sidebar">
     <a href="index.html">📋 Alumnas/os</a>
     <a href="pagos.html">💳 Pagos</a>
-    <a href="gastos.html">🧾 Gastos</a>
+    <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
     <a href="agenda.html">📅 Agenda</a>
     <a href="configuracion.html">⚙️ Configuración</a>
-    <a href="reportes.html">📈 Reportes</a>
+    <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
     <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
       🚪 Cerrar sesión
     </button>
@@ -204,6 +204,33 @@
     </table>
   </main>
   <script>
+
+ // 🔒 Chequeo de login/rol
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      location = 'login.html';
+      return;
+    }
+    const rol = localStorage.getItem('etnya_role');
+    // Gastos es solo para admin; si no lo es, redirigimos
+    if (rol !== 'admin') {
+      alert('No autorizado');
+      location = 'index.html';
+    }
+    // Ocultar menú Reportes/Gastos a operadores (por si se reutiliza HTML)
+    if (rol !== 'admin') {
+      document.querySelectorAll('.menu-reportes, .menu-gastos')
+        .forEach(el => el.style.display = 'none');
+    }
+  });
+
+  // ✅ Helper para enviar el JWT en cada request
+  function fetchConToken(url, opts = {}) {
+    const token = localStorage.getItem('etnya_token') || '';
+    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    return fetchConToken(url, { ...opts, headers });
+  }
+
 let gastosById = {};
 let editandoId = null;
 
@@ -241,7 +268,7 @@ let editandoId = null;
   }
 
   async function fetchTiposDeGasto() {
-    const res = await fetch('/gastos/tipos-gasto');
+    const res = await fetchConToken('/gastos/tipos-gasto');
     const data = await res.json();
     const select = document.getElementById('tipoGasto');
     select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
@@ -269,7 +296,7 @@ let editandoId = null;
   const url    = editandoId ? `/gastos/${editandoId}` : '/gastos';
   const method = editandoId ? 'PUT' : 'POST';
 
-  const res = await fetch(url, {
+  const res = await fetchConToken(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -290,7 +317,7 @@ let editandoId = null;
 
 
   async function cargarGastosRegistrados() {
-    const res = await fetch('/gastos/registrados');
+    const res = await fetchConToken('/gastos/registrados');
     const gastos = await res.json();
     const tbody = document.getElementById("tbodyGastos");
     tbody.innerHTML = '';
@@ -354,7 +381,7 @@ gastos.forEach(g => gastosById[g.id] = g);
 
   async function eliminarGasto(id) {
     if (!confirm('¿Eliminar este gasto?')) return;
-    const res = await fetch(`/gastos/${id}`, { method: 'DELETE' });
+    const res = await fetchConToken(`/gastos/${id}`, { method: 'DELETE' });
     if (res.ok) cargarGastosRegistrados();
     else alert('Error al eliminar');
   }
@@ -367,7 +394,7 @@ gastos.forEach(g => gastosById[g.id] = g);
   }
 
 async function fetchCuentas() {
-  const res = await fetch('/cuentas');
+  const res = await fetchConToken('/cuentas');
   const data = await res.json();
   const select = document.getElementById('cuenta');
   select.innerHTML = '<option value="">Seleccionar cuenta</option>';
