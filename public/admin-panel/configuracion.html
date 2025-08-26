@@ -395,6 +395,31 @@ td.slot.feriado { background: #d9d9d9 !important; }
 
 
 <script>
+
+ // 🔒 Chequeo de login/rol en Configuración
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      location = 'login.html';
+      return;
+    }
+    const rol = localStorage.getItem('etnya_role');
+    // La gestión de tipos de gasto usa /gastos/* (solo admin)
+    if (rol !== 'admin') {
+      // Mostrar/ocultar menú por coherencia (y bloquear edición)
+      document.querySelectorAll('.menu-reportes, .menu-gastos').forEach(el => el.style.display = 'none');
+      // Podés dejar la página visible pero sin la sección, o directamente redirigir:
+      // location = 'index.html';
+    }
+  });
+
+  // ✅ Helper: usa SIEMPRE el fetch nativo y agrega el token
+  const nativeFetch = window.fetch.bind(window);
+  function fetchConToken(url, opts = {}) {
+    const token = localStorage.getItem('etnya_token') || '';
+    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    return nativeFetch(url, { ...opts, headers });
+  }
+
 // ------------------- MODALIDADES -------------------
 let editandoId = null;
 let filasVisibles = false;
@@ -710,7 +735,7 @@ function toggleGastos() {
 }
 
 async function cargarGastos() {
-  const res = await fetch('/gastos/tipos-gasto');
+  const res = await fetchConToken('/gastos/tipos-gasto');
   const data = await res.json();
   const tbody = document.getElementById('tbodyGastos');
   tbody.innerHTML = '';
@@ -745,7 +770,7 @@ document.getElementById('formGasto').addEventListener('submit', async function(e
   const metodo = editandoGastoId ? 'PUT' : 'POST';
   const url = editandoGastoId ? `/gastos/tipos-gasto/${editandoGastoId}` : '/gastos/tipos-gasto';
 
-  const res = await fetch(url, {
+  const res = await fetchConToken(url, {
     method: metodo,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nombre })
@@ -763,7 +788,7 @@ document.getElementById('formGasto').addEventListener('submit', async function(e
 
 async function eliminarGasto(id) {
   if (!confirm('¿Eliminar este tipo de gasto?')) return;
-  const res = await fetch(`/gastos/tipos-gasto/${id}`, { method: 'DELETE' });
+  const res = await fetchConToken(`/gastos/tipos-gasto/${id}`, { method: 'DELETE' });
   if (res.ok) cargarGastos();
   else alert('Error al eliminar');
 }
