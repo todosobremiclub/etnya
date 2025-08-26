@@ -164,7 +164,7 @@
   <div class="sidebar">
     <a href="index.html">📋 Alumnas/os</a>
     <a href="pagos.html">💳 Pagos</a>
-    <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
+    <a href="gastos.html"   class="menu-gastos">🧾 Gastos</a>
     <a href="agenda.html">📅 Agenda</a>
     <a href="configuracion.html">⚙️ Configuración</a>
     <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
@@ -203,6 +203,33 @@
       <tbody id="tbodyGastos"></tbody>
     </table>
   </main>
+
+<script>
+  (function () {
+    // 1) Forzar login
+    if (localStorage.getItem('etnya_login') !== 'ok') {
+      location = 'login.html';
+      return;
+    }
+
+    // 2) Rol del usuario
+    const rol = localStorage.getItem('etnya_role') || '';
+
+    // 3) Ocultar menú si no es admin (sin alert)
+    if (rol !== 'admin') {
+      document.querySelectorAll('.menu-reportes, .menu-gastos')
+        .forEach(el => el.style.display = 'none');
+    }
+
+    // 4) Bloqueo silencioso de páginas restringidas (sin alert)
+    const restricted = { 'reportes.html': 'admin', 'gastos.html': 'admin' };
+    const page = (location.pathname.split('/').pop() || '').toLowerCase();
+    if (restricted[page] && rol !== restricted[page]) {
+      location = 'index.html';
+    }
+  })();
+</script>
+
   <script>
 
  // 🔒 Chequeo de login/rol
