@@ -292,53 +292,98 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
   }
 });
 
-// 13) Pagos parciales: resumen por mes y sede
-// Requiere que la tabla pagos tenga el booleano pago_parcial
+// 13) Pagos parciales: RESUMEN por mes (YYYY-MM) y sede
 router.get('/pagos-parciales-resumen', async (req, res) => {
   try {
     const q = `
-      SELECT 
-        p.mes_pagado AS mes,
-        a.sede,
-        COUNT(*) AS cantidad
-      FROM pagos p
-      JOIN alumnos a ON a.id = p.alumno_id
-      WHERE p.pago_parcial = TRUE
+      WITH pagos_norm AS (
+        SELECT
+          p.id,
+          p.alumno_id,
+          p.monto,
+          p.fecha_pago,
+          COALESCE(p.pago_parcial, false) AS pago_parcial,
+          -- Normalizamos mes_pagado a 'YYYY-MM' venga como TEXT 'YYYY-MM',
+          -- 'YYYY-MM-DD' o DATE:
+          to_char(
+            CASE
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM')
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM-DD')
+              WHEN pg_typeof(p.mes_pagado) = 'date'::regtype
+                THEN p.mes_pagado::date
+              ELSE NULL
+            END,
+            'YYYY-MM'
+          ) AS ym
+        FROM pagos p
+      )
+      SELECT pn.ym AS mes, a.sede, COUNT(*) AS cantidad
+      FROM pagos_norm pn
+      JOIN alumnos a ON a.id = pn.alumno_id
+      LEFT JOIN tipos_clase t
+        ON lower(trim(a.tipo_clase)) = lower(trim(t.modalidad))
+      WHERE pn.ym IS NOT NULL
+        AND (pn.pago_parcial = true OR (t.precio IS NOT NULL AND pn.monto < t.precio))
       GROUP BY 1, 2
-      ORDER BY 1 DESC, 2
+      ORDER BY 1 DESC, 2;
     `;
     const { rows } = await pool.query(q);
     res.json(rows);
   } catch (err) {
-    console.error('Error en /pagos-parciales-resumen:', err);
+    console.error('Error /reportes/pagos-parciales-resumen', err);
     res.status(500).send('Error en pagos parciales (resumen)');
   }
 });
 
-// 14) Pagos parciales: detalle por mes y sede
+// 14) Pagos parciales: DETALLE por mes (YYYY-MM) y sede
 router.get('/pagos-parciales-detalle', async (req, res) => {
-  const { mes, sede } = req.query; // mes = 'YYYY-MM'
+  const { mes, sede } = req.query; // ej: '2025-08'
   try {
     const q = `
+      WITH pagos_norm AS (
+        SELECT
+          p.id,
+          p.alumno_id,
+          p.monto,
+          p.fecha_pago,
+          COALESCE(p.pago_parcial, false) AS pago_parcial,
+          to_char(
+            CASE
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM')
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM-DD')
+              WHEN pg_typeof(p.mes_pagado) = 'date'::regtype
+                THEN p.mes_pagado::date
+              ELSE NULL
+            END,
+            'YYYY-MM'
+          ) AS ym
+        FROM pagos p
+      )
       SELECT 
-        p.id,
+        pn.id,
         a.numero_alumno,
         a.apellido,
         a.nombre,
         a.sede,
-        p.monto,
-        p.fecha_pago
-      FROM pagos p
-      JOIN alumnos a ON a.id = p.alumno_id
-      WHERE p.pago_parcial = TRUE
-        AND p.mes_pagado = $1
+        pn.monto,
+        pn.fecha_pago
+      FROM pagos_norm pn
+      JOIN alumnos a ON a.id = pn.alumno_id
+      LEFT JOIN tipos_clase t
+        ON lower(trim(a.tipo_clase)) = lower(trim(t.modalidad))
+      WHERE pn.ym = $1
         AND a.sede = $2
-      ORDER BY a.apellido, a.nombre
+        AND (pn.pago_parcial = true OR (t.precio IS NOT NULL AND pn.monto < t.precio))
+      ORDER BY a.apellido, a.nombre;
     `;
     const { rows } = await pool.query(q, [mes, sede]);
     res.json(rows);
   } catch (err) {
-    console.error('Error en /pagos-parciales-detalle:', err);
+    console.error('Error /reportes/pagos-parciales-detalle', err);
     res.status(500).send('Error en pagos parciales (detalle)');
   }
 });
