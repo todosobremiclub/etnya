@@ -365,6 +365,36 @@ table.agenda td.slot + td.slot,
   overflow: auto;
 }
 
+/* =================== RECUPERACIÓN: fondo rojo + anillo por estado =================== */
+:root{
+  --recup-bg:   #c62828;  /* rojo base */
+  --recup-ring: #e57373;  /* rojo claro por defecto */
+  --recup-ring-w: 4px;    /* grosor del anillo */
+}
+
+/* Siempre rojo sólido de base, sin borde */
+.tag[data-tipo="recuperacion"]{
+  background-color: var(--recup-bg) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 var(--recup-ring-w) var(--recup-ring) !important;
+}
+
+/* Anillo notorio según estado */
+.tag[data-tipo="recuperacion"].estado-asistio{
+  box-shadow: 0 0 0 var(--recup-ring-w) #D4C34A !important; /* amarillo */
+}
+.tag[data-tipo="recuperacion"].estado-sin-aviso{
+  box-shadow: 0 0 0 var(--recup-ring-w) #E6B800 !important; /* mostaza */
+}
+.tag[data-tipo="recuperacion"].estado-con-aviso{
+  box-shadow: 0 0 0 var(--recup-ring-w) #FF8FA3 !important; /* rosa */
+}
+.tag[data-tipo="recuperacion"].estado-sobre-hora{
+  box-shadow: 0 0 0 var(--recup-ring-w) #63D471 !important; /* verde */
+}
+
+
 
 </style>
 
