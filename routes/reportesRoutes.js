@@ -191,12 +191,15 @@ router.get('/recaudacion-por-sede', async (req, res) => {
     // 2. Obtener modalidades con sus precios
     const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
 
-    // 3. Obtener alumnos activos con sede y tipo de clase
-    const alumnos = await pool.query(`
-      SELECT sede, tipo_clase
-      FROM alumnos
-      WHERE activo = true
-    `);
+    // 3. Obtener alumnos activos (NO becados) con sede y tipo de clase
+const alumnos = await pool.query(`
+  SELECT a.sede, a.tipo_clase
+  FROM alumnos a
+  LEFT JOIN becados b ON b.alumno_id = a.id
+  WHERE a.activo = true
+    AND b.alumno_id IS NULL
+`);
+
 
     // 4. Agrupar alumnos por sede y modalidad
     const agrupado = {}; // { 'Craig Reformer': { 'Reformer': 4, ... }, ... }

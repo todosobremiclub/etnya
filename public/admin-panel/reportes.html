@@ -276,15 +276,40 @@
   }
 
   async function cargarReporteMesPagado(){
-    try{
-      const [ra,rt,rr]=await Promise.all([fetchConToken('/alumnos'),fetchConToken('/tipos-clase'),fetchConToken('/reportes/por-mes-pagado')]);
-      const da=await ra.json(), dt=await rt.json(), dr=await rr.json();
-      window.alumnos=da; window.tiposClase=dt;
-      const esperado=calcularMontoEsperadoPorMes();
-      const datos=dr.map(row=>({ mes:formatearMesYYYYMM(row.mes), total:row.total, esperado }));
-      renderTabla('reporte-mes-pagado',['Mes','Total','Esperado'],datos);
-    }catch(e){ console.error('Error mes pagado:',e); }
+  try{
+    const [ra, rt, rr, rb] = await Promise.all([
+      fetchConToken('/alumnos'),
+      fetchConToken('/tipos-clase'),
+      fetchConToken('/reportes/por-mes-pagado'),
+      fetchConToken('/becados') // ← NUEVO
+    ]);
+
+    const da = await ra.json();
+    const dt = await rt.json();
+    const dr = await rr.json();
+    const db = await rb.json();
+
+    // disponibles globalmente como antes
+    window.alumnos = da;
+    window.tiposClase = dt;
+
+    // set con ids de alumnos becados
+    const becadosSet = new Set((db || []).map(b => String(b.alumno_id)));
+
+    // calcula esperado excluyendo becados
+    const esperado = calcularMontoEsperadoPorMes(becadosSet);
+
+    const datos = dr.map(row => ({
+      mes: formatearMesYYYYMM(row.mes),
+      total: row.total,
+      esperado
+    }));
+
+    renderTabla('reporte-mes-pagado', ['Mes','Total','Esperado'], datos);
+  }catch(e){
+    console.error('Error mes pagado:', e);
   }
+}
 
   async function cargarReporteFechaPago(){
     try{ const r=await fetchConToken('/reportes/por-fecha-pago'); const d=await r.json();
@@ -378,17 +403,27 @@
     }catch(e){ console.error('Detalle modalidad:',e); document.getElementById('contenidoDetalleIngreso').innerHTML='<p>Error al cargar datos.</p>'; }
   }
 
-  function calcularMontoEsperadoPorMes(){
-    const modalidadCantidad={}; let total=0;
-    if(!Array.isArray(alumnos)||!Array.isArray(tiposClase)) return 0;
-    alumnos.forEach(a=>{ if(!a.activo) return; const m=a.tipo_clase; if(!m) return; modalidadCantidad[m]=(modalidadCantidad[m]||0)+1; });
-    for(const m in modalidadCantidad){
-      const cant=modalidadCantidad[m];
-      const tipo=tiposClase.find(t=>t.modalidad.toLowerCase().trim()===m.toLowerCase().trim());
-      const precio=tipo?.precio||0; total+=cant*precio;
-    }
-    return total;
+  function calcularMontoEsperadoPorMes(becadosSet = new Set()){
+  const modalidadCantidad = {};
+  let total = 0;
+  if (!Array.isArray(alumnos) || !Array.isArray(tiposClase)) return 0;
+
+  alumnos.forEach(a => {
+    if (!a.activo) return;
+    if (becadosSet.has(String(a.id))) return;   // ← EXCLUYE BECADOS
+    const m = a.tipo_clase;
+    if (!m) return;
+    modalidadCantidad[m] = (modalidadCantidad[m] || 0) + 1;
+  });
+
+  for (const m in modalidadCantidad){
+    const cant = modalidadCantidad[m];
+    const tipo = tiposClase.find(t => t.modalidad.toLowerCase().trim() === m.toLowerCase().trim());
+    const precio = tipo?.precio || 0;
+    total += cant * precio;
   }
+  return total;
+}
 
   async function cargarReporteRecaudacionPorSede(){
     try{
