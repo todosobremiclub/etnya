@@ -2,11 +2,14 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Obtener lista de becados con nombre completo
+// Obtener lista de becados con nombre completo + alumno_id
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT b.id, a.nombre || ' ' || a.apellido AS nombre_completo
+      SELECT
+        b.id,
+        b.alumno_id,
+        a.nombre || ' ' || a.apellido AS nombre_completo
       FROM becados b
       JOIN alumnos a ON b.alumno_id = a.id
       ORDER BY a.apellido, a.nombre
