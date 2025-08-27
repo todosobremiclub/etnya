@@ -1730,12 +1730,13 @@ if (bloqueado) td.classList.add('feriado');
       if (!tag.dataset.estado) applyTipoColorToTag(tag);
 
       // tooltip custom (sin title nativo)
-      if ((String(tipo).toLowerCase()==='prueba' || !cl.alumno_id) && motivo){
-        tag.removeAttribute('title');
-        tag.classList.add('has-tooltip');
-        tag.dataset.tooltip = `Observación: ${motivo}`;
-        tag.setAttribute('aria-label', `Observación: ${motivo}`);
-      }
+if (motivo) {
+  tag.removeAttribute('title');
+  tag.classList.add('has-tooltip');
+  tag.dataset.tooltip = `Observación: ${motivo}`;
+  tag.setAttribute('aria-label', `Observación: ${motivo}`);
+}
+
 
       tag.addEventListener('click', onTagClick);
       tag.addEventListener('dblclick', onTagDblClick);
