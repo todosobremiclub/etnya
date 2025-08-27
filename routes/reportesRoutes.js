@@ -292,6 +292,58 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
   }
 });
 
+// 13) Pagos parciales: resumen por mes y sede
+// Requiere que la tabla pagos tenga el booleano pago_parcial
+router.get('/pagos-parciales-resumen', async (req, res) => {
+  try {
+    const q = `
+      SELECT 
+        p.mes_pagado AS mes,
+        a.sede,
+        COUNT(*) AS cantidad
+      FROM pagos p
+      JOIN alumnos a ON a.id = p.alumno_id
+      WHERE p.pago_parcial = TRUE
+      GROUP BY 1, 2
+      ORDER BY 1 DESC, 2
+    `;
+    const { rows } = await pool.query(q);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /pagos-parciales-resumen:', err);
+    res.status(500).send('Error en pagos parciales (resumen)');
+  }
+});
+
+// 14) Pagos parciales: detalle por mes y sede
+router.get('/pagos-parciales-detalle', async (req, res) => {
+  const { mes, sede } = req.query; // mes = 'YYYY-MM'
+  try {
+    const q = `
+      SELECT 
+        p.id,
+        a.numero_alumno,
+        a.apellido,
+        a.nombre,
+        a.sede,
+        p.monto,
+        p.fecha_pago
+      FROM pagos p
+      JOIN alumnos a ON a.id = p.alumno_id
+      WHERE p.pago_parcial = TRUE
+        AND p.mes_pagado = $1
+        AND a.sede = $2
+      ORDER BY a.apellido, a.nombre
+    `;
+    const { rows } = await pool.query(q, [mes, sede]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /pagos-parciales-detalle:', err);
+    res.status(500).send('Error en pagos parciales (detalle)');
+  }
+});
+
+
 
 
 module.exports = router;

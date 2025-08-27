@@ -115,6 +115,8 @@
     <button class="report-btn" data-report="ingresos" onclick="mostrarReporte('ingresos')">Ingresos por mes/año</button>
     <button class="report-btn" data-report="recaudacion-sede" onclick="mostrarReporte('recaudacion-sede')">Recaudación por sede</button>
     <button class="report-btn" data-report="gastos-cuenta" onclick="mostrarReporte('gastos-cuenta')">Gastos por cuenta</button>
+    <button class="report-btn" data-report="parciales" onclick="mostrarReporte('parciales')">Pagos parciales</button>
+
 
   </div>
 </div>
@@ -181,6 +183,14 @@
   <h2>Gastos por cuenta (mensual)</h2>
   <div id="reporte-gastos-cuenta"></div>
 </div>
+
+<!-- 8. Pagos parciales por sede y mes -->
+<div class="bloque-reporte" data-report="parciales" style="display:none;">
+  <h2>8. Pagos parciales por sede y mes</h2>
+  <div id="tabla-parciales"></div>
+  <p style="margin-top:8px;color:#666">Doble click en una fila para ver el detalle.</p>
+</div>
+
 
 
 </div>
@@ -451,8 +461,95 @@ async function cargarReporteGastosPorCuenta(){
   }
 }
 
+// ❶ Resumen: arma tabla "Mes | Sede | Cantidad" y engancha el dblclick por fila
+async function cargarReportePagosParciales(){
+  try{
+    const r = await fetchConToken('/reportes/pagos-parciales-resumen');
+    const data = await r.json();
+
+    const cont = document.getElementById('tabla-parciales');
+    cont.innerHTML = '';
+
+    if (!data.length){
+      cont.innerHTML = '<p>No hay pagos parciales registrados.</p>';
+      return;
+    }
+
+    const t = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    ['Mes','Sede','Cantidad'].forEach(h=>{
+      const th = document.createElement('th'); th.textContent = h; trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    t.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    data.forEach(row=>{
+      const tr = document.createElement('tr');
+      tr.dataset.mes  = row.mes;    // YYYY-MM
+      tr.dataset.sede = row.sede;
+
+      const tdMes = document.createElement('td');  tdMes.textContent  = formatearMesYYYYMM(row.mes);
+      const tdSed = document.createElement('td');  tdSed.textContent  = row.sede || '-';
+      const tdCant= document.createElement('td');  tdCant.textContent = row.cantidad;
+
+      tr.appendChild(tdMes); tr.appendChild(tdSed); tr.appendChild(tdCant);
+
+      // doble click → abre detalle en el modal existente
+      tr.addEventListener('dblclick', () => {
+        abrirDetalleParciales(tr.dataset.mes, tr.dataset.sede);
+      });
+
+      tbody.appendChild(tr);
+    });
+    t.appendChild(tbody);
+    cont.appendChild(t);
+  }catch(e){
+    console.error('Error pagos parciales:', e);
+  }
+}
+
+// ❷ Detalle: lista personas (usa el modal reutilizable ya presente en el archivo)
+async function abrirDetalleParciales(mes, sede){
+  try{
+    const r = await fetchConToken(`/reportes/pagos-parciales-detalle?mes=${encodeURIComponent(mes)}&sede=${encodeURIComponent(sede)}`);
+    const det = await r.json();
+
+    const titulo = document.getElementById('tituloDetalleIngreso');
+    const cont   = document.getElementById('contenidoDetalleIngreso');
+    titulo.textContent = `Pagos parciales — ${formatearMesYYYYMM(mes)} — ${sede}`;
+    cont.innerHTML = '';
+
+    if (!det.length){
+      cont.innerHTML = '<p>No hay registros.</p>';
+    } else {
+      const t = document.createElement('table');
+      t.innerHTML = '<thead><tr><th>N°</th><th>Apellido</th><th>Nombre</th><th>Monto</th><th>Fecha de pago</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      det.forEach(x=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${x.numero_alumno ?? '-'}</td>
+          <td>${x.apellido ?? ''}</td>
+          <td>${x.nombre ?? ''}</td>
+          <td>$ ${Number(x.monto||0).toLocaleString('es-AR')}</td>
+          <td>${(x.fecha_pago||'').slice(0,10)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      t.appendChild(tbody);
+      cont.appendChild(t);
+    }
+
+    document.getElementById('modalDetalleIngresos').style.display = 'flex';
+  }catch(e){
+    console.error('Error detalle pagos parciales:', e);
+  }
+}
+
   /* Botonera: mostrar/ocultar */
-  const REPORTES=['gastos-cuenta','cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede'];
+  const REPORTES=['gastos-cuenta','cuenta','mes-pagado','fecha-pago','alumnos-sede','alumnos-modalidad','ingresos','recaudacion-sede','parciales'];
   function mostrarReporte(rep){
     document.querySelectorAll('.bloque-reporte').forEach(b=>b.style.display=(b.dataset.report===rep)?'block':'none');
     document.querySelectorAll('.report-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.report===rep));
@@ -470,6 +567,8 @@ async function cargarReporteGastosPorCuenta(){
   cargarReporteAlumnosModalidad();
   cargarReporteIngresos();
   cargarReporteRecaudacionPorSede();
+  cargarReportePagosParciales();
+
 
   const repGuardado=localStorage.getItem('reporte_activo') || 'gastos-cuenta';
   mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'gastos-cuenta');
