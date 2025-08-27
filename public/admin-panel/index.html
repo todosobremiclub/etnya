@@ -951,6 +951,7 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
   const filtroTexto = document.getElementById('buscar').value.toLowerCase();
   const filtroClase = document.getElementById('filtroClase').value;
   const mostrarInactivos = true; // ✅ mostrar siempre todos
+  const hayBusqueda = filtroTexto.trim().length > 0;  // ← NUEVO
 
 
   const tbodyCraig = document.getElementById('tablaCraig');
@@ -974,7 +975,7 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
     const color = estadoPago === 'al_dia' ? '#4caf50' : '#f44336';
 
     // ⚠️ Chequear faltantes por sede SOLO si NO está activo el filtro "con deuda"
-if (!mostrarConDeuda) {
+if (!mostrarConDeuda && !hayBusqueda) {
   if (alumno.sede === 'Craig' && lastNumCraig && numero > lastNumCraig + 1) {
     for (let n = lastNumCraig + 1; n < numero; n++) {
       const trFaltante = document.createElement('tr');
