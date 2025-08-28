@@ -652,15 +652,23 @@ function renderPagos(query = '') {
     let sede = 'Sin Sede';
     let alumnoLabel = '';
 
-    if (p.alumno_id === OPT_PRUEBA_VALUE) {
-  sede = p.__sede || 'General';               // << antes era 'General' fijo
+    function normalizarSede(valor) {
+  const txt = (valor || '').toLowerCase();
+  if (txt.includes('goyena')) return 'Goyena';
+  if (txt.includes('craig')) return 'Craig';
+  return 'General';
+}
+
+if (p.alumno_id === OPT_PRUEBA_VALUE) {
+  sede = normalizarSede(p.__sede);
   alumnoLabel = '000 - Pagos de clases de prueba';
 } else {
-      const a = alumnos.find(al => al.id === p.alumno_id);
-      if (!a) return;
-      sede = a.sede || 'Sin Sede';
-      alumnoLabel = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
-    }
+  const a = alumnos.find(al => al.id === p.alumno_id);
+  if (!a) return;
+  sede = normalizarSede(a.sede);
+  alumnoLabel = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+}
+
 
     if (!pagosPorSede[sede]) pagosPorSede[sede] = {};
     if (!pagosPorSede[sede][alumnoLabel]) pagosPorSede[sede][alumnoLabel] = [];
