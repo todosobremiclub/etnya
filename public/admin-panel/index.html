@@ -925,21 +925,23 @@ async function cargarAlumnos() {
     
 
 function calcularEstadoPago(alumno) {
-console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`);
+  // Becadas/os siempre en verde
   if (alumno.becado) return 'al_dia';
 
-  const ultimoMesPago = alumno.ultimo_mes_pagado;
-  if (!ultimoMesPago) return 'mora';
+  const ultimo = alumno.ultimo_mes_pagado;
+  if (!ultimo) return 'mora';
+
+  // Esperado formato "YYYY-MM"
+  const [anioPago, mesPago] = ultimo.split('-').map(Number);
+  if (!anioPago || !mesPago) return 'mora';
 
   const hoy = new Date();
-  const mesActual = hoy.getMonth() + 1;
   const anioActual = hoy.getFullYear();
+  const mesActual  = hoy.getMonth() + 1;
 
-  const [anioPago, mesPago] = ultimoMesPago.split('-').map(Number);
-
-  if (anioPago === anioActual && mesPago === mesActual) {
-    return 'al_dia';
-  }
+  // ✅ Verde si el pago es del mes actual o posterior
+  if (anioPago > anioActual) return 'al_dia';
+  if (anioPago === anioActual && mesPago >= mesActual) return 'al_dia';
 
   return 'mora';
 }
