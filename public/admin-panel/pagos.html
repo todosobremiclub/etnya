@@ -261,6 +261,14 @@ input[type="month"].fake-placeholder:invalid:before {
 
   <label for="montoFijo">Monto fijo (en $):</label>
   <input type="number" id="montoFijo" min="0" step="1" placeholder="0">
+
+  <label for="sedePrueba">Sede:</label>
+  <select id="sedePrueba">
+    <option value="">Seleccioná sede</option>
+    <option value="Craig Reformer">Craig Reformer</option>
+    <option value="Craig Circuito">Craig Circuito</option>
+    <option value="Pedro Goyena">Pedro Goyena</option>
+  </select>
 </div>
 
 
@@ -494,22 +502,31 @@ async function guardarPago() {
   if (alumnoId === OPT_PRUEBA_VALUE) {
     const montoFijo  = document.getElementById('montoFijo')?.value;
     const comentario = document.getElementById('comentarioPrueba')?.value || null;
+    const sede       = document.getElementById('sedePrueba')?.value;
 
     if (!montoFijo || isNaN(montoFijo) || parseFloat(montoFijo) <= 0) {
       alert("Ingresá un monto válido para el pago de prueba.");
       return;
     }
 
+if (!sede) {
+  alert("Seleccioná la sede para el pago de prueba.");
+  return;
+}
+
+
+
     try {
       const res = await fetch('/pagos/prueba', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          comentario,
-          monto: parseFloat(montoFijo),
-          cuenta
-        })
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    comentario,
+    monto: parseFloat(montoFijo),
+    cuenta,
+    sede
+  })
+});
       if (res.ok) {
         alert("Pago de prueba registrado con éxito.");
         await cargarPagos();
@@ -580,17 +597,19 @@ async function cargarPagos() {
   const pagos = await resPagos.json();
   const pagosPrueba = await resPrueba.json();
 
-  // Mapear pagos de prueba con formato compatible
-  const mappedPrueba = (pagosPrueba || []).map(p => ({
-    id        : p.id,
-    alumno_id : OPT_PRUEBA_VALUE,
-    mes_pagado: '-',                  // sin mes
-    monto     : p.monto,
-    cuenta    : p.cuenta,
-    fecha_pago: p.fecha_pago,
-    __tipo    : 'prueba',
-    __comentario: p.comentario || ''
-  }));
+  /// mappedPrueba (sumar __sede)
+const mappedPrueba = (pagosPrueba || []).map(p => ({
+  id        : p.id,
+  alumno_id : OPT_PRUEBA_VALUE,
+  mes_pagado: '-',
+  monto     : p.monto,
+  cuenta    : p.cuenta,
+  fecha_pago: p.fecha_pago,
+  __tipo    : 'prueba',
+  __comentario: p.comentario || '',
+  __sede    : p.sede || 'General'
+}));
+
 
   pagosGlobal = [...pagos, ...mappedPrueba];
   const q = document.getElementById('buscadorPagos')?.value || '';
@@ -634,9 +653,9 @@ function renderPagos(query = '') {
     let alumnoLabel = '';
 
     if (p.alumno_id === OPT_PRUEBA_VALUE) {
-      sede = 'General';
-      alumnoLabel = '000 - Pagos de clases de prueba';
-    } else {
+  sede = p.__sede || 'General';               // << antes era 'General' fijo
+  alumnoLabel = '000 - Pagos de clases de prueba';
+} else {
       const a = alumnos.find(al => al.id === p.alumno_id);
       if (!a) return;
       sede = a.sede || 'Sin Sede';

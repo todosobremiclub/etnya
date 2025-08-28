@@ -63,31 +63,34 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ===== Pagos de clases de prueba =====
-// Crea la tabla si no existe: id, comentario, monto, cuenta, fecha_pago
+// ===== Pagos de clases de prueba (con sede) =====
 async function ensureTablaPagosPrueba() {
+  // crea tabla si no existe
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pagos_prueba (
       id SERIAL PRIMARY KEY,
       comentario TEXT,
       monto NUMERIC NOT NULL,
       cuenta TEXT NOT NULL,
+      sede TEXT NOT NULL DEFAULT 'General',
       fecha_pago TIMESTAMP NOT NULL DEFAULT NOW()
     );
   `);
+  // por si la tabla ya existía sin la columna 'sede'
+  await pool.query(`ALTER TABLE pagos_prueba ADD COLUMN IF NOT EXISTS sede TEXT NOT NULL DEFAULT 'General';`);
 }
 
-// Registrar un pago de prueba (monto fijo + comentario + cuenta)
+// POST /pagos/prueba
 router.post('/prueba', async (req, res) => {
-  const { comentario, monto, cuenta } = req.body || {};
-  if (!monto || !cuenta) {
-    return res.status(400).json({ error: 'Faltan datos: monto y cuenta son obligatorios.' });
+  const { comentario, monto, cuenta, sede } = req.body || {};
+  if (!monto || !cuenta || !sede) {
+    return res.status(400).json({ error: 'Faltan datos: monto, cuenta y sede son obligatorios.' });
   }
   try {
     await ensureTablaPagosPrueba();
     await pool.query(
-      `INSERT INTO pagos_prueba (comentario, monto, cuenta) VALUES ($1, $2, $3)`,
-      [comentario || null, monto, cuenta]
+      `INSERT INTO pagos_prueba (comentario, monto, cuenta, sede) VALUES ($1, $2, $3, $4)`,
+      [comentario || null, monto, cuenta, sede]
     );
     res.status(200).json({ message: 'Pago de prueba registrado.' });
   } catch (e) {
@@ -96,7 +99,7 @@ router.post('/prueba', async (req, res) => {
   }
 });
 
-// Listar pagos de prueba (orden por fecha desc)
+// GET /pagos/prueba
 router.get('/prueba', async (_req, res) => {
   try {
     await ensureTablaPagosPrueba();
@@ -108,7 +111,7 @@ router.get('/prueba', async (_req, res) => {
   }
 });
 
-// Eliminar pago de prueba
+// DELETE /pagos/prueba/:id
 router.delete('/prueba/:id', async (req, res) => {
   const { id } = req.params || {};
   try {
