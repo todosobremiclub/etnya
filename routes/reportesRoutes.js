@@ -2,21 +2,55 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+// -- Asegura la tabla de pagos de prueba (por si aún no existe)
+async function ensureTablaPagosPrueba() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pagos_prueba (
+      id SERIAL PRIMARY KEY,
+      comentario TEXT,
+      monto NUMERIC NOT NULL,
+      cuenta TEXT NOT NULL,
+      sede TEXT NOT NULL DEFAULT 'General',
+      fecha_pago TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
+// -- Normaliza sede a sólo Craig / Goyena / General
+function normalizeSedeTxt(s) {
+  const t = String(s || '').toLowerCase();
+  if (t.includes('goyena')) return 'Goyena';
+  if (t.includes('craig'))  return 'Craig';
+  return 'General';
+}
+
+
 // 1. Monto por cuenta
 router.get('/por-cuenta-filtrado', async (req, res) => {
   const { mes, anio } = req.query;
-
   try {
-    const resultados = await pool.query(
-      `SELECT cuenta, SUM(monto) AS total
-       FROM pagos
-       WHERE EXTRACT(MONTH FROM fecha_pago) = $1
-         AND EXTRACT(YEAR FROM fecha_pago) = $2
-       GROUP BY cuenta
-       ORDER BY cuenta`,
-      [mes, anio]
-    );
-    res.json(resultados.rows);
+    await ensureTablaPagosPrueba();
+
+    const q = `
+      SELECT cuenta, SUM(monto) AS total
+      FROM (
+        SELECT p.cuenta, p.monto, p.fecha_pago
+        FROM pagos p
+        WHERE EXTRACT(MONTH FROM p.fecha_pago) = $1
+          AND EXTRACT(YEAR  FROM p.fecha_pago) = $2
+
+        UNION ALL
+
+        SELECT pp.cuenta, pp.monto, pp.fecha_pago
+        FROM pagos_prueba pp
+        WHERE EXTRACT(MONTH FROM pp.fecha_pago) = $1
+          AND EXTRACT(YEAR  FROM pp.fecha_pago) = $2
+      ) x
+      GROUP BY cuenta
+      ORDER BY cuenta;
+    `;
+    const { rows } = await pool.query(q, [mes, anio]);
+    res.json(rows);
   } catch (err) {
     console.error('Error al obtener reporte por cuenta filtrado:', err);
     res.status(500).json({ error: 'Error del servidor' });
@@ -40,16 +74,22 @@ router.get('/por-mes-pagado', async (req, res) => {
 });
 
 // 3. Monto por fecha de pago
-router.get('/por-fecha-pago', async (req, res) => {
+router.get('/por-fecha-pago', async (_req, res) => {
   try {
-    const result = await pool.query(`
+    await ensureTablaPagosPrueba();
+
+    const q = `
       SELECT TO_CHAR(DATE_TRUNC('month', fecha_pago), 'YYYY-MM') AS mes, SUM(monto) AS total
-      FROM pagos
-      WHERE fecha_pago IS NOT NULL
+      FROM (
+        SELECT p.fecha_pago, p.monto FROM pagos p WHERE p.fecha_pago IS NOT NULL
+        UNION ALL
+        SELECT pp.fecha_pago, pp.monto FROM pagos_prueba pp WHERE pp.fecha_pago IS NOT NULL
+      ) t
       GROUP BY DATE_TRUNC('month', fecha_pago)
-      ORDER BY mes
-    `);
-    res.json(result.rows);
+      ORDER BY mes;
+    `;
+    const { rows } = await pool.query(q);
+    res.json(rows);
   } catch (err) {
     console.error('Error en /por-fecha-pago:', err);
     res.status(500).send('Error en reporte por fecha de pago');
@@ -94,15 +134,20 @@ router.get('/alumnos-por-modalidad', async (req, res) => {
 // 6. Total anual por cuenta
 router.get('/total-anual-por-cuenta', async (req, res) => {
   const { anio } = req.query;
-
   try {
-    const result = await pool.query(`
-      SELECT SUM(monto) AS total
-      FROM pagos
-      WHERE EXTRACT(YEAR FROM fecha_pago) = $1
-    `, [anio]);
+    await ensureTablaPagosPrueba();
 
-    res.json({ total: result.rows[0].total || 0 });
+    const q = `
+      SELECT SUM(monto) AS total
+      FROM (
+        SELECT p.monto, p.fecha_pago FROM pagos p
+        UNION ALL
+        SELECT pp.monto, pp.fecha_pago FROM pagos_prueba pp
+      ) x
+      WHERE EXTRACT(YEAR FROM fecha_pago) = $1;
+    `;
+    const { rows } = await pool.query(q, [anio]);
+    res.json({ total: rows[0]?.total || 0 });
   } catch (err) {
     console.error('Error en /total-anual-por-cuenta:', err);
     res.status(500).json({ error: 'Error al obtener total anual por cuenta' });
@@ -172,74 +217,85 @@ router.get('/detalle-modalidad', async (req, res) => {
 });
 
 /// 10. Recaudación por sede y mes pagado con monto esperado
-router.get('/recaudacion-por-sede', async (req, res) => {
+router.get('/recaudacion-por-sede', async (_req, res) => {
   try {
-    // 1. Obtener montos recaudados por sede y mes
-    const pagos = await pool.query(`
-  SELECT 
-    p.mes_pagado AS mes,
-    a.sede,
-    SUM(p.monto) AS total
-  FROM pagos p
-  JOIN alumnos a ON p.alumno_id = a.id
-  WHERE a.activo = true
-  GROUP BY p.mes_pagado, a.sede
-  ORDER BY mes DESC, a.sede
-`);
+    await ensureTablaPagosPrueba();
 
+    // 1) Recaudado: pagos normales por mes_pagado + pagos_prueba por fecha_pago, todo con sede normalizada
+    const qRecaudado = `
+      WITH p1 AS (
+        SELECT
+          p.mes_pagado AS mes,
+          CASE
+            WHEN lower(a.sede) LIKE '%goyena%' THEN 'Goyena'
+            WHEN lower(a.sede) LIKE '%craig%'  THEN 'Craig'
+            ELSE COALESCE(a.sede,'General')
+          END AS sede,
+          SUM(p.monto) AS total
+        FROM pagos p
+        JOIN alumnos a ON a.id = p.alumno_id
+        WHERE a.activo = true
+        GROUP BY 1,2
+      ),
+      p2 AS (
+        SELECT
+          TO_CHAR(DATE_TRUNC('month', pp.fecha_pago), 'YYYY-MM') AS mes,
+          CASE
+            WHEN lower(pp.sede) LIKE '%goyena%' THEN 'Goyena'
+            WHEN lower(pp.sede) LIKE '%craig%'  THEN 'Craig'
+            ELSE COALESCE(pp.sede,'General')
+          END AS sede,
+          SUM(pp.monto) AS total
+        FROM pagos_prueba pp
+        GROUP BY 1,2
+      )
+      SELECT mes, sede, SUM(total) AS total
+      FROM (
+        SELECT * FROM p1
+        UNION ALL
+        SELECT * FROM p2
+      ) u
+      GROUP BY mes, sede
+      ORDER BY mes DESC, sede;
+    `;
+    const recaudado = await pool.query(qRecaudado);
 
-    // 2. Obtener modalidades con sus precios
+    // 2) Esperado: alumnos activos NO becados, con sede normalizada, por precios de tipos_clase
     const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
-
-    // 3. Obtener alumnos activos (NO becados) con sede y tipo de clase
-const alumnos = await pool.query(`
-  SELECT a.sede, a.tipo_clase
-  FROM alumnos a
-  LEFT JOIN becados b ON b.alumno_id = a.id
-  WHERE a.activo = true
-    AND b.alumno_id IS NULL
-`);
-
-
-    // 4. Agrupar alumnos por sede y modalidad
-    const agrupado = {}; // { 'Craig Reformer': { 'Reformer': 4, ... }, ... }
-
-    for (let a of alumnos.rows) {
-      const sede = a.sede;
-      const modalidad = a.tipo_clase;
-
-      if (!sede || !modalidad) continue;
-
-      if (!agrupado[sede]) agrupado[sede] = {};
-      if (!agrupado[sede][modalidad]) agrupado[sede][modalidad] = 0;
-
-      agrupado[sede][modalidad]++;
-    }
-
-    // 5. Mapear precios por modalidad
     const precios = {};
-    for (let m of modalidades.rows) {
-      precios[m.modalidad] = parseFloat(m.precio) || 0;
-    }
+    (modalidades.rows || []).forEach(m => precios[m.modalidad] = Number(m.precio) || 0);
 
-    // 6. Calcular monto esperado por sede
+    const alumnos = await pool.query(`
+      SELECT a.sede, a.tipo_clase
+      FROM alumnos a
+      LEFT JOIN becados b ON b.alumno_id = a.id
+      WHERE a.activo = true AND b.alumno_id IS NULL
+    `);
+
+    const agrupado = {};  // { 'Craig': { 'Combinaciones - 1R 1C': 3, ... }, 'Goyena': {...} }
+    (alumnos.rows || []).forEach(a => {
+      const sede = normalizeSedeTxt(a.sede);
+      const mod  = (a.tipo_clase || '').trim();
+      if (!sede || !mod) return;
+      agrupado[sede] = agrupado[sede] || {};
+      agrupado[sede][mod] = (agrupado[sede][mod] || 0) + 1;
+    });
+
     const esperadosPorSede = {};
-    for (let sede in agrupado) {
+    for (const sede in agrupado) {
       let subtotal = 0;
-      for (let modalidad in agrupado[sede]) {
-        const cantidad = agrupado[sede][modalidad];
-        const precio = precios[modalidad] || 0;
-        subtotal += cantidad * precio;
+      for (const mod in agrupado[sede]) {
+        subtotal += (agrupado[sede][mod] || 0) * (precios[mod] || 0);
       }
       esperadosPorSede[sede] = subtotal;
     }
 
-    // 7. Construir resultado final
-    const resultado = pagos.rows.map(p => ({
-      mes: p.mes,
-      sede: p.sede,
-      total: parseFloat(p.total),
-      esperado: esperadosPorSede[p.sede] || 0
+    // 3) Resultado final: agrega columna 'esperado'
+    const resultado = recaudado.rows.map(r => ({
+      mes: r.mes,
+      sede: r.sede,
+      total: Number(r.total || 0),
+      esperado: esperadosPorSede[r.sede] || 0
     }));
 
     res.json(resultado);
