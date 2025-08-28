@@ -261,7 +261,7 @@
     const trh=document.createElement('tr');
     columnas.forEach(c=>{ const th=document.createElement('th'); th.textContent=c; trh.appendChild(th); });
     thead.appendChild(trh);
-    const monetarios=['total','monto supervisora','monto supervisora 2','esperado'];
+    const monetarios = ['total','monto supervisora','monto supervisora 2','esperado','diferencia'];
     datos.forEach(row=>{
       const tr=document.createElement('tr');
       columnas.forEach(col=>{
