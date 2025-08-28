@@ -504,19 +504,9 @@ async function inferirModalidadDeDetalle(x){
 
 
 // Cache global para precios por modalidad y diferencias calculadas
-let _preciosModalidad = null;   // { 'combinaciones - 1r 1c': 54000, ... } en minúsculas
+
 const _cacheDiff = new Map();   // clave "YYYY-MM|SEDE" -> número
 
-async function getPreciosModalidad(){
-  if (_preciosModalidad) return _preciosModalidad;
-  const rTipos = await fetchConToken('/tipos-clase');
-  const tipos  = await rTipos.json();
-  _preciosModalidad = {};
-  (tipos||[]).forEach(t=>{
-    _preciosModalidad[(t.modalidad||'').trim().toLowerCase()] = Number(t.precio||0);
-  });
-  return _preciosModalidad;
-}
 
 // Calcula la diferencia total (sum(pagado - esperado)) para un mes+sede
 async function calcularDiferenciaResumen(mes, sede){
