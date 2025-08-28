@@ -461,6 +461,47 @@ async function cargarReporteGastosPorCuenta(){
   }
 }
 
+// ===== CACHES =====
+let _preciosModalidad = null;        // { 'combinaciones - 1r 1c': 54000, ... }
+let _alumnosIdx = null;              // { byId: Map, byNumero: Map }
+
+// Trae y cachea precios por modalidad
+async function getPreciosModalidad(){
+  if (_preciosModalidad) return _preciosModalidad;
+  const rTipos = await fetchConToken('/tipos-clase');
+  const tipos  = await rTipos.json();
+  _preciosModalidad = {};
+  (tipos||[]).forEach(t=>{
+    _preciosModalidad[(t.modalidad||'').trim().toLowerCase()] = Number(t.precio||0);
+  });
+  return _preciosModalidad;
+}
+
+// Trae y cachea alumnos indexados por id y por numero_alumno
+async function getAlumnosIndex(){
+  if (_alumnosIdx) return _alumnosIdx;
+  const r = await fetchConToken('/alumnos');
+  const a = await r.json();
+  const byId     = new Map();
+  const byNumero = new Map();
+  (a||[]).forEach(x=>{
+    byId.set(String(x.id), x);
+    byNumero.set(String(x.numero_alumno), x);
+  });
+  _alumnosIdx = { byId, byNumero };
+  return _alumnosIdx;
+}
+
+// Dada una fila del detalle (x), devuelve la modalidad del alumno
+async function inferirModalidadDeDetalle(x){
+  const idx = await getAlumnosIndex();
+  let alumno = null;
+  if (x.alumno_id != null) alumno = idx.byId.get(String(x.alumno_id));
+  if (!alumno && x.numero_alumno != null) alumno = idx.byNumero.get(String(x.numero_alumno));
+  return (alumno?.tipo_clase || '').trim();
+}
+
+
 
 // Cache global para precios por modalidad y diferencias calculadas
 let _preciosModalidad = null;   // { 'combinaciones - 1r 1c': 54000, ... } en minúsculas
@@ -480,24 +521,23 @@ async function getPreciosModalidad(){
 // Calcula la diferencia total (sum(pagado - esperado)) para un mes+sede
 async function calcularDiferenciaResumen(mes, sede){
   const key = `${mes}|${sede}`;
-  if (_cacheDiff.has(key)) return _cacheDiff.get(key);
+  if (_cacheDiff?.has?.(key)) return _cacheDiff.get(key);
 
-  const precios = await getPreciosModalidad();
+  const [precios] = await Promise.all([ getPreciosModalidad() ]);
   const rDet = await fetchConToken(`/reportes/pagos-parciales-detalle?mes=${encodeURIComponent(mes)}&sede=${encodeURIComponent(sede)}`);
   const det  = await rDet.json();
 
   let diffTotal = 0;
-  (det||[]).forEach(x=>{
-    const modalidad = String(x.modalidad||'').trim().toLowerCase();
+  for (const x of (det||[])){
+    const modalidad = (await inferirModalidadDeDetalle(x)).toLowerCase();
     const esperado  = precios[modalidad] || 0;
     const pagado    = Number(x.monto||0);
     diffTotal      += (pagado - esperado);
-  });
+  }
 
   _cacheDiff.set(key, diffTotal);
   return diffTotal;
 }
-
 // ❶ Resumen: ahora incluye columna "Diferencia" (pagado - esperado) totalizada por fila
 async function cargarReportePagosParciales(){
   try{
@@ -567,6 +607,56 @@ async function cargarReportePagosParciales(){
     console.error('Error pagos parciales:', e);
   }
 }
+
+async function abrirDetalleParciales(mes, sede){
+  try{
+    const [precios] = await Promise.all([ getPreciosModalidad() ]);
+    const rDet = await fetchConToken(`/reportes/pagos-parciales-detalle?mes=${encodeURIComponent(mes)}&sede=${encodeURIComponent(sede)}`);
+    const det  = await rDet.json();
+
+    const titulo = document.getElementById('tituloDetalleIngreso');
+    const cont   = document.getElementById('contenidoDetalleIngreso');
+    titulo.textContent = `Pagos parciales — ${formatearMesYYYYMM(mes)} — ${sede}`;
+    cont.innerHTML = '';
+
+    if (!det.length){
+      cont.innerHTML = '<p>No hay registros.</p>';
+    } else {
+      const t = document.createElement('table');
+      t.innerHTML = '<thead><tr><th>N°</th><th>Apellido</th><th>Nombre</th><th>Modalidad</th><th>Esperado</th><th>Pagado</th><th>Diferencia</th><th>Fecha de pago</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      for (const x of det){
+        const modalidad  = (await inferirModalidadDeDetalle(x)) || '-';
+        const key        = modalidad.toLowerCase();
+        const esperado   = precios[key] || 0;
+        const pagado     = Number(x.monto||0);
+        const diff       = pagado - esperado;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${x.numero_alumno ?? '-'}</td>
+          <td>${x.apellido ?? ''}</td>
+          <td>${x.nombre ?? ''}</td>
+          <td>${modalidad || '-'}</td>
+          <td>$ ${Math.round(esperado).toLocaleString('es-AR')}</td>
+          <td>$ ${Math.round(pagado).toLocaleString('es-AR')}</td>
+          <td style="color:${diff<0?'red':'green'}">$ ${Math.round(diff).toLocaleString('es-AR')}</td>
+          <td>${(x.fecha_pago||'').slice(0,10)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      t.appendChild(tbody);
+      cont.appendChild(t);
+    }
+
+    document.getElementById('modalDetalleIngresos').style.display = 'flex';
+  }catch(e){
+    console.error('Error detalle pagos parciales:', e);
+  }
+}
+
 
 
   /* Botonera: mostrar/ocultar */
