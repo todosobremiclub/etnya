@@ -254,6 +254,16 @@ input[type="month"].fake-placeholder:invalid:before {
   <input type="number" id="montoParcial" disabled>
 </div>
 
+<!-- Grupo especial para Pagos de clases de prueba -->
+<div id="grupoPrueba" style="display:none; margin-top:10px;">
+  <label for="comentarioPrueba">Comentario:</label>
+  <textarea id="comentarioPrueba" rows="3" placeholder="Escribí un comentario (opcional)"></textarea>
+
+  <label for="montoFijo">Monto fijo (en $):</label>
+  <input type="number" id="montoFijo" min="0" step="1" placeholder="0">
+</div>
+
+
 <!-- Botón Guardar ahora dentro del formulario -->
 <div style="text-align: center; margin-top: 20px;">
   <button onclick="guardarPago()" style="
@@ -326,50 +336,197 @@ input[type="month"].fake-placeholder:invalid:before {
 </script>
 
 
-  <script>
+<script>
+/* ====== Constantes / estado ====== */
+const OPT_PRUEBA_VALUE = 'PRUEBA_SPECIAL';
+const alumnos = [];
+let tiposClase = [];
+let pagosGlobal = [];
 
-if (localStorage.getItem('etnya_login') !== 'ok') {
-  window.location.href = 'login.html';
-}
-
+/* ====== Util ====== */
 function normalizarTexto(texto) {
-  return texto.toLowerCase().trim().replace(/\s+/g, ' ');
+  return (texto || '').toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
-  const alumnos = [];
-  let tiposClase = [];
-  let pagosGlobal = [];
-
-
-
-  
-  // Inicializar Select2 después de que DOM esté listo
-$(document).ready(() => {
-  $('#alumno-select').select2({
-    placeholder: "Seleccionar alumno",
-    width: '100%'
-  });
-});
- 
-
- 
-
-  document.getElementById("parcial").addEventListener("change", (e) => {
+/* ====== UI: monto parcial ====== */
+document.getElementById("parcial").addEventListener("change", (e) => {
   const grupo = document.getElementById("grupoMontoManual");
   const montoParcial = document.getElementById("montoParcial");
   grupo.style.display = e.target.checked ? 'block' : 'none';
   montoParcial.disabled = !e.target.checked;
 });
 
+/* ====== Select2 ====== */
+$(document).ready(() => {
+  $('#alumno-select').select2({
+    placeholder: "Seleccionar alumno",
+    width: '100%'
+  });
+});
 
+/* ====== Cargar cuentas ====== */
+async function cargarCuentas() {
+  try {
+    const res = await fetch('/cuentas');
+    const cuentas = await res.json();
+    const select = document.getElementById('cuenta');
+    select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+    cuentas.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.nombre;
+      option.textContent = c.nombre;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error al cargar cuentas:', err);
+  }
+}
 
- 
- async function guardarPago() {
+/* ====== ONLOAD ====== */
+window.onload = async () => {
+  // Seguridad (ya la tenés arriba, pero lo dejamos por si este script se mueve)
+  if (localStorage.getItem('etnya_login') !== 'ok') {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // 1) Datos base
+  const resAlumnos = await fetch('/alumnos');
+  const dataAlumnos = await resAlumnos.json();
+  alumnos.splice(0, alumnos.length, ...dataAlumnos);
+
+  await cargarCuentas();
+
+  const resTipos = await fetch('/tipos-clase');
+  tiposClase = await resTipos.json();
+
+  // 2) Poblar selector de alumnos (+ opción PRUEBA al inicio)
+  const alumnoSelect = document.getElementById("alumno-select");
+  alumnoSelect.innerHTML = '';
+
+  // Opción especial primero
+  const optPrueba = new Option('000 - General - Pagos de clases de prueba', OPT_PRUEBA_VALUE, false, false);
+  alumnoSelect.add(optPrueba);
+
+  // Luego alumnos reales
+  alumnos.forEach(a => {
+    const option = document.createElement("option");
+    option.value = a.id;
+    let numeroFormateado = a.numero_alumno;
+    if (a.numero_alumno < 100) {
+      numeroFormateado = String(a.numero_alumno).padStart(2, '0');
+    }
+    option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
+    alumnoSelect.appendChild(option);
+  });
+
+  // 3) Cambio de alumno => conmuta UI (normal vs prueba)
+  $('#alumno-select').on('change', function () {
+    const id = this.value;
+    const esPrueba = (id === OPT_PRUEBA_VALUE);
+
+    // Bloques a ocultar/mostrar
+    const $mesPago     = document.getElementById('mesPago')?.parentElement;
+    const $modalidad   = document.getElementById('modalidad')?.parentElement;
+    const $montoStd    = document.getElementById('monto')?.parentElement;
+    const $grupoManual = document.getElementById('grupoMontoManual');
+    const $chkParcial  = document.getElementById('parcial');
+
+    // Grupo especial (debe existir en el HTML, ver instrucciones previas)
+    const $grupoPrueba = document.getElementById('grupoPrueba');
+    if ($grupoPrueba) $grupoPrueba.style.display = esPrueba ? 'block' : 'none';
+
+    // Campos estándar
+    if ($mesPago)     $mesPago.style.display     = esPrueba ? 'none' : 'block';
+    if ($modalidad)   $modalidad.style.display   = esPrueba ? 'none' : 'block';
+    if ($montoStd)    $montoStd.style.display    = esPrueba ? 'none' : 'block';
+    if ($grupoManual) $grupoManual.style.display = esPrueba ? 'none' : ($chkParcial.checked ? 'block' : 'none');
+
+    if ($chkParcial) {
+      $chkParcial.disabled = esPrueba;
+      if (esPrueba) {
+        $chkParcial.checked = false;
+        document.getElementById('montoParcial').value = '';
+      }
+    }
+
+    if (esPrueba) {
+      // Limpiar modalidad/monto si venías de un alumno normal
+      document.getElementById("modalidad").value = '';
+      document.getElementById("monto").value     = '';
+      return;
+    }
+
+    // Alumno normal
+    const alumno = alumnos.find(a => String(a.id) === String(id));
+    if (!alumno) return;
+
+    const tipo = tiposClase.find(t =>
+      normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
+    );
+
+    document.getElementById("modalidad").value = alumno.tipo_clase || '';
+    document.getElementById("monto").value     = tipo?.precio || '';
+  });
+
+  // 4) Buscador
+  document.getElementById('buscadorPagos').addEventListener('input', (e) => {
+    renderPagos(e.target.value);
+  });
+
+  // 5) Disparar cambio y cargar pagos
+  alumnoSelect.dispatchEvent(new Event('change'));
+  $('#alumno-select').trigger('change.select2');
+  await cargarPagos();
+};
+
+/* ====== Guardar pago ====== */
+async function guardarPago() {
   const alumnoId = $('#alumno-select').val();
+  const cuenta   = document.getElementById("cuenta").value;
+
+  if (!cuenta) {
+    alert("Seleccioná la cuenta.");
+    return;
+  }
+
+  // Flujo especial PRUEBA
+  if (alumnoId === OPT_PRUEBA_VALUE) {
+    const montoFijo  = document.getElementById('montoFijo')?.value;
+    const comentario = document.getElementById('comentarioPrueba')?.value || null;
+
+    if (!montoFijo || isNaN(montoFijo) || parseFloat(montoFijo) <= 0) {
+      alert("Ingresá un monto válido para el pago de prueba.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/pagos/prueba', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          comentario,
+          monto: parseFloat(montoFijo),
+          cuenta
+        })
+      });
+      if (res.ok) {
+        alert("Pago de prueba registrado con éxito.");
+        await cargarPagos();
+        cerrarFormularioPago();
+      } else {
+        alert("Error al registrar el pago de prueba.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Ocurrió un error al registrar el pago de prueba.");
+    }
+    return;
+  }
+
+  // Flujo alumno normal
   const mes = document.getElementById("mesPago").value;
   let monto = '';
-  const cuenta = document.getElementById("cuenta").value;
-
   if (document.getElementById("parcial").checked) {
     monto = document.getElementById("montoParcial").value;
     if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
@@ -380,7 +537,7 @@ $(document).ready(() => {
     monto = document.getElementById("monto").value;
   }
 
-  if (!alumnoId || !mes || !monto || !cuenta) {
+  if (!alumnoId || !mes || !monto) {
     alert("Faltan datos obligatorios.");
     return;
   }
@@ -412,12 +569,32 @@ $(document).ready(() => {
   }
 }
 
-
+/* ====== Listado / Render ====== */
 async function cargarPagos() {
-  const res = await fetch('/pagos');
-  pagosGlobal = await res.json();           // guardo todo
+  // Traer pagos normales + pagos de prueba
+  const [resPagos, resPrueba] = await Promise.all([
+    fetch('/pagos'),
+    fetch('/pagos/prueba')
+  ]);
+
+  const pagos = await resPagos.json();
+  const pagosPrueba = await resPrueba.json();
+
+  // Mapear pagos de prueba con formato compatible
+  const mappedPrueba = (pagosPrueba || []).map(p => ({
+    id        : p.id,
+    alumno_id : OPT_PRUEBA_VALUE,
+    mes_pagado: '-',                  // sin mes
+    monto     : p.monto,
+    cuenta    : p.cuenta,
+    fecha_pago: p.fecha_pago,
+    __tipo    : 'prueba',
+    __comentario: p.comentario || ''
+  }));
+
+  pagosGlobal = [...pagos, ...mappedPrueba];
   const q = document.getElementById('buscadorPagos')?.value || '';
-  renderPagos(q);                           // render con filtro actual
+  renderPagos(q);
 }
 
 function renderPagos(query = '') {
@@ -425,38 +602,50 @@ function renderPagos(query = '') {
   tbody.innerHTML = '';
 
   const term = normalizarTexto(query);
-  // filtrar por nro, apellido o nombre y luego ordenar
-const pagos = pagosGlobal
-  .filter(p => {
-    const a = alumnos.find(x => x.id === p.alumno_id);
-    if (!a) return false;
-    if (!term) return true;
-    const nro = String(a.numero_alumno || '');
-    const ape = normalizarTexto(a.apellido || '');
-    const nom = normalizarTexto(a.nombre || '');
-    return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
-           normalizarTexto(`${ape} ${nom}`).includes(term);
-  })
-  .sort((p1, p2) => {
-    const a1 = alumnos.find(x => x.id === p1.alumno_id);
-    const a2 = alumnos.find(x => x.id === p2.alumno_id);
-    return (a1?.numero_alumno || 0) - (a2?.numero_alumno || 0);
-  });
 
+  // filtrar y ordenar (PRUEBA se ordena como nro=0)
+  const pagos = pagosGlobal
+    .filter(p => {
+      if (p.alumno_id === OPT_PRUEBA_VALUE) {
+        if (!term) return true;
+        const label = normalizarTexto('000 pagos de clases de prueba general');
+        return label.includes(term);
+      }
+      const a = alumnos.find(x => x.id === p.alumno_id);
+      if (!a) return false;
+      if (!term) return true;
+      const nro = String(a.numero_alumno || '');
+      const ape = normalizarTexto(a.apellido || '');
+      const nom = normalizarTexto(a.nombre || '');
+      return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
+             normalizarTexto(`${ape} ${nom}`).includes(term);
+    })
+    .sort((p1, p2) => {
+      const getNum = (p) => p.alumno_id === OPT_PRUEBA_VALUE
+        ? 0
+        : (alumnos.find(x => x.id === p.alumno_id)?.numero_alumno || 0);
+      return getNum(p1) - getNum(p2);
+    });
 
-  // Agrupar por sede y luego por alumno
+  // Agrupar por sede y alumno
   const pagosPorSede = {};
   pagos.forEach(p => {
-    const alumno = alumnos.find(a => a.id === p.alumno_id);
-    if (!alumno) return;
+    let sede = 'Sin Sede';
+    let alumnoLabel = '';
 
-    const sede = alumno.sede || 'Sin Sede';
+    if (p.alumno_id === OPT_PRUEBA_VALUE) {
+      sede = 'General';
+      alumnoLabel = '000 - Pagos de clases de prueba';
+    } else {
+      const a = alumnos.find(al => al.id === p.alumno_id);
+      if (!a) return;
+      sede = a.sede || 'Sin Sede';
+      alumnoLabel = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
+    }
+
     if (!pagosPorSede[sede]) pagosPorSede[sede] = {};
-
-    const nombreCompleto = `${alumno.numero_alumno} - ${alumno.apellido}, ${alumno.nombre}`;
-    if (!pagosPorSede[sede][nombreCompleto]) pagosPorSede[sede][nombreCompleto] = [];
-
-    pagosPorSede[sede][nombreCompleto].push({ ...p, alumno });
+    if (!pagosPorSede[sede][alumnoLabel]) pagosPorSede[sede][alumnoLabel] = [];
+    pagosPorSede[sede][alumnoLabel].push(p);
   });
 
   let sedeIndex = 0;
@@ -484,108 +673,86 @@ const pagos = pagosGlobal
 
       pagosPorSede[sede][alumnoNombre].forEach(p => {
         const tr = document.createElement("tr");
-        tr.classList.add(grupoId);
-        tr.classList.add(sedeId);
+        tr.classList.add(grupoId, sedeId);
         tr.style.display = 'none';
 
-        const [año, mes] = p.mes_pagado.split('-');
-        const mesFormateado = `${mes}/${año}`;
-        const tipo = tiposClase.find(t =>
-          normalizarTexto(t.modalidad) === normalizarTexto(p.alumno.tipo_clase)
-        );
-
-        tr.innerHTML = `
-          <td>${p.alumno.numero_alumno}</td>
-          <td>${p.alumno.nombre} ${p.alumno.apellido}</td>
-          <td>${tipo?.modalidad || p.alumno.tipo_clase || '-'}</td>
-          <td>${mesFormateado}</td>
-          <td>$${parseFloat(p.monto).toFixed(2)}</td>
-          <td>
-            ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-            <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
-          </td>
-          <td>${p.cuenta || '-'}</td>
-        `;
+        if (p.alumno_id === OPT_PRUEBA_VALUE) {
+          tr.innerHTML = `
+            <td>000</td>
+            <td>Pagos de prueba</td>
+            <td>Prueba ${p.__comentario ? `- ${p.__comentario}` : ''}</td>
+            <td>-</td>
+            <td>$${parseFloat(p.monto).toFixed(2)}</td>
+            <td>
+              ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+              <button onclick="eliminarPagoPrueba(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
+            </td>
+            <td>${p.cuenta || '-'}</td>
+          `;
+        } else {
+          const a = alumnos.find(x => x.id === p.alumno_id);
+          const [anio, mes] = String(p.mes_pagado || '').split('-');
+          const mesFormateado = (anio && mes) ? `${mes}/${anio}` : '-';
+          const tipo = tiposClase.find(t =>
+            normalizarTexto(t.modalidad) === normalizarTexto(a?.tipo_clase)
+          );
+          tr.innerHTML = `
+            <td>${a?.numero_alumno ?? '-'}</td>
+            <td>${a?.nombre ?? ''} ${a?.apellido ?? ''}</td>
+            <td>${tipo?.modalidad || a?.tipo_clase || '-'}</td>
+            <td>${mesFormateado}</td>
+            <td>$${parseFloat(p.monto).toFixed(2)}</td>
+            <td>
+              ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+              <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
+            </td>
+            <td>${p.cuenta || '-'}</td>
+          `;
+        }
         tbody.appendChild(tr);
       });
     }
   }
 }
 
-
-
-
-
-
- window.onload = async () => {
-  const resAlumnos = await fetch('/alumnos');
-  const dataAlumnos = await resAlumnos.json();
-  alumnos.push(...dataAlumnos);
-
-  await cargarCuentas();
-
-  const resTipos = await fetch('/tipos-clase');
-  tiposClase = await resTipos.json();
-
-  const alumnoSelect = document.getElementById("alumno-select");
-  alumnoSelect.innerHTML = '';
-
-  alumnos.forEach(a => {
-    const option = document.createElement("option");
-    option.value = a.id;
-
-    let numeroFormateado = a.numero_alumno;
-    if (a.numero_alumno < 100) {
-      numeroFormateado = String(a.numero_alumno).padStart(2, '0');
-    }
-    option.textContent = `${numeroFormateado}-${a.sede || ''} - ${a.apellido}, ${a.nombre}`;
-    alumnoSelect.appendChild(option);
-  });
-
-  $('#alumno-select').on('change', function () {
-    const id = this.value;
-    const alumno = alumnos.find(a => a.id == id);
-    if (!alumno) return;
-
-    const tipo = tiposClase.find(t =>
-      normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
-    );
-
-    document.getElementById("modalidad").value = alumno.tipo_clase || '';
-    document.getElementById("monto").value = tipo?.precio || '';
-  });
-
-document.getElementById('buscadorPagos').addEventListener('input', (e) => {
-    renderPagos(e.target.value);
-  });
-
-  alumnoSelect.dispatchEvent(new Event('change'));
-  $('#alumno-select').trigger('change.select2');
-
-  await cargarPagos();
-  
-};
-
-
+/* ====== Helpers de UI ====== */
 function toggleGrupo(grupoId) {
-    const filas = document.querySelectorAll(`.${grupoId}`);
-    filas.forEach(f => {
-      f.style.display = (f.style.display === 'none') ? '' : 'none';
-    });
-  }
+  const filas = document.querySelectorAll(`.${grupoId}`);
+  filas.forEach(f => {
+    f.style.display = (f.style.display === 'none') ? '' : 'none';
+  });
+}
+
+function toggleSede(sedeId) {
+  const filas = document.querySelectorAll(`.${sedeId}`);
+  filas.forEach(f => {
+    f.style.display = (f.style.display === 'none') ? '' : 'none';
+  });
+}
+
+function mostrarFormularioPago() {
+  const form = document.getElementById("formularioPago");
+  form.style.display = form.style.display === "none" ? "block" : "none";
+}
+
+function cerrarFormularioPago() {
+  document.getElementById("formularioPago").style.display = "none";
+}
+
+function toggleMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('mostrar');
+}
 
 function cerrarSesion() {
   localStorage.removeItem('etnya_login');
   window.location.href = 'login.html';
 }
 
+/* ====== Borrados ====== */
 async function eliminarPago(id) {
   if (!confirm("¿Estás seguro de que querés eliminar este pago?")) return;
-
-  const res = await fetch(`/pagos/${id}`, {
-    method: 'DELETE'
-  });
-
+  const res = await fetch(`/pagos/${id}`, { method: 'DELETE' });
   if (res.ok) {
     alert("Pago eliminado correctamente.");
     await cargarPagos();
@@ -593,6 +760,31 @@ async function eliminarPago(id) {
     alert("Error al eliminar el pago.");
   }
 }
+
+async function eliminarPagoPrueba(id) {
+  if (!confirm("¿Eliminar este pago de prueba?")) return;
+  const res = await fetch(`/pagos/prueba/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    alert("Pago de prueba eliminado.");
+    await cargarPagos();
+  } else {
+    alert("Error al eliminar el pago de prueba.");
+  }
+}
+</script>
+
+
+async function eliminarPagoPrueba(id) {
+  if (!confirm("¿Eliminar este pago de prueba?")) return;
+  const res = await fetch(`/pagos/prueba/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    alert("Pago de prueba eliminado.");
+    await cargarPagos();
+  } else {
+    alert("Error al eliminar el pago de prueba.");
+  }
+}
+
 
 async function cargarCuentas() {
   try {
