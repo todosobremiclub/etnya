@@ -968,6 +968,9 @@ console.log(`Calculando pago para ${alumno.apellido} (becado: ${alumno.becado})`
     if (!textoCompleto.includes(filtroTexto)) return;
     if (mostrarConDeuda && calcularEstadoPago(alumno) !== 'mora') return;
 
+// ✅ Filtrar por sede
+  if (sedeSeleccionada !== 'Todas' && alumno.sede !== sedeSeleccionada) return;
+
     const numero = parseInt(alumno.numero_alumno, 10);
     const numeroStr = numero.toString().padStart(2, '0');
     const sede = alumno.sede === 'Craig' ? 'C' : 'G';
