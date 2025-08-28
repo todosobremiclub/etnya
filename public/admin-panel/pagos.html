@@ -165,6 +165,45 @@ input[type="month"].fake-placeholder:invalid:before {
   font-size: 14px;
 }
 
+/* Labels en su propia línea */
+.formulario label{
+  display:block;
+  margin: 6px 0 4px;
+  font-weight: 600;
+}
+
+/* Textarea consistente con inputs */
+.formulario textarea{
+  width: 100%;
+  min-height: 90px;
+  padding: 8px;
+  margin: 0 0 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/* Layout del bloque de prueba en dos columnas */
+#grupoPrueba{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+/* El comentario ocupa todo el ancho */
+#grupoPrueba .full{
+  grid-column: 1 / -1;
+}
+
+/* En mobile, una sola columna */
+@media (max-width: 768px){
+  #grupoPrueba{ grid-template-columns: 1fr; }
+}
+
+
   </style>
 </head>
 
@@ -256,19 +295,25 @@ input[type="month"].fake-placeholder:invalid:before {
 
 <!-- Grupo especial para Pagos de clases de prueba -->
 <div id="grupoPrueba" style="display:none; margin-top:10px;">
-  <label for="comentarioPrueba">Comentario:</label>
-  <textarea id="comentarioPrueba" rows="3" placeholder="Escribí un comentario (opcional)"></textarea>
+  <div class="full">
+    <label for="comentarioPrueba">Comentario:</label>
+    <textarea id="comentarioPrueba" rows="3" placeholder="Escribí un comentario (opcional)"></textarea>
+  </div>
 
-  <label for="montoFijo">Monto fijo (en $):</label>
-  <input type="number" id="montoFijo" min="0" step="1" placeholder="0">
+  <div>
+    <label for="montoFijo">Monto fijo (en $):</label>
+    <input type="number" id="montoFijo" min="0" step="1" placeholder="0">
+  </div>
 
-  <label for="sedePrueba">Sede:</label>
-  <select id="sedePrueba">
-    <option value="">Seleccioná sede</option>
-    <option value="Craig Reformer">Craig Reformer</option>
-    <option value="Craig Circuito">Craig Circuito</option>
-    <option value="Pedro Goyena">Pedro Goyena</option>
-  </select>
+  <div>
+    <label for="sedePrueba">Sede:</label>
+    <select id="sedePrueba">
+      <option value="">Seleccioná sede</option>
+      <option value="Craig Reformer">Craig Reformer</option>
+      <option value="Craig Circuito">Craig Circuito</option>
+      <option value="Pedro Goyena">Pedro Goyena</option>
+    </select>
+  </div>
 </div>
 
 
