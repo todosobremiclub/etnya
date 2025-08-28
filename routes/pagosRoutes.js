@@ -63,5 +63,63 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ===== Pagos de clases de prueba =====
+// Crea la tabla si no existe: id, comentario, monto, cuenta, fecha_pago
+async function ensureTablaPagosPrueba() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pagos_prueba (
+      id SERIAL PRIMARY KEY,
+      comentario TEXT,
+      monto NUMERIC NOT NULL,
+      cuenta TEXT NOT NULL,
+      fecha_pago TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
+// Registrar un pago de prueba (monto fijo + comentario + cuenta)
+router.post('/prueba', async (req, res) => {
+  const { comentario, monto, cuenta } = req.body || {};
+  if (!monto || !cuenta) {
+    return res.status(400).json({ error: 'Faltan datos: monto y cuenta son obligatorios.' });
+  }
+  try {
+    await ensureTablaPagosPrueba();
+    await pool.query(
+      `INSERT INTO pagos_prueba (comentario, monto, cuenta) VALUES ($1, $2, $3)`,
+      [comentario || null, monto, cuenta]
+    );
+    res.status(200).json({ message: 'Pago de prueba registrado.' });
+  } catch (e) {
+    console.error('Error al guardar pago de prueba:', e);
+    res.status(500).json({ error: 'Error al guardar pago de prueba.' });
+  }
+});
+
+// Listar pagos de prueba (orden por fecha desc)
+router.get('/prueba', async (_req, res) => {
+  try {
+    await ensureTablaPagosPrueba();
+    const r = await pool.query(`SELECT * FROM pagos_prueba ORDER BY fecha_pago DESC`);
+    res.json(r.rows);
+  } catch (e) {
+    console.error('Error al obtener pagos de prueba:', e);
+    res.status(500).json({ error: 'Error al obtener pagos de prueba' });
+  }
+});
+
+// Eliminar pago de prueba
+router.delete('/prueba/:id', async (req, res) => {
+  const { id } = req.params || {};
+  try {
+    await pool.query(`DELETE FROM pagos_prueba WHERE id = $1`, [id]);
+    res.sendStatus(200);
+  } catch (e) {
+    console.error('Error al eliminar pago de prueba:', e);
+    res.status(500).json({ error: 'Error al eliminar pago de prueba.' });
+  }
+});
+
+
 module.exports = router;
 
