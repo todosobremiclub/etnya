@@ -513,8 +513,17 @@ async function cargarReportePagosParciales(){
 // ❷ Detalle: lista personas (usa el modal reutilizable ya presente en el archivo)
 async function abrirDetalleParciales(mes, sede){
   try{
-    const r = await fetchConToken(`/reportes/pagos-parciales-detalle?mes=${encodeURIComponent(mes)}&sede=${encodeURIComponent(sede)}`);
-    const det = await r.json();
+    // Traigo detalle y modalidades en paralelo
+    const [rDet, rTipos] = await Promise.all([
+      fetchConToken(`/reportes/pagos-parciales-detalle?mes=${encodeURIComponent(mes)}&sede=${encodeURIComponent(sede)}`),
+      fetchConToken('/tipos-clase')
+    ]);
+    const det = await rDet.json();
+    const tipos = await rTipos.json();
+
+    // Mapa modalidad → precio
+    const precios = {};
+    tipos.forEach(t => { precios[t.modalidad.trim().toLowerCase()] = Number(t.precio||0); });
 
     const titulo = document.getElementById('tituloDetalleIngreso');
     const cont   = document.getElementById('contenidoDetalleIngreso');
@@ -525,15 +534,23 @@ async function abrirDetalleParciales(mes, sede){
       cont.innerHTML = '<p>No hay registros.</p>';
     } else {
       const t = document.createElement('table');
-      t.innerHTML = '<thead><tr><th>N°</th><th>Apellido</th><th>Nombre</th><th>Monto</th><th>Fecha de pago</th></tr></thead>';
+      t.innerHTML = '<thead><tr><th>N°</th><th>Apellido</th><th>Nombre</th><th>Modalidad</th><th>Esperado</th><th>Pagado</th><th>Diferencia</th><th>Fecha de pago</th></tr></thead>';
       const tbody = document.createElement('tbody');
       det.forEach(x=>{
+        const modalidad = (x.modalidad||'').trim().toLowerCase();
+        const esperado  = precios[modalidad] || 0;
+        const pagado    = Number(x.monto||0);
+        const diff      = pagado - esperado;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${x.numero_alumno ?? '-'}</td>
           <td>${x.apellido ?? ''}</td>
           <td>${x.nombre ?? ''}</td>
-          <td>$ ${Number(x.monto||0).toLocaleString('es-AR')}</td>
+          <td>${x.modalidad ?? '-'}</td>
+          <td>$ ${esperado.toLocaleString('es-AR')}</td>
+          <td>$ ${pagado.toLocaleString('es-AR')}</td>
+          <td style="color:${diff<0?'red':'green'}">$ ${diff.toLocaleString('es-AR')}</td>
           <td>${(x.fecha_pago||'').slice(0,10)}</td>
         `;
         tbody.appendChild(tr);
