@@ -478,7 +478,7 @@ async function cargarReportePagosParciales(){
     const t = document.createElement('table');
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');
-    ['Mes','Sede','Cantidad'].forEach(h=>{
+    ['Mes','Sede','Cantidad','Total'].forEach(h=>{
       const th = document.createElement('th'); th.textContent = h; trh.appendChild(th);
     });
     thead.appendChild(trh);
@@ -490,13 +490,14 @@ async function cargarReportePagosParciales(){
       tr.dataset.mes  = row.mes;    // YYYY-MM
       tr.dataset.sede = row.sede;
 
-      const tdMes = document.createElement('td');  tdMes.textContent  = formatearMesYYYYMM(row.mes);
-      const tdSed = document.createElement('td');  tdSed.textContent  = row.sede || '-';
-      const tdCant= document.createElement('td');  tdCant.textContent = row.cantidad;
+      const tdMes   = document.createElement('td');  tdMes.textContent   = formatearMesYYYYMM(row.mes);
+      const tdSed   = document.createElement('td');  tdSed.textContent   = row.sede || '-';
+      const tdCant  = document.createElement('td');  tdCant.textContent  = row.cantidad;
+      const tdTotal = document.createElement('td');  tdTotal.textContent = `$ ${Math.round(Number(row.total||0)).toLocaleString('es-AR')}`;
 
-      tr.appendChild(tdMes); tr.appendChild(tdSed); tr.appendChild(tdCant);
+      tr.appendChild(tdMes); tr.appendChild(tdSed); tr.appendChild(tdCant); tr.appendChild(tdTotal);
 
-      // doble click → abre detalle en el modal existente
+      // doble click → abrir detalle
       tr.addEventListener('dblclick', () => {
         abrirDetalleParciales(tr.dataset.mes, tr.dataset.sede);
       });
@@ -509,7 +510,6 @@ async function cargarReportePagosParciales(){
     console.error('Error pagos parciales:', e);
   }
 }
-
 // ❷ Detalle: lista personas (usa el modal reutilizable ya presente en el archivo)
 async function abrirDetalleParciales(mes, sede){
   try{

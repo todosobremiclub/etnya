@@ -292,7 +292,7 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
   }
 });
 
-// 13) Pagos parciales: RESUMEN por mes (YYYY-MM) y sede
+// 13) Pagos parciales: RESUMEN por mes (YYYY-MM) y sede, con TOTAL en pesos
 router.get('/pagos-parciales-resumen', async (req, res) => {
   try {
     const q = `
@@ -303,8 +303,7 @@ router.get('/pagos-parciales-resumen', async (req, res) => {
           p.monto,
           p.fecha_pago,
           COALESCE(p.pago_parcial, false) AS pago_parcial,
-          -- Normalizamos mes_pagado a 'YYYY-MM' venga como TEXT 'YYYY-MM',
-          -- 'YYYY-MM-DD' o DATE:
+          -- Normalizamos mes_pagado a 'YYYY-MM' venga como TEXT, 'YYYY-MM-DD' o DATE
           to_char(
             CASE
               WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}$'
@@ -319,7 +318,11 @@ router.get('/pagos-parciales-resumen', async (req, res) => {
           ) AS ym
         FROM pagos p
       )
-      SELECT pn.ym AS mes, a.sede, COUNT(*) AS cantidad
+      SELECT 
+        pn.ym  AS mes,
+        a.sede AS sede,
+        COUNT(*)         AS cantidad,
+        SUM(pn.monto)    AS total     -- ← NUEVO: total en pesos
       FROM pagos_norm pn
       JOIN alumnos a ON a.id = pn.alumno_id
       LEFT JOIN tipos_clase t
