@@ -401,6 +401,30 @@ function normalizarTexto(texto) {
   return (texto || '').toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+// 👇 Pegá aquí los helpers
+function normalizarSede(valor) {
+  const txt = (valor || '').toLowerCase();
+  if (txt.includes('goyena')) return 'Goyena';
+  if (txt.includes('craig'))  return 'Craig';
+  return 'General';
+}
+
+// Clave mes: para pagos normales usa mes_pagado (YYYY-MM),
+// para prueba toma YYYY-MM desde fecha_pago
+function getMesKey(p) {
+  if (p.alumno_id === OPT_PRUEBA_VALUE) {
+    const d = new Date(p.fecha_pago);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  }
+  return p.mes_pagado || 'Sin Mes';
+}
+
+/* ====== UI: monto parcial ====== */
+document.getElementById("parcial").addEventListener("change", (e) => {
+  ...
+
 /* ====== UI: monto parcial ====== */
 document.getElementById("parcial").addEventListener("change", (e) => {
   const grupo = document.getElementById("grupoMontoManual");
@@ -633,7 +657,6 @@ if (!sede) {
 
 /* ====== Listado / Render ====== */
 async function cargarPagos() {
-  // Traer pagos normales + pagos de prueba
   const [resPagos, resPrueba] = await Promise.all([
     fetch('/pagos'),
     fetch('/pagos/prueba')
@@ -642,21 +665,21 @@ async function cargarPagos() {
   const pagos = await resPagos.json();
   const pagosPrueba = await resPrueba.json();
 
-  /// mappedPrueba (sumar __sede)
-const mappedPrueba = (pagosPrueba || []).map(p => ({
-  id        : p.id,
-  alumno_id : OPT_PRUEBA_VALUE,
-  mes_pagado: '-',
-  monto     : p.monto,
-  cuenta    : p.cuenta,
-  fecha_pago: p.fecha_pago,
-  __tipo    : 'prueba',
-  __comentario: p.comentario || '',
-  __sede    : p.sede || 'General'
-}));
+  const mappedPrueba = (pagosPrueba || []).map(p => ({
+    id        : p.id,
+    alumno_id : OPT_PRUEBA_VALUE,
+    mes_pagado: '-',        // no usa esta columna para agrupar
+    monto     : p.monto,
+    cuenta    : p.cuenta,
+    fecha_pago: p.fecha_pago,
+    __tipo    : 'prueba',
+    __comentario: p.comentario || '',
+    __sede    : p.sede || 'General'
+  }));
 
-
+  // 👇 corregido
   pagosGlobal = [...pagos, ...mappedPrueba];
+
   const q = document.getElementById('buscadorPagos')?.value || '';
   renderPagos(q);
 }
@@ -667,12 +690,13 @@ function renderPagos(query = '') {
 
   const term = normalizarTexto(query);
 
-  // filtrar y ordenar (PRUEBA se ordena como nro=0)
-  const pagos = pagosGlobal
+  // Filtrar por búsqueda y ordenar por número de alumno (los de prueba = 0)
+  const pagosFiltrados = (pagosGlobal || [])
     .filter(p => {
       if (p.alumno_id === OPT_PRUEBA_VALUE) {
+        // Permitir filtrar por la etiqueta "000 pagos de clases de prueba"
         if (!term) return true;
-        const label = normalizarTexto('000 pagos de clases de prueba general');
+        const label = normalizarTexto('000 pagos de clases de prueba');
         return label.includes(term);
       }
       const a = alumnos.find(x => x.id === p.alumno_id);
@@ -685,67 +709,63 @@ function renderPagos(query = '') {
              normalizarTexto(`${ape} ${nom}`).includes(term);
     })
     .sort((p1, p2) => {
-      const getNum = (p) => p.alumno_id === OPT_PRUEBA_VALUE
+      const n1 = (p1.alumno_id === OPT_PRUEBA_VALUE)
         ? 0
-        : (alumnos.find(x => x.id === p.alumno_id)?.numero_alumno || 0);
-      return getNum(p1) - getNum(p2);
+        : (alumnos.find(x => x.id === p1.alumno_id)?.numero_alumno || 0);
+      const n2 = (p2.alumno_id === OPT_PRUEBA_VALUE)
+        ? 0
+        : (alumnos.find(x => x.id === p2.alumno_id)?.numero_alumno || 0);
+      return n1 - n2;
     });
 
-  // Agrupar por sede y alumno
-  const pagosPorSede = {};
-  pagos.forEach(p => {
-    let sede = 'Sin Sede';
-    let alumnoLabel = '';
+  // Agrupar por Sede -> Mes
+  const mapa = {};
+  pagosFiltrados.forEach(p => {
+    let sede = 'General';
+    if (p.alumno_id === OPT_PRUEBA_VALUE) {
+      sede = normalizarSede(p.__sede);
+    } else {
+      const a = alumnos.find(al => al.id === p.alumno_id);
+      if (!a) return;
+      sede = normalizarSede(a.sede);
+    }
+    const mes = getMesKey(p);
 
-    function normalizarSede(valor) {
-  const txt = (valor || '').toLowerCase();
-  if (txt.includes('goyena')) return 'Goyena';
-  if (txt.includes('craig')) return 'Craig';
-  return 'General';
-}
-
-if (p.alumno_id === OPT_PRUEBA_VALUE) {
-  sede = normalizarSede(p.__sede);
-  alumnoLabel = '000 - Pagos de clases de prueba';
-} else {
-  const a = alumnos.find(al => al.id === p.alumno_id);
-  if (!a) return;
-  sede = normalizarSede(a.sede);
-  alumnoLabel = `${a.numero_alumno} - ${a.apellido}, ${a.nombre}`;
-}
-
-
-    if (!pagosPorSede[sede]) pagosPorSede[sede] = {};
-    if (!pagosPorSede[sede][alumnoLabel]) pagosPorSede[sede][alumnoLabel] = [];
-    pagosPorSede[sede][alumnoLabel].push(p);
+    if (!mapa[sede]) mapa[sede] = {};
+    if (!mapa[sede][mes]) mapa[sede][mes] = [];
+    mapa[sede][mes].push(p);
   });
 
-  let sedeIndex = 0;
-  for (const sede in pagosPorSede) {
-    const sedeId = `sede-${sedeIndex++}`;
-    const filaSede = document.createElement("tr");
-    filaSede.style.cursor = "pointer";
-    filaSede.style.backgroundColor = "#d1bfc5";
-    filaSede.style.fontWeight = "bold";
-    filaSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🧘‍♀️ ${sede}</td>`;
-    tbody.appendChild(filaSede);
+  // Pintar: Fila Sede (colapsable) -> Fila Mes (colapsable) -> Detalle de pagos
+  let sedeIdx = 0;
+  for (const sede in mapa) {
+    const sedeId = `sede-${sedeIdx++}`;
+    const trSede = document.createElement('tr');
+    trSede.style.cursor = 'pointer';
+    trSede.style.backgroundColor = '#d1bfc5';
+    trSede.style.fontWeight = 'bold';
+    trSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🧘‍♀️ ${sede}</td>`;
+    tbody.appendChild(trSede);
 
-    let grupoIndex = 0;
-    for (const alumnoNombre in pagosPorSede[sede]) {
-      const grupoId = `${sedeId}-grupo-${grupoIndex++}`;
+    // Ordenar meses descendente (más nuevo primero)
+    const meses = Object.keys(mapa[sede]).sort((a, b) => b.localeCompare(a));
 
-      const filaTitulo = document.createElement("tr");
-      filaTitulo.style.cursor = "pointer";
-      filaTitulo.style.backgroundColor = "#f3d6dd";
-      filaTitulo.style.fontWeight = "bold";
-      filaTitulo.classList.add(sedeId);
-      filaTitulo.style.display = 'none';
-      filaTitulo.innerHTML = `<td colspan="7" onclick="toggleGrupo('${grupoId}')">▶️ ${alumnoNombre}</td>`;
-      tbody.appendChild(filaTitulo);
+    let mesIdx = 0;
+    for (const mes of meses) {
+      const mesId = `${sedeId}-mes-${mesIdx++}`;
+      const trMes = document.createElement('tr');
+      trMes.classList.add(sedeId);
+      trMes.style.display = 'none';
+      trMes.style.cursor = 'pointer';
+      trMes.style.backgroundColor = '#f3d6dd';
+      trMes.style.fontWeight = 'bold';
+      trMes.innerHTML = `<td colspan="7" onclick="toggleGrupo('${mesId}')">📅 ${mes}</td>`;
+      tbody.appendChild(trMes);
 
-      pagosPorSede[sede][alumnoNombre].forEach(p => {
-        const tr = document.createElement("tr");
-        tr.classList.add(grupoId, sedeId);
+      // Dentro del mes ya vienen ordenados por número
+      mapa[sede][mes].forEach(p => {
+        const tr = document.createElement('tr');
+        tr.classList.add(mesId, sedeId);
         tr.style.display = 'none';
 
         if (p.alumno_id === OPT_PRUEBA_VALUE) {
@@ -753,7 +773,7 @@ if (p.alumno_id === OPT_PRUEBA_VALUE) {
             <td>000</td>
             <td>Pagos de prueba</td>
             <td>Prueba ${p.__comentario ? `- ${p.__comentario}` : ''}</td>
-            <td>-</td>
+            <td>${mes.split('-')[1]}/${mes.split('-')[0]}</td>
             <td>$${parseFloat(p.monto).toFixed(2)}</td>
             <td>
               ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
@@ -763,16 +783,17 @@ if (p.alumno_id === OPT_PRUEBA_VALUE) {
           `;
         } else {
           const a = alumnos.find(x => x.id === p.alumno_id);
-          const [anio, mes] = String(p.mes_pagado || '').split('-');
-          const mesFormateado = (anio && mes) ? `${mes}/${anio}` : '-';
           const tipo = tiposClase.find(t =>
             normalizarTexto(t.modalidad) === normalizarTexto(a?.tipo_clase)
           );
+          const [y, m] = String(p.mes_pagado || '').split('-');
+          const mesFmt = (y && m) ? `${m}/${y}` : '-';
+
           tr.innerHTML = `
             <td>${a?.numero_alumno ?? '-'}</td>
             <td>${a?.nombre ?? ''} ${a?.apellido ?? ''}</td>
             <td>${tipo?.modalidad || a?.tipo_clase || '-'}</td>
-            <td>${mesFormateado}</td>
+            <td>${mesFmt}</td>
             <td>$${parseFloat(p.monto).toFixed(2)}</td>
             <td>
               ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
@@ -781,6 +802,7 @@ if (p.alumno_id === OPT_PRUEBA_VALUE) {
             <td>${p.cuenta || '-'}</td>
           `;
         }
+
         tbody.appendChild(tr);
       });
     }
