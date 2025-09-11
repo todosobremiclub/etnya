@@ -1811,78 +1811,85 @@ document.getElementById('observacionClase').value = obs;
 
 
 async function guardarEstadoClase(){
-  // único estado seleccionado (o ninguno para limpiar)
+  // ===== Estado seleccionado (o ninguno)
   var estado = '';
   if (chkAsistio.checked)        estado = 'asistio';
   else if (chkSinAviso.checked)  estado = 'sin_aviso';
   else if (chkConAviso.checked)  estado = 'con_aviso';
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
-  // Observación (nota de prueba o comentario)
-// Si el textarea está vacío, usamos la observación previa (dataset o cache 'it')
-var obsEl = document.getElementById('observacionClase');
-var newObs = obsEl ? String(obsEl.value || '').trim() : '';
+  // ===== Buscar la clase en cache y su tipo
+  var it = (clasesSemana || []).find(x => Number(x.id) === Number(claseSelId)) || null;
+  var tipo = it ? (it.tipo || '') : '';
 
-var prevObs = '';
-if (claseSelTag && claseSelTag.dataset && typeof claseSelTag.dataset.observacion === 'string') {
-  prevObs = claseSelTag.dataset.observacion.trim();
-}
-if (!prevObs && it && typeof it.observacion === 'string') {
-  prevObs = String(it.observacion || '').trim();
-}
-var observacion = newObs || prevObs;   // 👈 conservar la anterior si no escriben nada
+  // ===== Observación: si no escriben nada nuevo, conservar la anterior
+  var obsEl  = document.getElementById('observacionClase');
+  var newObs = (obsEl && typeof obsEl.value === 'string') ? obsEl.value.trim() : '';
 
+  // Observación previa (dataset del tag o cache en memoria)
+  var prevObs = '';
+  if (claseSelTag?.dataset?.observacion) prevObs = String(claseSelTag.dataset.observacion || '').trim();
+  if (!prevObs && it?.observacion)       prevObs = String(it.observacion || '').trim();
 
-  // Buscar tipo en cache
-var it = clasesSemana.find(x => Number(x.id) === Number(claseSelId)) || null;
-var tipo = it ? (it.tipo || '') : '';
-
-// ==== UI inmediata
-if (claseSelTag){
-  claseSelTag.dataset.estado = estado;
-  claseSelTag.dataset.observacion = observacion;
-  applyEstadoClassToTag(claseSelTag, estado);
-  if (observacion){
-    claseSelTag.dataset.tooltip = `Observación: ${observacion}`;
-    claseSelTag.classList.add('has-tooltip');
-    claseSelTag.setAttribute('aria-label', `Observación: ${observacion}`);
-  } else {
-    claseSelTag.removeAttribute('data-tooltip');
-    claseSelTag.removeAttribute('aria-label');
-    claseSelTag.classList.remove('has-tooltip');
+  // Extra: si es prueba y hay cache local previo, usarlo como último fallback
+  if (!prevObs && tipo === 'prueba'){
+    try{
+      var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+      prevObs = String(cache?.[String(claseSelId)] || '').trim();
+    } catch(e){}
   }
-}
 
-// cache persistente solo si es prueba
-if (tipo === 'prueba') {
-  try {
-    var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
-    cache[String(claseSelId)] = observacion || '';
-    localStorage.setItem('motivos_prueba', JSON.stringify(cache));
-  } catch(e){}
-}
+  // Observación efectiva
+  var observacion = newObs || prevObs;
 
-// ==== Cache en memoria
-if (it){
-  it.estado = estado || null;
-  it.observacion = observacion || '';
-}
+  // ===== UI inmediata
+  if (claseSelTag){
+    claseSelTag.dataset.estado = estado || '';
+    claseSelTag.dataset.observacion = observacion || '';
+    applyEstadoClassToTag(claseSelTag, estado || '');
 
+    // Tooltip en vivo
+    if ((observacion || '').trim()){
+      var tip = `Observación: ${observacion}`;
+      claseSelTag.dataset.tooltip = tip;
+      claseSelTag.classList.add('has-tooltip');
+      claseSelTag.setAttribute('aria-label', tip);
+    } else {
+      claseSelTag.removeAttribute('data-tooltip');
+      claseSelTag.removeAttribute('aria-label');
+      claseSelTag.classList.remove('has-tooltip');
+    }
+  }
 
+  // ===== Cache persistente solo si es PRUEBA
+  if (tipo === 'prueba'){
+    try{
+      var cache2 = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+      cache2[String(claseSelId)] = observacion || '';
+      localStorage.setItem('motivos_prueba', JSON.stringify(cache2));
+    } catch(e){}
+  }
 
+  // ===== Cache en memoria
+  if (it){
+    it.estado = estado || null;
+    it.observacion = observacion || '';  // 👈 siempre mantenemos la efectiva
+  }
+
+  // ===== Persistencia backend
   try{
     if (claseSelId){
-      // intenta PATCH /clases/:id con estado + observacion
+      // PATCH /clases/:id (estado + observacion)
       var r = await fetch('/clases/' + claseSelId, {
         method: 'PATCH',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           estado: estado || null,
-          observacion: observacion   // 
+          observacion: observacion
         })
       });
 
-      // fallback POST /clases/estado si el PATCH no existe
+      // fallback si el PATCH no existe
       if (!r.ok){
         r = await fetch('/clases/estado', {
           method: 'POST',
@@ -1895,29 +1902,49 @@ if (it){
         });
         if (!r.ok) throw new Error('No se pudo guardar el estado/observación');
       }
+
+      // Merge defensivo del response (si existe)
+      try{
+        const saved = await r.clone().json();
+        if (saved && it){
+          if ('estado' in saved) it.estado = saved.estado;
+          if (typeof saved.observacion === 'string' && saved.observacion.trim() !== ''){
+            it.observacion = saved.observacion.trim();
+            if (claseSelTag){
+              claseSelTag.dataset.observacion = it.observacion;
+              claseSelTag.dataset.tooltip = `Observación: ${it.observacion}`;
+              claseSelTag.setAttribute('aria-label', `Observación: ${it.observacion}`);
+            }
+          }
+        }
+      } catch(e){ /* sin JSON: ignorar */ }
     }
+
     cerrarModalClase();
   } catch(err){
     console.error(err);
     alert('No se pudo guardar el estado/observación');
 
-    // rollback visual si falló
+    // ===== Rollback visual si falló
     if (claseSelTag){
       var prevEstado = it ? (it.estado || '') : '';
-      var prevObs    = '';
-      if (it){
-        prevObs = (tipo === 'prueba')
-          ? (it.observacion || '')
-          : (it.nota || '');
-      }
+      var prevObsRb  = it ? (String(it.observacion || '').trim()) : '';
       claseSelTag.dataset.estado = prevEstado;
-      if (tipo === 'prueba') claseSelTag.dataset.observacion = prevObs;
-      else claseSelTag.dataset.nota = prevObs;
+      claseSelTag.dataset.observacion = prevObsRb;
       applyEstadoClassToTag(claseSelTag, prevEstado);
+
+      if (prevObsRb){
+        claseSelTag.dataset.tooltip = `Observación: ${prevObsRb}`;
+        claseSelTag.setAttribute('aria-label', `Observación: ${prevObsRb}`);
+        claseSelTag.classList.add('has-tooltip');
+      } else {
+        claseSelTag.removeAttribute('data-tooltip');
+        claseSelTag.removeAttribute('aria-label');
+        claseSelTag.classList.remove('has-tooltip');
+      }
     }
   }
 }
-
 // (si no lo tenías ya exportado)
 window.guardarEstadoClase = guardarEstadoClase;
 
