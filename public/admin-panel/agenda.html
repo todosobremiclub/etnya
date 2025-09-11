@@ -1823,26 +1823,27 @@ async function guardarEstadoClase(){
   // ==== UI inmediata
   if (claseSelTag){
     claseSelTag.dataset.estado = estado;
-    if (tipo === 'prueba') {
-      claseSelTag.dataset.observacion = observacion;
-      // cache persistente del motivo por id
-      try {
-        var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
-        cache[String(claseSelId)] = observacion || '';
-        localStorage.setItem('motivos_prueba', JSON.stringify(cache));
-      } catch(e){}
-    } else {
-      claseSelTag.dataset.nota = observacion || '';
-    }
+    // Siempre guardamos la observación en dataset.observacion
+claseSelTag.dataset.observacion = observacion;
+
+// cache persistente solo si es prueba
+if (tipo === 'prueba') {
+  try {
+    var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+    cache[String(claseSelId)] = observacion || '';
+    localStorage.setItem('motivos_prueba', JSON.stringify(cache));
+  } catch(e){}
+}
+
     applyEstadoClassToTag(claseSelTag, estado);
   }
 
   // ==== Cache en memoria
   if (it){
-    it.estado = estado || null;
-    if (tipo === 'prueba') it.observacion = observacion || '';
-    else it.nota = observacion || '';
-  }
+  it.estado = estado || null;
+  it.observacion = observacion || '';
+}
+
 
   try{
     if (claseSelId){
