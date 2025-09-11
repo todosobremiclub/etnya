@@ -1515,6 +1515,15 @@ function initQuickMenu(){
     // 2) SIEMPRE limpiar/aplicar clases de estado
     applyEstadoClassToTag(quickMenuTarget, estado);
 
+// preservar/rehabilitar tooltip si hay observación cargada
+const ob = (quickMenuTarget.dataset.observacion || '').trim();
+if (ob){
+  quickMenuTarget.classList.add('has-tooltip');
+  quickMenuTarget.dataset.tooltip = `Observación: ${ob}`;
+  quickMenuTarget.setAttribute('aria-label', `Observación: ${ob}`);
+}
+
+
     // 3) si quedó sin estado, volver al color por tipo (normal/prueba/recuperación)
     if (!estado) applyTipoColorToTag(quickMenuTarget);
 
@@ -1716,9 +1725,18 @@ if (bloqueado) td.classList.add('feriado');
       tag.dataset.hora     = cl.hora  || '';
       tag.dataset.sede     = cl.sede  || '';
 
-      // motivo/tooltip
+      // motivo/tooltip: primero observación explícita; si es prueba y está vacía, usar cache local por id
 let motivo = '';
-const obs = (cl.observacion ?? cl.obs ?? cl.motivo ?? '').trim();
+let obs = (cl.observacion ?? cl.obs ?? cl.motivo ?? '').trim();
+
+if (!obs && (cl.tipo === 'prueba' || (!cl.alumno_id && cl.nota))) {
+  try {
+    const cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+    const key   = String(cl.id ?? '');
+    if (key && typeof cache[key] === 'string') obs = cache[key].trim();
+  } catch(_){}
+}
+
 if (obs) {
   motivo = obs;
 } else if ((cl.tipo !== 'prueba') && typeof cl.nota === 'string' && cl.nota.trim()) {
@@ -1727,24 +1745,14 @@ if (obs) {
 }
 tag.dataset.observacion = motivo;
 
-
-      // estado y tipo
-      applyEstadoClassToTag(tag, tag.dataset.estado);
-      const tipo = cl.tipo ?? (
-        cl.es_prueba ? 'prueba'
-        : (cl.unica_vez || cl.es_recuperacion ? 'recuperacion'
-        : (!cl.alumno_id && cl.nota ? 'prueba' : 'normal'))
-      );
-      tag.dataset.tipo = tipo;
-      if (!tag.dataset.estado) applyTipoColorToTag(tag);
-
-      // tooltip custom (sin title nativo)
+// tooltip custom (sin title nativo)
 if (motivo) {
   tag.removeAttribute('title');
   tag.classList.add('has-tooltip');
   tag.dataset.tooltip = `Observación: ${motivo}`;
   tag.setAttribute('aria-label', `Observación: ${motivo}`);
 }
+
 
 
       tag.addEventListener('click', onTagClick);
