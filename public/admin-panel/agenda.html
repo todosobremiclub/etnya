@@ -1511,6 +1511,9 @@ function initQuickMenu(){
     // 2) SIEMPRE limpiar/aplicar clases de estado
     applyEstadoClassToTag(quickMenuTarget, estado);
 
+syncTooltip(quickMenuTarget, quickMenuTarget.dataset.observacion || '');
+
+
     // 3) si quedó sin estado, volver al color por tipo (normal/prueba/recuperación)
     if (!estado) applyTipoColorToTag(quickMenuTarget);
 
@@ -1805,53 +1808,59 @@ document.getElementById('observacionClase').value = obs;
   overlayClase.style.display = 'flex';
 }
 
+function syncTooltip(tag, texto){
+  texto = (texto || '').trim();
+  if (texto){
+    tag.classList.add('has-tooltip');
+    tag.dataset.observacion = texto;
+    tag.dataset.tooltip = `Observación: ${texto}`;
+    tag.setAttribute('aria-label', `Observación: ${texto}`);
+  }else{
+    tag.classList.remove('has-tooltip');
+    tag.removeAttribute('data-tooltip');
+    tag.removeAttribute('aria-label');
+  }
+}
+
+
 
 async function guardarEstadoClase(){
   // único estado seleccionado (o ninguno para limpiar)
-  var estado = '';
+  let estado = '';
   if (chkAsistio.checked)        estado = 'asistio';
   else if (chkSinAviso.checked)  estado = 'sin_aviso';
   else if (chkConAviso.checked)  estado = 'con_aviso';
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
   // Buscar clase en cache
-  var it = clasesSemana.find(x => Number(x.id) === Number(claseSelId)) || null;
-  var tipo = it ? (it.tipo || '') : '';
+  const it   = clasesSemana.find(x => Number(x.id) === Number(claseSelId)) || null;
+  const tipo = it ? (it.tipo || '') : '';
 
   // Observación (textarea, dataset o previa en cache)
-  var obsEl = document.getElementById('observacionClase');
-  var newObs = obsEl ? String(obsEl.value || '').trim() : '';
+  const obsEl  = document.getElementById('observacionClase');
+  const newObs = obsEl ? String(obsEl.value || '').trim() : '';
 
-  var prevObs = '';
-  if (claseSelTag?.dataset?.observacion) {
-    prevObs = claseSelTag.dataset.observacion.trim();
+  let prevObs = '';
+  if (claseSelTag && claseSelTag.dataset && claseSelTag.dataset.observacion){
+    prevObs = String(claseSelTag.dataset.observacion || '').trim();
   }
-  if (!prevObs && it?.observacion) {
+  if (!prevObs && it && it.observacion){
     prevObs = String(it.observacion || '').trim();
   }
 
-  var observacion = newObs || prevObs;   // 👈 conservar la anterior si no escriben nada
+  const observacion = newObs || prevObs;   // conservar la anterior si no escriben nada
 
   // ==== UI inmediata
   if (claseSelTag){
     claseSelTag.dataset.estado = estado;
-    claseSelTag.dataset.observacion = observacion;
     applyEstadoClassToTag(claseSelTag, estado);
-    if (observacion){
-      claseSelTag.dataset.tooltip = `Observación: ${observacion}`;
-      claseSelTag.classList.add('has-tooltip');
-      claseSelTag.setAttribute('aria-label', `Observación: ${observacion}`);
-    } else {
-      claseSelTag.removeAttribute('data-tooltip');
-      claseSelTag.removeAttribute('aria-label');
-      claseSelTag.classList.remove('has-tooltip');
-    }
+    syncTooltip(claseSelTag, observacion);
   }
 
   // cache persistente solo si es prueba
   if (tipo === 'prueba') {
     try {
-      var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+      const cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
       cache[String(claseSelId)] = observacion || '';
       localStorage.setItem('motivos_prueba', JSON.stringify(cache));
     } catch(e){}
@@ -1863,9 +1872,9 @@ async function guardarEstadoClase(){
     it.observacion = observacion || '';
   }
 
-   try{
+  try{
     if (claseSelId){
-      var r = await fetch('/clases/' + claseSelId, {
+      let r = await fetch('/clases/' + claseSelId, {
         method: 'PATCH',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ estado: estado || null, observacion })
@@ -1885,10 +1894,10 @@ async function guardarEstadoClase(){
     // rollback visual si falló
     if (claseSelTag && it){
       const prevEstado = it.estado || '';
-      const prevObs    = (tipo === 'prueba') ? (it.observacion || '') : (it.nota || '');
+      const prevObs2   = (tipo === 'prueba') ? (it.observacion || '') : (it.nota || '');
       claseSelTag.dataset.estado = prevEstado;
-      claseSelTag.dataset.observacion = prevObs;
       applyEstadoClassToTag(claseSelTag, prevEstado);
+      syncTooltip(claseSelTag, prevObs2);
     }
     alert('No se pudo guardar el estado/observación');
   }
