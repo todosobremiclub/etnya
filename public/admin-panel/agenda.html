@@ -1713,11 +1713,16 @@ if (bloqueado) td.classList.add('feriado');
       tag.dataset.sede     = cl.sede  || '';
 
       // motivo/tooltip
-      let motivo = '';
-      if (cl.observacion && String(cl.observacion).trim()) motivo = String(cl.observacion).trim();
-      else if (cl.motivo && String(cl.motivo).trim())      motivo = String(cl.motivo).trim();
-      else if (cl.nota && String(cl.nota).trim())          motivo = String(cl.nota).trim();
-      tag.dataset.observacion = motivo;
+let motivo = '';
+const obs = (cl.observacion ?? cl.obs ?? cl.motivo ?? '').trim();
+if (obs) {
+  motivo = obs;
+} else if ((cl.tipo !== 'prueba') && typeof cl.nota === 'string' && cl.nota.trim()) {
+  // Solo usamos 'nota' como fallback si NO es clase de prueba
+  motivo = cl.nota.trim();
+}
+tag.dataset.observacion = motivo;
+
 
       // estado y tipo
       applyEstadoClassToTag(tag, tag.dataset.estado);
@@ -1825,6 +1830,22 @@ async function guardarEstadoClase(){
     claseSelTag.dataset.estado = estado;
     // Siempre guardamos la observación en dataset.observacion
 claseSelTag.dataset.observacion = observacion;
+
+// Actualizar tooltip al vuelo (sin caer al nombre)
+if (claseSelTag) {
+  const txt = (observacion || '').trim();
+  if (txt) {
+    claseSelTag.dataset.tooltip = `Observación: ${txt}`;
+    claseSelTag.classList.add('has-tooltip');
+    claseSelTag.setAttribute('aria-label', `Observación: ${txt}`);
+  } else {
+    // Sin observación: quitamos tooltip y NO mostramos el nombre
+    claseSelTag.removeAttribute('data-tooltip');
+    claseSelTag.removeAttribute('aria-label');
+    claseSelTag.classList.remove('has-tooltip');
+  }
+}
+
 
 // cache persistente solo si es prueba
 if (tipo === 'prueba') {
