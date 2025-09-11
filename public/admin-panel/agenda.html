@@ -1896,23 +1896,7 @@ async function guardarEstadoClase(){
 
 
 
-    // rollback visual si falló
-    if (claseSelTag){
-      var prevEstado = it ? (it.estado || '') : '';
-      var prevObs    = '';
-      if (it){
-        prevObs = (tipo === 'prueba')
-          ? (it.observacion || '')
-          : (it.nota || '');
-      }
-      claseSelTag.dataset.estado = prevEstado;
-      if (tipo === 'prueba') claseSelTag.dataset.observacion = prevObs;
-      else claseSelTag.dataset.nota = prevObs;
-      applyEstadoClassToTag(claseSelTag, prevEstado);
-    }
-  }
-}
-
+    
 // (si no lo tenías ya exportado)
 window.guardarEstadoClase = guardarEstadoClase;
 
