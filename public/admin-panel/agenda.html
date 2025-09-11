@@ -1815,8 +1815,19 @@ async function guardarEstadoClase(){
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
   // Observación (nota de prueba o comentario)
-  var obsEl = document.getElementById('observacionClase');
-  var observacion = obsEl ? obsEl.value : '';
+// Si el textarea está vacío, usamos la observación previa (dataset o cache 'it')
+var obsEl = document.getElementById('observacionClase');
+var newObs = obsEl ? String(obsEl.value || '').trim() : '';
+
+var prevObs = '';
+if (claseSelTag && claseSelTag.dataset && typeof claseSelTag.dataset.observacion === 'string') {
+  prevObs = claseSelTag.dataset.observacion.trim();
+}
+if (!prevObs && it && typeof it.observacion === 'string') {
+  prevObs = String(it.observacion || '').trim();
+}
+var observacion = newObs || prevObs;   // 👈 conservar la anterior si no escriben nada
+
 
   // Buscar la clase en cache para saber el tipo
   var it = null;
@@ -1826,25 +1837,23 @@ async function guardarEstadoClase(){
   var tipo = it ? (it.tipo || '') : '';
 
   // ==== UI inmediata
-  if (claseSelTag){
-    claseSelTag.dataset.estado = estado;
-    // Siempre guardamos la observación en dataset.observacion
-claseSelTag.dataset.observacion = observacion;
+ if (claseSelTag){
+  claseSelTag.dataset.estado = estado;
+  claseSelTag.dataset.observacion = observacion;   // 👈 unificado
+  applyEstadoClassToTag(claseSelTag, estado);
 
-// Actualizar tooltip al vuelo (sin caer al nombre)
-if (claseSelTag) {
-  const txt = (observacion || '').trim();
-  if (txt) {
-    claseSelTag.dataset.tooltip = `Observación: ${txt}`;
+  // actualizar tooltip en vivo
+  if (observacion) {
+    claseSelTag.dataset.tooltip = `Observación: ${observacion}`;
     claseSelTag.classList.add('has-tooltip');
-    claseSelTag.setAttribute('aria-label', `Observación: ${txt}`);
+    claseSelTag.setAttribute('aria-label', `Observación: ${observacion}`);
   } else {
-    // Sin observación: quitamos tooltip y NO mostramos el nombre
     claseSelTag.removeAttribute('data-tooltip');
     claseSelTag.removeAttribute('aria-label');
     claseSelTag.classList.remove('has-tooltip');
   }
 }
+
 
 
 // cache persistente solo si es prueba
