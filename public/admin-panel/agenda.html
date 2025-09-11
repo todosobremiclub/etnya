@@ -1123,22 +1123,18 @@ if ($findIn){
   $findIn.addEventListener('keydown', async e => {
     if (e.key === 'ArrowDown'){
       if ($findDrop && $findDrop.options.length === 0) showFindOptions($findIn.value);
-      if ($findDrop){
-        $findDrop.style.display = 'block';
-        $findDrop.focus();
-        if ($findDrop.options.length) $findDrop.selectedIndex = 0;
-      }
+      if ($findDrop){ $findDrop.style.display = 'block'; $findDrop.focus(); if ($findDrop.options.length) $findDrop.selectedIndex = 0; }
     }
-    if (e.key === 'Escape'){
-      if ($findDrop) $findDrop.style.display = 'none';
-    }
+    if (e.key === 'Escape'){ if ($findDrop) $findDrop.style.display = 'none'; }
     if (e.key === 'Enter'){
-      const t = normTxt($findIn.value);
-      await ensureIndexReady(t);
-      const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
-      if (m) selectAlumnoEnSemana(m.id);
-    }
+  const t = normTxt($findIn.value);
+  await ensureIndexReady(t);
+  const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
+  if (m) selectAlumnoEnSemana(m.id);
+}
+
   });
+
 }
 
 if ($findDrop){
@@ -1818,57 +1814,54 @@ async function guardarEstadoClase(){
   else if (chkConAviso.checked)  estado = 'con_aviso';
   else if (chkSobreHora.checked) estado = 'sobre_hora';
 
-  // Observación (nota de prueba o comentario)
-// Si el textarea está vacío, usamos la observación previa (dataset o cache 'it')
-var obsEl = document.getElementById('observacionClase');
-var newObs = obsEl ? String(obsEl.value || '').trim() : '';
+  // Buscar clase en cache
+  var it = clasesSemana.find(x => Number(x.id) === Number(claseSelId)) || null;
+  var tipo = it ? (it.tipo || '') : '';
 
-var prevObs = '';
-if (claseSelTag && claseSelTag.dataset && typeof claseSelTag.dataset.observacion === 'string') {
-  prevObs = claseSelTag.dataset.observacion.trim();
-}
-if (!prevObs && it && typeof it.observacion === 'string') {
-  prevObs = String(it.observacion || '').trim();
-}
-var observacion = newObs || prevObs;   // 👈 conservar la anterior si no escriben nada
+  // Observación (textarea, dataset o previa en cache)
+  var obsEl = document.getElementById('observacionClase');
+  var newObs = obsEl ? String(obsEl.value || '').trim() : '';
 
-
-  // Buscar tipo en cache
-var it = clasesSemana.find(x => Number(x.id) === Number(claseSelId)) || null;
-var tipo = it ? (it.tipo || '') : '';
-
-// ==== UI inmediata
-if (claseSelTag){
-  claseSelTag.dataset.estado = estado;
-  claseSelTag.dataset.observacion = observacion;
-  applyEstadoClassToTag(claseSelTag, estado);
-  if (observacion){
-    claseSelTag.dataset.tooltip = `Observación: ${observacion}`;
-    claseSelTag.classList.add('has-tooltip');
-    claseSelTag.setAttribute('aria-label', `Observación: ${observacion}`);
-  } else {
-    claseSelTag.removeAttribute('data-tooltip');
-    claseSelTag.removeAttribute('aria-label');
-    claseSelTag.classList.remove('has-tooltip');
+  var prevObs = '';
+  if (claseSelTag?.dataset?.observacion) {
+    prevObs = claseSelTag.dataset.observacion.trim();
   }
-}
+  if (!prevObs && it?.observacion) {
+    prevObs = String(it.observacion || '').trim();
+  }
 
-// cache persistente solo si es prueba
-if (tipo === 'prueba') {
-  try {
-    var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
-    cache[String(claseSelId)] = observacion || '';
-    localStorage.setItem('motivos_prueba', JSON.stringify(cache));
-  } catch(e){}
-}
+  var observacion = newObs || prevObs;   // 👈 conservar la anterior si no escriben nada
 
-// ==== Cache en memoria
-if (it){
-  it.estado = estado || null;
-  it.observacion = observacion || '';
-}
+  // ==== UI inmediata
+  if (claseSelTag){
+    claseSelTag.dataset.estado = estado;
+    claseSelTag.dataset.observacion = observacion;
+    applyEstadoClassToTag(claseSelTag, estado);
+    if (observacion){
+      claseSelTag.dataset.tooltip = `Observación: ${observacion}`;
+      claseSelTag.classList.add('has-tooltip');
+      claseSelTag.setAttribute('aria-label', `Observación: ${observacion}`);
+    } else {
+      claseSelTag.removeAttribute('data-tooltip');
+      claseSelTag.removeAttribute('aria-label');
+      claseSelTag.classList.remove('has-tooltip');
+    }
+  }
 
+  // cache persistente solo si es prueba
+  if (tipo === 'prueba') {
+    try {
+      var cache = JSON.parse(localStorage.getItem('motivos_prueba') || '{}');
+      cache[String(claseSelId)] = observacion || '';
+      localStorage.setItem('motivos_prueba', JSON.stringify(cache));
+    } catch(e){}
+  }
 
+  // ==== Cache en memoria
+  if (it){
+    it.estado = estado || null;
+    it.observacion = observacion || '';
+  }
 
   try{
     if (claseSelId){
@@ -1878,12 +1871,12 @@ if (it){
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           estado: estado || null,
-          observacion: observacion   // 
+          observacion: observacion
         })
       });
 
-      // fallback POST /clases/estado si el PATCH no existe
       if (!r.ok){
+        // fallback POST /clases/estado
         r = await fetch('/clases/estado', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
@@ -1900,6 +1893,9 @@ if (it){
   } catch(err){
     console.error(err);
     alert('No se pudo guardar el estado/observación');
+  }
+}
+
 
     // rollback visual si falló
     if (claseSelTag){
@@ -1951,30 +1947,20 @@ function onSlotDblClick(e){
 
 
 /* ===== Modal helpers ===== */
-function selectedDOWs(){
-  return Array.from(document.querySelectorAll('#chipsDias .chip.selected'))
-    .map(ch => parseInt(ch.dataset.dow,10));
-}
-
+function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
 function applySedeToSelectedDays(){
-  const sede = selectSede.value;
-  if (!sede) return;
-  selectedDOWs().forEach(d => {
-    const row = Array.from(document.querySelectorAll('#perDia > div'))
-      .find(el => parseInt(el.dataset.dow,10) === d);
-    if (row){
-      const selects = row.querySelectorAll('select');
-      if (selects[1]) selects[1].value = sede;
-    }
+  const sede=selectSede.value;if(!sede)return;
+  selectedDOWs().forEach(d=>{
+    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+    if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
   });
 }
-
 function applyHoraToSelectedDays(){
   const horaGen = document.getElementById('selectHoraGeneral').value;
   const seleccionados = selectedDOWs();
-  if (!horaGen || seleccionados.length === 0) return;
+  if (!horaGen || seleccionados.length === 0) return; // <-- si no hay días, no hace nada
 
-  seleccionados.forEach(d => {
+  seleccionados.forEach(d=>{
     const row = Array.from(document.querySelectorAll('#perDia > div'))
       .find(el => parseInt(el.dataset.dow,10) === d);
     if (!row) return;
