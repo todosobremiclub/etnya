@@ -1123,18 +1123,22 @@ if ($findIn){
   $findIn.addEventListener('keydown', async e => {
     if (e.key === 'ArrowDown'){
       if ($findDrop && $findDrop.options.length === 0) showFindOptions($findIn.value);
-      if ($findDrop){ $findDrop.style.display = 'block'; $findDrop.focus(); if ($findDrop.options.length) $findDrop.selectedIndex = 0; }
+      if ($findDrop){
+        $findDrop.style.display = 'block';
+        $findDrop.focus();
+        if ($findDrop.options.length) $findDrop.selectedIndex = 0;
+      }
     }
-    if (e.key === 'Escape'){ if ($findDrop) $findDrop.style.display = 'none'; }
+    if (e.key === 'Escape'){
+      if ($findDrop) $findDrop.style.display = 'none';
+    }
     if (e.key === 'Enter'){
-  const t = normTxt($findIn.value);
-  await ensureIndexReady(t);
-  const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
-  if (m) selectAlumnoEnSemana(m.id);
-}
-
+      const t = normTxt($findIn.value);
+      await ensureIndexReady(t);
+      const m = (window.idxAlumnos || []).find(x => x.needle.includes(t));
+      if (m) selectAlumnoEnSemana(m.id);
+    }
   });
-
 }
 
 if ($findDrop){
