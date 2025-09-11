@@ -260,6 +260,38 @@
     return nativeFetch(url, { ...opts, headers });
   }
 
+
+  // Detecta si la respuesta es JSON por Content-Type
+  function ensureJson(res) {
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    return ct.includes('application/json');
+  }
+
+  // Parser seguro: maneja 401 y respuestas no-JSON
+  async function jsonSeguro(res) {
+    // 401: token inválido/expirado -> limpiar y redirigir
+    if (res.status === 401) {
+      // Intentamos mostrar el texto del backend por consola para debugging
+      try { console.warn('401:', await res.text()); } catch (e) {}
+      alert('Tu sesión expiró. Iniciá sesión nuevamente.');
+      localStorage.removeItem('etnya_login');
+      localStorage.removeItem('etnya_token');
+      localStorage.removeItem('etnya_role');
+      location = 'login.html';
+      return null; // evita romper el await en el caller
+    }
+
+    // Si es JSON, devolvés JSON
+    if (ensureJson(res)) return res.json();
+
+    // Si no es JSON, leé como texto y arrojá un error legible
+    const txt = await res.text();
+    if (res.ok) return txt; // por si intencionalmente devolviste texto 200 OK
+    throw new Error(txt || 'Respuesta no JSON del servidor');
+  }
+
+
+
 let gastosById = {};
 let editandoId = null;
 
@@ -283,9 +315,12 @@ let editandoId = null;
 
 
   function cerrarSesion() {
-    localStorage.removeItem('etnya_login');
-    window.location.href = 'login.html';
-  }
+  localStorage.removeItem('etnya_login');
+  localStorage.removeItem('etnya_token');
+  localStorage.removeItem('etnya_role');
+  window.location.href = 'login.html';
+}
+
 
   function toggleMenu() {
     document.querySelector('.sidebar').classList.toggle('mostrar');
@@ -297,8 +332,10 @@ let editandoId = null;
   }
 
   async function fetchTiposDeGasto() {
+  try {
     const res = await fetchConToken('/gastos/tipos-gasto');
-    const data = await res.json();
+    const data = await jsonSeguro(res);
+    if (!data) return; // pudo redirigir por 401
     const select = document.getElementById('tipoGasto');
     select.innerHTML = '<option value="">Seleccionar tipo de gasto</option>';
     data.forEach(g => {
@@ -307,7 +344,12 @@ let editandoId = null;
       option.textContent = g.nombre;
       select.appendChild(option);
     });
+  } catch (e) {
+    console.error('fetchTiposDeGasto()', e);
+    alert('No se pudieron cargar los tipos de gasto.');
   }
+}
+
 
  async function guardarPago() {
   const nombre = document.getElementById('tipoGasto').value;
@@ -325,52 +367,52 @@ let editandoId = null;
   const url    = editandoId ? `/gastos/${editandoId}` : '/gastos';
   const method = editandoId ? 'PUT' : 'POST';
 
-  const res = await fetchConToken(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+ const res = await fetchConToken(url, {
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body)
+});
 
-  if (res.ok) {
-    alert(editandoId ? 'Gasto actualizado' : 'Gasto guardado');
-    editandoId = null;
-    // reset texto botón y campos
-    document.querySelector('.boton-guardar').textContent = 'Guardar';
-    cerrarModal();
-    cargarGastosRegistrados();
-  } else {
-    alert('Error al guardar');
-  }
+// Dispara manejo de 401; si no es JSON y es OK, no rompe
+await jsonSeguro(res);
+if (res.ok) {
+  alert(editandoId ? 'Gasto actualizado' : 'Gasto guardado');
+  editandoId = null;
+  document.querySelector('.boton-guardar').textContent = 'Guardar';
+  cerrarModal();
+  cargarGastosRegistrados();
+} else {
+  alert('Error al guardar');
 }
 
 
 
+
   async function cargarGastosRegistrados() {
+  try {
     const res = await fetchConToken('/gastos/registrados');
-    const gastos = await res.json();
+    const gastos = await jsonSeguro(res);
+    if (!gastos) return;
+
     const tbody = document.getElementById("tbodyGastos");
     tbody.innerHTML = '';
-gastosById = {};
-gastos.forEach(g => gastosById[g.id] = g);
-
+    gastosById = {};
+    gastos.forEach(g => gastosById[g.id] = g);
 
     const agrupados = {};
-
     gastos.forEach(g => {
-      const clave = g.fecha.slice(0, 7); // YYYY-MM exacto
+      const clave = String(g.fecha).slice(0, 7); // YYYY-MM exacto
       if (!agrupados[clave]) agrupados[clave] = [];
       agrupados[clave].push(g);
     });
 
     let grupoIndex = 0;
-
     for (const mesClave in agrupados) {
       const grupoId = `grupo-${grupoIndex++}`;
       const gastosDelMes = agrupados[mesClave];
       const totalMes = gastosDelMes.reduce((sum, g) => sum + parseFloat(g.monto), 0);
       const mesFormateado = formatearMesTexto(mesClave);
 
-      // Fila agrupadora (desplegable)
       const filaMes = document.createElement("tr");
       filaMes.innerHTML = `
         <td colspan="5" style="font-weight:bold; background:#f6e6ea; cursor:pointer;"
@@ -380,26 +422,29 @@ gastos.forEach(g => gastosById[g.id] = g);
         </td>`;
       tbody.appendChild(filaMes);
 
-      // Filas individuales ocultas por defecto
       gastosDelMes.forEach(g => {
         const tr = document.createElement("tr");
         tr.classList.add(grupoId);
         tr.style.display = "none";
-        const mesReal = formatearMesTexto(g.fecha.slice(0, 7));
+        const mesReal = formatearMesTexto(String(g.fecha).slice(0, 7));
         tr.innerHTML = `
-  <td>${g.nombre}</td>
-  <td>${g.cuenta ?? 'Sin cuenta'}</td>
-  <td>${mesReal}</td>
-  <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
-  <td class="acciones">
-    <button class="editar" onclick="abrirEditarGasto(${g.id})">✏️</button>
-    <button class="borrar" onclick="eliminarGasto(${g.id})">🗑️</button>
-  </td>`;
-
+          <td>${g.nombre}</td>
+          <td>${g.cuenta ?? 'Sin cuenta'}</td>
+          <td>${mesReal}</td>
+          <td>$${parseFloat(g.monto).toLocaleString('es-AR')}</td>
+          <td class="acciones">
+            <button class="editar" onclick="abrirEditarGasto(${g.id})">✏️</button>
+            <button class="borrar" onclick="eliminarGasto(${g.id})">🗑️</button>
+          </td>`;
         tbody.appendChild(tr);
       });
     }
-  } // ← cierre correcto de cargarGastosRegistrados()
+  } catch (e) {
+    console.error('cargarGastosRegistrados()', e);
+    alert('No se pudieron cargar los gastos.');
+  }
+}
+
 
   function toggleGrupo(grupoId) {
     const filas = document.querySelectorAll(`.${grupoId}`);
@@ -411,8 +456,10 @@ gastos.forEach(g => gastosById[g.id] = g);
   async function eliminarGasto(id) {
     if (!confirm('¿Eliminar este gasto?')) return;
     const res = await fetchConToken(`/gastos/${id}`, { method: 'DELETE' });
-    if (res.ok) cargarGastosRegistrados();
-    else alert('Error al eliminar');
+await jsonSeguro(res); // maneja 401
+if (res.ok) cargarGastosRegistrados();
+else alert('Error al eliminar');
+
   }
 
   function formatearMesTexto(fechaStr) {
@@ -423,16 +470,22 @@ gastos.forEach(g => gastosById[g.id] = g);
   }
 
 async function fetchCuentas() {
-  const res = await fetchConToken('/cuentas');
-  const data = await res.json();
-  const select = document.getElementById('cuenta');
-  select.innerHTML = '<option value="">Seleccionar cuenta</option>';
-  data.forEach(c => {
-    const option = document.createElement('option');
-    option.value = c.nombre;
-    option.textContent = c.nombre;
-    select.appendChild(option);
-  });
+  try {
+    const res = await fetchConToken('/cuentas');
+    const data = await jsonSeguro(res);
+    if (!data) return;
+    const select = document.getElementById('cuenta');
+    select.innerHTML = '<option value="">Seleccionar cuenta</option>';
+    data.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.nombre;
+      option.textContent = c.nombre;
+      select.appendChild(option);
+    });
+  } catch (e) {
+    console.error('fetchCuentas()', e);
+    alert('No se pudieron cargar las cuentas.');
+  }
 }
 
 function abrirEditarGasto(id) {
