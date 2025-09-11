@@ -1956,20 +1956,30 @@ function onSlotDblClick(e){
 
 
 /* ===== Modal helpers ===== */
-function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias .chip.selected')).map(ch=>parseInt(ch.dataset.dow,10))}
+function selectedDOWs(){
+  return Array.from(document.querySelectorAll('#chipsDias .chip.selected'))
+    .map(ch => parseInt(ch.dataset.dow,10));
+}
+
 function applySedeToSelectedDays(){
-  const sede=selectSede.value;if(!sede)return;
-  selectedDOWs().forEach(d=>{
-    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
-    if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
+  const sede = selectSede.value;
+  if (!sede) return;
+  selectedDOWs().forEach(d => {
+    const row = Array.from(document.querySelectorAll('#perDia > div'))
+      .find(el => parseInt(el.dataset.dow,10) === d);
+    if (row){
+      const selects = row.querySelectorAll('select');
+      if (selects[1]) selects[1].value = sede;
+    }
   });
 }
+
 function applyHoraToSelectedDays(){
   const horaGen = document.getElementById('selectHoraGeneral').value;
   const seleccionados = selectedDOWs();
-  if (!horaGen || seleccionados.length === 0) return; // <-- si no hay días, no hace nada
+  if (!horaGen || seleccionados.length === 0) return;
 
-  seleccionados.forEach(d=>{
+  seleccionados.forEach(d => {
     const row = Array.from(document.querySelectorAll('#perDia > div'))
       .find(el => parseInt(el.dataset.dow,10) === d);
     if (!row) return;
