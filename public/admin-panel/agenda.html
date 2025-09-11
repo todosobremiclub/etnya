@@ -1863,28 +1863,18 @@ async function guardarEstadoClase(){
     it.observacion = observacion || '';
   }
 
-  try{
+   try{
     if (claseSelId){
-      // intenta PATCH /clases/:id con estado + observacion
       var r = await fetch('/clases/' + claseSelId, {
         method: 'PATCH',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          estado: estado || null,
-          observacion: observacion
-        })
+        body: JSON.stringify({ estado: estado || null, observacion })
       });
-
       if (!r.ok){
-        // fallback POST /clases/estado
         r = await fetch('/clases/estado', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            id: claseSelId,
-            estado: estado || null,
-            observacion: observacion
-          })
+          body: JSON.stringify({ id: claseSelId, estado: estado || null, observacion })
         });
         if (!r.ok) throw new Error('No se pudo guardar el estado/observación');
       }
@@ -1892,9 +1882,18 @@ async function guardarEstadoClase(){
     cerrarModalClase();
   } catch(err){
     console.error(err);
+    // rollback visual si falló
+    if (claseSelTag && it){
+      const prevEstado = it.estado || '';
+      const prevObs    = (tipo === 'prueba') ? (it.observacion || '') : (it.nota || '');
+      claseSelTag.dataset.estado = prevEstado;
+      claseSelTag.dataset.observacion = prevObs;
+      applyEstadoClassToTag(claseSelTag, prevEstado);
+    }
     alert('No se pudo guardar el estado/observación');
   }
 }
+
 
 
     // rollback visual si falló
@@ -1951,7 +1950,9 @@ function selectedDOWs(){return Array.from(document.querySelectorAll('#chipsDias 
 function applySedeToSelectedDays(){
   const sede=selectSede.value;if(!sede)return;
   selectedDOWs().forEach(d=>{
-    const row=[...document.querySelectorAll('#perDia > div')].find(el=>parseInt(el.dataset.dow,10)===d);
+    const row = Array.from(document.querySelectorAll('#perDia > div'))
+  .find(el => parseInt(el.dataset.dow,10) === d);
+
     if(row){const selects=row.querySelectorAll('select'); if(selects[1]) selects[1].value=sede;}
   });
 }
