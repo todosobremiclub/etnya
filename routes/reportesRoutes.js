@@ -346,7 +346,6 @@ router.get('/recaudacion-por-sede', async (_req, res) => {
   try {
     await ensureTablaPagosPrueba();
 
-    // 1) Recaudado: pagos normales por mes_pagado + pagos_prueba por fecha_pago, todo con sede normalizada
     const qRecaudado = `
       WITH p1 AS (
         SELECT
@@ -385,65 +384,20 @@ router.get('/recaudacion-por-sede', async (_req, res) => {
     `;
     const recaudado = await pool.query(qRecaudado);
 
-        // 2) Resultado final usando snapshot/actual para 'esperado' por sede y mes
+    // ← ÚNICA salida: usa snapshot si el mes está cerrado, en vivo si es mes actual
     const out = [];
     for (const r of recaudado.rows) {
-      const mes  = String(r.mes || '').slice(0, 7);                 // 'YYYY-MM'
-      const sede = normalizeSedeTxt(r.sede);                        // Craig | Goyena | General
+      const mes  = String(r.mes || '').slice(0, 7);   // 'YYYY-MM'
+      const sede = normalizeSedeTxt(r.sede);
       const total = Number(r.total || 0);
-
-      // Usa snapshot si el mes está cerrado; si no, calcula en vivo
       const esperado = await getEsperadoMesSede(mes, sede);
-
-      out.push({
-        mes,
-        sede,
-        total,
-        esperado,
-        diferencia: total - esperado
-      });
+      out.push({ mes, sede, total, esperado, diferencia: total - esperado });
     }
 
-    res.json(out);
-
-
-    const alumnos = await pool.query(`
-      SELECT a.sede, a.tipo_clase
-      FROM alumnos a
-      LEFT JOIN becados b ON b.alumno_id = a.id
-      WHERE a.activo = true AND b.alumno_id IS NULL
-    `);
-
-    const agrupado = {};  // { 'Craig': { 'Combinaciones - 1R 1C': 3, ... }, 'Goyena': {...} }
-    (alumnos.rows || []).forEach(a => {
-      const sede = normalizeSedeTxt(a.sede);
-      const mod  = (a.tipo_clase || '').trim();
-      if (!sede || !mod) return;
-      agrupado[sede] = agrupado[sede] || {};
-      agrupado[sede][mod] = (agrupado[sede][mod] || 0) + 1;
-    });
-
-    const esperadosPorSede = {};
-    for (const sede in agrupado) {
-      let subtotal = 0;
-      for (const mod in agrupado[sede]) {
-        subtotal += (agrupado[sede][mod] || 0) * (precios[mod] || 0);
-      }
-      esperadosPorSede[sede] = subtotal;
-    }
-
-    // 3) Resultado final: agrega columna 'esperado'
-    const resultado = recaudado.rows.map(r => ({
-      mes: r.mes,
-      sede: r.sede,
-      total: Number(r.total || 0),
-      esperado: esperadosPorSede[r.sede] || 0
-    }));
-
-    res.json(resultado);
+    return res.json(out);
   } catch (err) {
     console.error('Error en /recaudacion-por-sede:', err);
-    res.status(500).json({ error: 'Error al calcular recaudación por sede' });
+    return res.status(500).json({ error: 'Error al calcular recaudación por sede' });
   }
 });
 
