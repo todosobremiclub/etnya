@@ -287,37 +287,17 @@
 
   async function cargarReporteMesPagado(){
   try{
-    const [ra, rt, rr, rb] = await Promise.all([
-      fetchConToken('/alumnos'),
-      fetchConToken('/tipos-clase'),
-      fetchConToken('/reportes/por-mes-pagado'),
-      fetchConToken('/becados') // ← NUEVO
-    ]);
-
-    const da = await ra.json();
-    const dt = await rt.json();
+    const rr = await fetchConToken('/reportes/por-mes-pagado');
     const dr = await rr.json();
-    const db = await rb.json();
 
-    // disponibles globalmente como antes
-    window.alumnos = da;
-    window.tiposClase = dt;
+    const datos = (dr||[]).map(row => ({
+      mes: formatearMesYYYYMM(row.mes),
+      total: row.total,
+      esperado: row.esperado,
+      diferencia: Number(row.total || 0) - Number(row.esperado || 0)
+    }));
 
-    // set con ids de alumnos becados
-    const becadosSet = new Set((db || []).map(b => String(b.alumno_id)));
-
-    // calcula esperado excluyendo becados
-    const esperado = calcularMontoEsperadoPorMes(becadosSet);
-
-    const datos = dr.map(row => ({
-  mes: formatearMesYYYYMM(row.mes),
-  total: row.total,
-  esperado,
-  diferencia: (Number(row.total || 0) - Number(esperado || 0))
-}));
-
-renderTabla('reporte-mes-pagado', ['Mes','Total','Esperado','Diferencia'], datos);
-
+    renderTabla('reporte-mes-pagado', ['Mes','Total','Esperado','Diferencia'], datos);
   }catch(e){
     console.error('Error mes pagado:', e);
   }

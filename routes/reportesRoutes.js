@@ -176,7 +176,7 @@ router.get('/por-mes-pagado', async (_req, res) => {
       ORDER BY mes_pagado
     `);
 
-    const filas = [];
+        const filas = [];
     for (const row of result.rows) {
       const mes = String(row.mes || '').slice(0,7); // normalizo a 'YYYY-MM'
       if (!mes.match(/^\d{4}-\d{2}$/)) continue;
@@ -189,8 +189,9 @@ router.get('/por-mes-pagado', async (_req, res) => {
         esperado,
         diferencia: total - esperado
       });
-    }c
+    }
     res.json(filas);
+
   } catch (err) {
     console.error('Error en /por-mes-pagado:', err);
     res.status(500).send('Error en reporte por mes pagado');
