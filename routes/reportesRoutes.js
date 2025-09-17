@@ -2,6 +2,115 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+// === SNAPSHOT DE ESPERADOS MENSUALES ===
+async function ensureTablaEsperados() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS esperados_mensuales (
+      mes CHAR(7) NOT NULL,             -- 'YYYY-MM'
+      sede TEXT NOT NULL,               -- 'Craig' | 'Goyena' | 'General' | 'GLOBAL'
+      valor NUMERIC NOT NULL,           -- esperado congelado
+      frozen_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (mes, sede)
+    );
+  `);
+}
+
+function yyyymmHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function esMesCerrado(mes) {
+  // mes: 'YYYY-MM' ; está cerrado si es < mes actual
+  return String(mes) < yyyymmHoy();
+}
+
+// Calcula esperado actual por sede (excluye becados, sólo activos)
+async function calcularEsperadosActualesPorSede() {
+  const mRes = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
+  const precios = {};
+  (mRes.rows||[]).forEach(r => precios[(r.modalidad||'').trim()] = Number(r.precio||0));
+
+  const aRes = await pool.query(`
+    SELECT a.sede, a.tipo_clase
+    FROM alumnos a
+    LEFT JOIN becados b ON b.alumno_id = a.id
+    WHERE a.activo = true AND b.alumno_id IS NULL
+  `);
+
+  const porSede = {}; // { Craig: subtotal, Goyena: subtotal, General: subtotal }
+  (aRes.rows||[]).forEach(a => {
+    const sede = normalizeSedeTxt(a.sede);
+    const mod  = (a.tipo_clase||'').trim();
+    if (!mod) return;
+    porSede[sede] = (porSede[sede]||0) + (precios[mod]||0);
+  });
+
+  const global = Object.values(porSede).reduce((s,n)=>s+Number(n||0),0);
+  return { porSede, global };
+}
+
+// Asegura snapshot para un mes dado (idempotente: no pisa si ya existe)
+async function asegurarSnapshotMes(mes) {
+  await ensureTablaEsperados();
+
+  // Si ya hay GLOBAL, asumimos que ese mes quedó congelado
+  const ya = await pool.query(`SELECT 1 FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL' LIMIT 1`, [mes]);
+  if (ya.rowCount > 0) return;
+
+  const { porSede, global } = await calcularEsperadosActualesPorSede();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const sede of Object.keys(porSede)) {
+      await client.query(`
+        INSERT INTO esperados_mensuales (mes, sede, valor)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (mes, sede) DO NOTHING
+      `, [mes, sede, porSede[sede]]);
+    }
+    await client.query(`
+      INSERT INTO esperados_mensuales (mes, sede, valor)
+      VALUES ($1, 'GLOBAL', $2)
+      ON CONFLICT (mes, sede) DO NOTHING
+    `, [mes, global]);
+    await client.query('COMMIT');
+  } catch(e){
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+// Devuelve esperado (número) priorizando snapshot si está cerrado; si falta y es cerrado, lo crea
+async function getEsperadoMesGlobal(mes) {
+  await ensureTablaEsperados();
+  if (esMesCerrado(mes)) {
+    await asegurarSnapshotMes(mes);
+    const r = await pool.query(`SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL'`, [mes]);
+    return Number(r.rows?.[0]?.valor || 0);
+  } else {
+    const { global } = await calcularEsperadosActualesPorSede();
+    return global;
+  }
+}
+
+// Igual que arriba pero por sede
+async function getEsperadoMesSede(mes, sede) {
+  await ensureTablaEsperados();
+  const sedeNorm = normalizeSedeTxt(sede);
+  if (esMesCerrado(mes)) {
+    await asegurarSnapshotMes(mes);
+    const r = await pool.query(`SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede=$2`, [mes, sedeNorm]);
+    return Number(r.rows?.[0]?.valor || 0);
+  } else {
+    const { porSede } = await calcularEsperadosActualesPorSede();
+    return Number(porSede[sedeNorm] || 0);
+  }
+}
+
+
+
 // -- Asegura la tabla de pagos de prueba (por si aún no existe)
 async function ensureTablaPagosPrueba() {
   await pool.query(`
@@ -57,8 +166,8 @@ router.get('/por-cuenta-filtrado', async (req, res) => {
   }
 });
 
-// 2. Monto por mes pagado (corregido)
-router.get('/por-mes-pagado', async (req, res) => {
+// 2. Monto por mes pagado (con ESPERADO congelado y diferencia)
+router.get('/por-mes-pagado', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT mes_pagado AS mes, SUM(monto) AS total
@@ -66,7 +175,22 @@ router.get('/por-mes-pagado', async (req, res) => {
       GROUP BY mes_pagado
       ORDER BY mes_pagado
     `);
-    res.json(result.rows);
+
+    const filas = [];
+    for (const row of result.rows) {
+      const mes = String(row.mes || '').slice(0,7); // normalizo a 'YYYY-MM'
+      if (!mes.match(/^\d{4}-\d{2}$/)) continue;
+
+      const total = Number(row.total || 0);
+      const esperado = await getEsperadoMesGlobal(mes); // ← usa snapshot si está cerrado
+      filas.push({
+        mes,
+        total,
+        esperado,
+        diferencia: total - esperado
+      });
+    }c
+    res.json(filas);
   } catch (err) {
     console.error('Error en /por-mes-pagado:', err);
     res.status(500).send('Error en reporte por mes pagado');
@@ -260,10 +384,27 @@ router.get('/recaudacion-por-sede', async (_req, res) => {
     `;
     const recaudado = await pool.query(qRecaudado);
 
-    // 2) Esperado: alumnos activos NO becados, con sede normalizada, por precios de tipos_clase
-    const modalidades = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
-    const precios = {};
-    (modalidades.rows || []).forEach(m => precios[m.modalidad] = Number(m.precio) || 0);
+        // 2) Resultado final usando snapshot/actual para 'esperado' por sede y mes
+    const out = [];
+    for (const r of recaudado.rows) {
+      const mes  = String(r.mes || '').slice(0, 7);                 // 'YYYY-MM'
+      const sede = normalizeSedeTxt(r.sede);                        // Craig | Goyena | General
+      const total = Number(r.total || 0);
+
+      // Usa snapshot si el mes está cerrado; si no, calcula en vivo
+      const esperado = await getEsperadoMesSede(mes, sede);
+
+      out.push({
+        mes,
+        sede,
+        total,
+        esperado,
+        diferencia: total - esperado
+      });
+    }
+
+    res.json(out);
+
 
     const alumnos = await pool.query(`
       SELECT a.sede, a.tipo_clase
