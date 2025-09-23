@@ -1234,7 +1234,8 @@ function filtrarAlumnos(){poblarListaAlumnos(document.getElementById('buscadorAl
 async function cargarClasesSemana(){
   const desde = ymd(semanaInicio);
   const dias  = diasHabilitados(sedeSeleccionada) || [1,2,3,4,5];
-  const hasta = ymd(addDays(semanaInicio, Math.max(...dias)));
+  const hasta = ymd(addDays(semanaInicio, Math.max(...dias) - 1));
+
 
   const params = new URLSearchParams();
   params.set('desde', desde);
@@ -1338,7 +1339,7 @@ async function cargarSituacionAlumno(alumnoId) {
 
   // Rango: desde inicio de la semana hasta fin de año
   const desde = ymd(semanaInicio);
-  const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
+  const fin = '2100-12-31';
 
   try {
     const res = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
