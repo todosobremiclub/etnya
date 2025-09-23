@@ -2042,10 +2042,10 @@ function cupoDisponible(fecha, hora, sede){
   return Number.POSITIVE_INFINITY;
 }
 
-// Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta fin de año
-// para el día de la semana indicado (1=Lun ... 7=Dom)
+// Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta dic-2100
+// para el día de la semana indicado (1=Lun . 7=Dom)
 function fechasHastaFinDeAnio(dow){
-  const fin = new Date(semanaInicio.getFullYear(), 11, 31);
+  const fin = new Date(2100, 11, 31); // ← antes tomaba el año de la semana visible
   let first = addDays(semanaInicio, dow - 1);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   if (first < hoy) first = addDays(first, 7);
