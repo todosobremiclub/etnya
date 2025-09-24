@@ -1339,7 +1339,7 @@ async function cargarSituacionAlumno(alumnoId) {
 
   // Rango: desde inicio de la semana hasta fin de año
   const desde = ymd(semanaInicio);
-  const fin = '2100-12-31';
+  const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
 
   try {
     const res = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
@@ -2046,7 +2046,7 @@ function cupoDisponible(fecha, hora, sede){
 // Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta dic-2100
 // para el día de la semana indicado (1=Lun . 7=Dom)
 function fechasHastaFinDeAnio(dow){
-  const fin = new Date(2100, 11, 31); // ← antes tomaba el año de la semana visible
+  const fin = new Date(semanaInicio.getFullYear(), 11, 31);
   let first = addDays(semanaInicio, dow - 1);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   if (first < hoy) first = addDays(first, 7);
