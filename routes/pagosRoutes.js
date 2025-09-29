@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Registrar un nuevo pago
+
 // Registrar un nuevo pago
 router.post('/', async (req, res) => {
   const { alumno_id, mes_pagado, monto, cuenta } = req.body;
@@ -13,21 +13,40 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Verificar si ya existe un pago para ese alumno y mes
+    // 1) Duplicado por alumno + mes
     const existe = await pool.query(
       `SELECT 1 FROM pagos WHERE alumno_id = $1 AND mes_pagado = $2`,
       [alumno_id, mes_pagado]
     );
-
     if (existe.rows.length > 0) {
       return res.status(409).json({ error: 'Ya existe un pago para ese mes.' });
     }
 
-    // Si no existe, insertarlo
+    // 2) Leer datos del alumno para snapshot
+    const rAlumno = await pool.query(
+      `SELECT numero_alumno, nombre, apellido, sede, tipo_clase
+         FROM alumnos
+        WHERE id = $1`,
+      [alumno_id]
+    );
+    if (rAlumno.rows.length === 0) {
+      // si no existe el alumno, igualmente podés decidir guardar igual con snapshot en null
+      return res.status(400).json({ error: 'Alumno inexistente.' });
+    }
+    const { numero_alumno, nombre, apellido, sede, tipo_clase } = rAlumno.rows[0];
+
+    // 3) Insert con snapshot (queda histórico aunque borres el alumno)
     await pool.query(
-      `INSERT INTO pagos (alumno_id, mes_pagado, monto, cuenta, fecha_pago)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [alumno_id, mes_pagado, monto, cuenta, fecha_pago]
+      `INSERT INTO pagos (
+         alumno_id,
+         alumno_numero, alumno_nombre, alumno_apellido, alumno_sede, alumno_modalidad,
+         mes_pagado, monto, cuenta, fecha_pago
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        alumno_id,
+        numero_alumno, nombre, apellido, sede, tipo_clase,
+        mes_pagado, monto, cuenta, fecha_pago
+      ]
     );
 
     res.status(200).json({ message: 'Pago registrado correctamente.' });
