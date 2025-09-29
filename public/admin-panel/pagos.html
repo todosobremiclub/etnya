@@ -696,15 +696,17 @@ function renderPagos(query = '') {
         const label = normalizarTexto('000 pagos de clases de prueba');
         return label.includes(term);
       }
-      const a = alumnos.find(x => x.id === p.alumno_id);
-      if (!a) return false;
-      if (!term) return true;
-      const nro = String(a.numero_alumno || '');
-      const ape = normalizarTexto(a.apellido || '');
-      const nom = normalizarTexto(a.nombre || '');
-      return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
-             normalizarTexto(`${ape} ${nom}`).includes(term);
-    })
+     const a = alumnos.find(x => x.id === p.alumno_id);
+if (!a) {
+  // permitir ver pagos aunque alumno_id sea NULL o no exista: usar snapshot
+  if (!term) return true;
+  const nro = String(p.alumno_numero || '');
+  const ape = normalizarTexto(p.alumno_apellido || '');
+  const nom = normalizarTexto(p.alumno_nombre || '');
+  return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
+         normalizarTexto(`${ape} ${nom}`).includes(term);
+}
+
     .sort((p1, p2) => {
       const n1 = (p1.alumno_id === OPT_PRUEBA_VALUE)
         ? 0
@@ -780,24 +782,34 @@ function renderPagos(query = '') {
           `;
         } else {
           const a = alumnos.find(x => x.id === p.alumno_id);
-          const tipo = tiposClase.find(t =>
-            normalizarTexto(t.modalidad) === normalizarTexto(a?.tipo_clase)
-          );
-          const [y, m] = String(p.mes_pagado || '').split('-');
-          const mesFmt = (y && m) ? `${m}/${y}` : '-';
+const mostrarNumero   = a?.numero_alumno ?? p.alumno_numero ?? '-';
+const mostrarNombre   = a ? `${a.nombre ?? ''} ${a.apellido ?? ''}`.trim()
+                          : `${p.alumno_nombre ?? ''} ${p.alumno_apellido ?? ''}`.trim();
+const mostrarModalidad= (()=>{
+  if (a) {
+    const tipo = tiposClase.find(t =>
+      normalizarTexto(t.modalidad) === normalizarTexto(a?.tipo_clase)
+    );
+    return tipo?.modalidad || a?.tipo_clase || '-';
+  }
+  return p.alumno_modalidad || '-';
+})();
+const [y, m] = String(p.mes_pagado || '').split('-');
+const mesFmt = (y && m) ? `${m}/${y}` : '-';
 
-          tr.innerHTML = `
-            <td>${a?.numero_alumno ?? '-'}</td>
-            <td>${a?.nombre ?? ''} ${a?.apellido ?? ''}</td>
-            <td>${tipo?.modalidad || a?.tipo_clase || '-'}</td>
-            <td>${mesFmt}</td>
-            <td>$${parseFloat(p.monto).toFixed(2)}</td>
-            <td>
-              ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-              <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
-            </td>
-            <td>${p.cuenta || '-'}</td>
-          `;
+tr.innerHTML = `
+  <td>${mostrarNumero}</td>
+  <td>${mostrarNombre || '-'}</td>
+  <td>${mostrarModalidad}</td>
+  <td>${mesFmt}</td>
+  <td>$${parseFloat(p.monto).toFixed(2)}</td>
+  <td>
+    ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
+    <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
+  </td>
+  <td>${p.cuenta || '-'}</td>
+`;
+
         }
 
         tbody.appendChild(tr);
