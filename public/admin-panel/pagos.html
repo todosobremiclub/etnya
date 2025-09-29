@@ -729,24 +729,25 @@ function renderPagos(query = '') {
 
 
   // Agrupar por Sede -> Mes
-  const mapa = {};
-  pagosFiltrados.forEach(p => {
-    let sede = 'General';
-    if (p.alumno_id === OPT_PRUEBA_VALUE) {
-      sede = normalizarSede(p.__sede);
-    } else {
-  const a = alumnos.find(al => al.id === p.alumno_id);
-  sede = a ? normalizarSede(a.sede)
-           : normalizarSede(p.alumno_sede || 'General'); // usar snapshot si no existe el alumno
-}
+const mapa = {};
+pagosFiltrados.forEach(p => {
+  let sede = 'General';
 
-    }
-    const mes = getMesKey(p);
+  if (p.alumno_id === OPT_PRUEBA_VALUE) {
+    sede = normalizarSede(p.__sede);
+  } else {
+    const a = alumnos.find(al => al.id === p.alumno_id);
+    sede = a ? normalizarSede(a.sede)
+             : normalizarSede(p.alumno_sede || 'General'); // usar snapshot si no existe el alumno
+  }
 
-    if (!mapa[sede]) mapa[sede] = {};
-    if (!mapa[sede][mes]) mapa[sede][mes] = [];
-    mapa[sede][mes].push(p);
-  });
+  const mes = getMesKey(p);
+
+  if (!mapa[sede]) mapa[sede] = {};
+  if (!mapa[sede][mes]) mapa[sede][mes] = [];
+  mapa[sede][mes].push(p);
+});
+
 
   // Pintar: Fila Sede (colapsable) -> Fila Mes (colapsable) -> Detalle de pagos
   let sedeIdx = 0;
