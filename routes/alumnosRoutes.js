@@ -90,11 +90,13 @@ router.delete('/:id', async (req, res) => {
     }
 
     // 2) Borrar dependencias (ajustá si tenés más tablas hijas)
-    await client.query('DELETE FROM clases        WHERE alumno_id = $1', [id]);
-    await client.query('DELETE FROM observaciones WHERE alumno_id = $1', [id]);
-    await client.query('DELETE FROM adjuntos      WHERE alumno_id = $1', [id]);
-    await client.query('DELETE FROM pagos         WHERE alumno_id = $1', [id]);
-    await client.query('DELETE FROM becados       WHERE alumno_id = $1', [id]);
+// ⚠️ NO borrar de pagos: la FK SET NULL preserva el histórico
+await client.query('DELETE FROM clases        WHERE alumno_id = $1', [id]);
+await client.query('DELETE FROM observaciones WHERE alumno_id = $1', [id]);
+await client.query('DELETE FROM adjuntos      WHERE alumno_id = $1', [id]);
+// await client.query('DELETE FROM pagos      WHERE alumno_id = $1', [id]);  // ← quitado
+await client.query('DELETE FROM becados       WHERE alumno_id = $1', [id]);
+
 
     // 3) Borrar el alumno
     await client.query('DELETE FROM alumnos WHERE id = $1', [id]);
