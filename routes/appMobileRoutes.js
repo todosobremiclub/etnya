@@ -38,9 +38,8 @@ function ymKey(d) {
 /** GET /app/perfil */
 router.get('/perfil', async (req, res) => {
   try {
-    const numero = req.user.numero;
+    const alumnoId = req.user.uid; // 👈 usar el ID exacto del token
 
-    // Intento 1: con columna becado (si existe)
     const qConBecado = `
       SELECT id,
              ${NUM_FIELD} AS numero,
@@ -51,11 +50,9 @@ router.get('/perfil', async (req, res) => {
              ${SEDE_FIELD}  AS sede,
              ${SCHOLAR_FIELD} AS becado
       FROM ${TBL}
-      WHERE ${NUM_FIELD} = $1
+      WHERE id = $1
       LIMIT 1
     `;
-
-    // Intento 2 (fallback): sin columna becado → devolvemos false como literal
     const qSinBecado = `
       SELECT id,
              ${NUM_FIELD} AS numero,
@@ -66,44 +63,39 @@ router.get('/perfil', async (req, res) => {
              ${SEDE_FIELD}  AS sede,
              FALSE AS becado
       FROM ${TBL}
-      WHERE ${NUM_FIELD} = $1
+      WHERE id = $1
       LIMIT 1
     `;
 
     let s;
     try {
-      const { rows } = await db.query(qConBecado, [numero]);
+      const { rows } = await db.query(qConBecado, [alumnoId]);
       s = rows[0];
     } catch (err) {
-      // Si falló por columna inexistente (42703), usamos el fallback
       if (String(err.code) === '42703') {
-        const { rows } = await db.query(qSinBecado, [numero]);
+        const { rows } = await db.query(qSinBecado, [alumnoId]);
         s = rows[0];
-      } else {
-        throw err;
-      }
+      } else throw err;
     }
 
-    if (!s) return res.status(404).json({ error: 'Socio no encontrado' });
+    if (!s) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-    // último mes pagado
+    // último mes pagado (por ID, no por número)
     let maxMes = null;
     try {
-      const qPago = `
-        SELECT MAX(${PAGOS_MES_FIELD}) AS max_mes
-        FROM ${PAGOS_TABLE}
-        WHERE ${PAGOS_ALUMNO_FK} = $1
-      `;
-      const { rows: rp } = await db.query(qPago, [s.id]);
+      const { rows: rp } = await db.query(
+        `SELECT MAX(${PAGOS_MES_FIELD}) AS max_mes
+         FROM ${PAGOS_TABLE}
+         WHERE ${PAGOS_ALUMNO_FK} = $1`,
+        [alumnoId]
+      );
       maxMes = rp[0]?.max_mes || null;
     } catch (_) {}
 
     const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const mesActual = ymKey(new Date());
 
-    // Normalizamos "becado" (por si vino string/num/boolean)
     const esBecado = s.becado === true || String(s.becado).toLowerCase() === 'true' || s.becado === 1;
-
     let estado = 'en_mora';
     if (esBecado) estado = 'al_dia';
     else if (maxMes && String(maxMes) >= mesActual) estado = 'al_dia';
@@ -113,7 +105,7 @@ router.get('/perfil', async (req, res) => {
       nombre: s.nombre,
       apellido: s.apellido,
       inicio_clases: s.inicio_clases ? new Date(s.inicio_clases).toISOString() : null,
-      estado_pago: estado, // 'al_dia' | 'en_mora'
+      estado_pago: estado,
       tipo_clase: s.tipo_clase || '',
       sede: s.sede || ''
     });
@@ -129,13 +121,7 @@ router.get('/clases', async (req, res) => {
     const { mes } = req.query;
     if (!mes) return res.status(400).json({ error: 'Parametro mes (YYYY-MM) requerido' });
 
-    const numero = req.user.numero;
-    const { rows: rs } = await db.query(
-      `SELECT id FROM ${TBL} WHERE ${NUM_FIELD} = $1 LIMIT 1`,
-      [numero]
-    );
-    const s = rs[0];
-    if (!s) return res.status(404).json({ error: 'Socio no encontrado' });
+    const alumnoId = req.user.uid; // 👈 usar ID del token
 
     const qClases = `
       SELECT id,
@@ -148,7 +134,7 @@ router.get('/clases', async (req, res) => {
         AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2
       ORDER BY ${CLASES_FECHA} ASC
     `;
-    const { rows: rc } = await db.query(qClases, [s.id, mes]);
+    const { rows: rc } = await db.query(qClases, [alumnoId, mes]);
 
     const tomadas = rc.filter(x => x.estado === 'asistio').length;
     const suspendidas = rc.filter(x => x.estado === 'con_aviso' || x.estado === 'sin_aviso').length;
@@ -159,7 +145,7 @@ router.get('/clases', async (req, res) => {
         id: c.id,
         fecha: c.fecha ? new Date(c.fecha).toISOString() : null,
         sede: c.sede || '',
-        tipo: c.tipo || 'normal',   // 'normal' | 'recuperacion'
+        tipo: c.tipo || 'normal',
         estado: c.estado || ''
       }))
     });
