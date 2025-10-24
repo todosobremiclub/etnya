@@ -38,10 +38,10 @@ function ymKey(d) {
 /** GET /app/perfil */
 router.get('/perfil', async (req, res) => {
   try {
-    const alumnoId = req.user.uid;
+    const alumnoId = req.user.uid; // usamos el ID real del token
 
-    // 1) Intento traer con becado + estado_pago si existen
-    const qFull = `
+    // 1) Intento completo: asume que existen 'becado' y/o 'estado_pago'
+    const qConFlags = `
       SELECT id,
              ${NUM_FIELD} AS numero,
              ${NAME_FIELD} AS nombre,
@@ -49,25 +49,44 @@ router.get('/perfil', async (req, res) => {
              ${START_FIELD} AS inicio_clases,
              ${TYPE_FIELD}  AS tipo_clase,
              ${SEDE_FIELD}  AS sede,
-             /* pueden o no existir en esta base */
-             CASE WHEN EXISTS (
-               SELECT 1 FROM information_schema.columns
-               WHERE table_name='${TBL}' AND column_name='becado'
-             ) THEN becado ELSE NULL END AS becado,
-             CASE WHEN EXISTS (
-               SELECT 1 FROM information_schema.columns
-               WHERE table_name='${TBL}' AND column_name='estado_pago'
-             ) THEN estado_pago ELSE NULL END AS estado_pago
+             becado,
+             estado_pago
       FROM ${TBL}
       WHERE id = $1
       LIMIT 1
     `;
 
-    const { rows: rs } = await db.query(qFull, [alumnoId]);
-    const s = rs[0];
+    // 2) Fallback: sin columnas opcionales
+    const qBasica = `
+      SELECT id,
+             ${NUM_FIELD} AS numero,
+             ${NAME_FIELD} AS nombre,
+             ${SURNAME_FIELD} AS apellido,
+             ${START_FIELD} AS inicio_clases,
+             ${TYPE_FIELD}  AS tipo_clase,
+             ${SEDE_FIELD}  AS sede
+      FROM ${TBL}
+      WHERE id = $1
+      LIMIT 1
+    `;
+
+    let s;
+    try {
+      const { rows } = await db.query(qConFlags, [alumnoId]);
+      s = rows[0];
+    } catch (err) {
+      // Si la columna no existe (42703), hacemos la consulta básica
+      if (String(err.code) === '42703') {
+        const { rows } = await db.query(qBasica, [alumnoId]);
+        s = rows[0];
+      } else {
+        throw err;
+      }
+    }
+
     if (!s) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-    // 2) Último mes pagado por ID (independiente del número)
+    // último mes pagado por ID
     let maxMes = null;
     try {
       const { rows: rp } = await db.query(
@@ -79,16 +98,16 @@ router.get('/perfil', async (req, res) => {
       maxMes = rp[0]?.max_mes || null;
     } catch (_) {}
 
-    // 3) Reglas de estado
+    // cálculo estado
     const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const mesActual = ymKey(new Date());
 
-    // normalizo posibles valores de becado/estado_pago
-    const esBecado = s.becado === true || s.becado === 1 || String(s.becado).toLowerCase() == 'true';
-    const estadoPagoCol = (s.estado_pago || '').toString().toLowerCase();
-    const estadoPagoPositivo =
-      estadoPagoCol == 'al_dia' || estadoPagoCol == 'ok' || estadoPagoCol == 'pago' ||
-      estadoPagoCol == 'true'  || estadoPagoCol == '1';
+    // normalizo flags si están presentes
+    const esBecado = s.hasOwnProperty('becado') &&
+                     (s.becado === true || s.becado === 1 || String(s.becado).toLowerCase() === 'true');
+
+    const estadoPagoPositivo = s.hasOwnProperty('estado_pago') &&
+      ['al_dia','ok','pago','true','1'].includes(String(s.estado_pago).toLowerCase());
 
     let estado = 'en_mora';
     if (esBecado || estadoPagoPositivo) {
@@ -102,7 +121,7 @@ router.get('/perfil', async (req, res) => {
       nombre: s.nombre,
       apellido: s.apellido,
       inicio_clases: s.inicio_clases ? new Date(s.inicio_clases).toISOString() : null,
-      estado_pago: estado,         // 'al_dia' | 'en_mora'
+      estado_pago: estado,           // 'al_dia' | 'en_mora'
       tipo_clase: s.tipo_clase || '',
       sede: s.sede || ''
     });
