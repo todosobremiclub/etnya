@@ -5,12 +5,12 @@ const jwt = require('jsonwebtoken');
 const db = require('../db'); // tu pool/cliente PG
 
 // ====== CONFIG (ajustable por .env) ======
-const TBL              = process.env.MOBILE_TABLE               || 'socios';
-const NUM_FIELD        = process.env.MOBILE_NUM_FIELD           || 'numero';
-const SURNAME_FIELD    = process.env.MOBILE_SURNAME_FIELD       || 'apellido';
-const NAME_FIELD       = process.env.MOBILE_NAME_FIELD          || 'nombre';
-const ACTIVE_FIELD     = process.env.MOBILE_ACTIVE_FIELD        || 'estado';   // en Flores Jrs suele ser 'activo' o 'estado'
-const ACTIVE_TRUE_VAL  = process.env.MOBILE_ACTIVE_TRUE_VAL     || 'activo';   // valor que consideramos "activo" si es texto
+const TBL        = process.env.MOBILE_TABLE || 'alumnos';
+const NUM_FIELD  = process.env.MOBILE_NUM_FIELD || 'numero_alumno';
+const SURNAME_FIELD = process.env.MOBILE_SURNAME_FIELD || 'apellido';
+const NAME_FIELD    = process.env.MOBILE_NAME_FIELD || 'nombre';
+const ACTIVE_FIELD  = process.env.MOBILE_ACTIVE_FIELD || 'activo';
+const ACTIVE_TRUE_VAL = process.env.MOBILE_ACTIVE_TRUE_VAL || 'true';
 // =========================================
 
 const JWT_SECRET = process.env.JWT_SECRET || 'cambia-esto';

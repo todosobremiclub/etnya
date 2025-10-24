@@ -5,25 +5,26 @@ const db = require('../db');
 const jwtMobile = require('../middleware/jwtMobile');
 
 // ====== CONFIG (ajustable por .env) ======
-const TBL               = process.env.MOBILE_TABLE                || 'socios';
-const NUM_FIELD         = process.env.MOBILE_NUM_FIELD            || 'numero';
-const NAME_FIELD        = process.env.MOBILE_NAME_FIELD           || 'nombre';
-const SURNAME_FIELD     = process.env.MOBILE_SURNAME_FIELD        || 'apellido';
-const START_FIELD       = process.env.MOBILE_START_FIELD          || 'fecha_ingreso';
-const TYPE_FIELD        = process.env.MOBILE_TYPE_FIELD           || 'categoria'; // para FJ puede ser 'categoria'
-const SEDE_FIELD        = process.env.MOBILE_SEDE_FIELD           || 'sede';      // si no existe, queda vacío
-const SCHOLAR_FIELD     = process.env.MOBILE_BECADO_FIELD         || 'becado';    // si no existe, quedará null
+const TBL           = process.env.MOBILE_TABLE || 'alumnos';
+const NUM_FIELD     = process.env.MOBILE_NUM_FIELD || 'numero_alumno';
+const NAME_FIELD    = process.env.MOBILE_NAME_FIELD || 'nombre';
+const SURNAME_FIELD = process.env.MOBILE_SURNAME_FIELD || 'apellido';
+const START_FIELD   = process.env.MOBILE_START_FIELD || 'fecha_inicio';
+const TYPE_FIELD    = process.env.MOBILE_TYPE_FIELD || 'tipo_clase';
+const SEDE_FIELD    = process.env.MOBILE_SEDE_FIELD || 'sede';
+const SCHOLAR_FIELD = process.env.MOBILE_BECADO_FIELD || 'becado';
 
-const PAGOS_TABLE       = process.env.MOBILE_PAGOS_TABLE          || 'pagos_mensuales';
-const PAGOS_ALUMNO_FK   = process.env.MOBILE_PAGOS_ALUMNO_FIELD   || 'socio_id';
-const PAGOS_MES_FIELD   = process.env.MOBILE_PAGOS_MES_FIELD      || 'mes_pagado'; // 'YYYY-MM'
+const PAGOS_TABLE     = process.env.MOBILE_PAGOS_TABLE || 'pagos';
+const PAGOS_ALUMNO_FK = process.env.MOBILE_PAGOS_ALUMNO_FIELD || 'alumno_id';
+const PAGOS_MES_FIELD = process.env.MOBILE_PAGOS_MES_FIELD || 'mes_pagado';
 
-const CLASES_TABLE      = process.env.MOBILE_CLASES_TABLE         || 'clases';
-const CLASES_ALUMNO_FK  = process.env.MOBILE_CLASES_ALUMNO_FIELD  || 'socio_id';
-const CLASES_FECHA      = process.env.MOBILE_CLASES_FECHA_FIELD   || 'fecha';
-const CLASES_SEDE       = process.env.MOBILE_CLASES_SEDE_FIELD    || 'sede';
-const CLASES_TIPO       = process.env.MOBILE_CLASES_TIPO_FIELD    || 'tipo';
-const CLASES_ESTADO     = process.env.MOBILE_CLASES_ESTADO_FIELD  || 'estado';
+const CLASES_TABLE      = process.env.MOBILE_CLASES_TABLE || 'clases';
+const CLASES_ALUMNO_FK  = process.env.MOBILE_CLASES_ALUMNO_FIELD || 'alumno_id';
+const CLASES_FECHA      = process.env.MOBILE_CLASES_FECHA_FIELD || 'fecha';
+const CLASES_SEDE       = process.env.MOBILE_CLASES_SEDE_FIELD || 'sede';
+const CLASES_TIPO       = process.env.MOBILE_CLASES_TIPO_FIELD || 'tipo';
+const CLASES_ESTADO     = process.env.MOBILE_CLASES_ESTADO_FIELD || 'estado';
+
 // =========================================
 
 router.use(jwtMobile);
