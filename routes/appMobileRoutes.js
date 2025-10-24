@@ -40,7 +40,8 @@ router.get('/perfil', async (req, res) => {
   try {
     const numero = req.user.numero;
 
-    const qSocio = `
+    // Intento 1: con columna becado (si existe)
+    const qConBecado = `
       SELECT id,
              ${NUM_FIELD} AS numero,
              ${NAME_FIELD} AS nombre,
@@ -53,8 +54,36 @@ router.get('/perfil', async (req, res) => {
       WHERE ${NUM_FIELD} = $1
       LIMIT 1
     `;
-    const { rows: rs } = await db.query(qSocio, [numero]);
-    const s = rs[0];
+
+    // Intento 2 (fallback): sin columna becado → devolvemos false como literal
+    const qSinBecado = `
+      SELECT id,
+             ${NUM_FIELD} AS numero,
+             ${NAME_FIELD} AS nombre,
+             ${SURNAME_FIELD} AS apellido,
+             ${START_FIELD} AS inicio_clases,
+             ${TYPE_FIELD}  AS tipo_clase,
+             ${SEDE_FIELD}  AS sede,
+             FALSE AS becado
+      FROM ${TBL}
+      WHERE ${NUM_FIELD} = $1
+      LIMIT 1
+    `;
+
+    let s;
+    try {
+      const { rows } = await db.query(qConBecado, [numero]);
+      s = rows[0];
+    } catch (err) {
+      // Si falló por columna inexistente (42703), usamos el fallback
+      if (String(err.code) === '42703') {
+        const { rows } = await db.query(qSinBecado, [numero]);
+        s = rows[0];
+      } else {
+        throw err;
+      }
+    }
+
     if (!s) return res.status(404).json({ error: 'Socio no encontrado' });
 
     // último mes pagado
@@ -67,12 +96,16 @@ router.get('/perfil', async (req, res) => {
       `;
       const { rows: rp } = await db.query(qPago, [s.id]);
       maxMes = rp[0]?.max_mes || null;
-    } catch (_) { /* si no existe la tabla devolvemos null */ }
+    } catch (_) {}
 
+    const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const mesActual = ymKey(new Date());
+
+    // Normalizamos "becado" (por si vino string/num/boolean)
+    const esBecado = s.becado === true || String(s.becado).toLowerCase() === 'true' || s.becado === 1;
+
     let estado = 'en_mora';
-    const becado = s.becado === true || String(s.becado).toLowerCase() === 'true';
-    if (becado) estado = 'al_dia';
+    if (esBecado) estado = 'al_dia';
     else if (maxMes && String(maxMes) >= mesActual) estado = 'al_dia';
 
     res.json({
