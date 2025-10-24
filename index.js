@@ -6,6 +6,10 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 
 const app = express();
+const rateLimit = require('express-rate-limit');          // NUEVO
+const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
+const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
+
 
 // ===== DB =====
 const pool = require('./db');
@@ -41,6 +45,17 @@ const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'cambia-esto';
 // ===== Middlewares =====
 app.use(cors());
 app.use(express.json());
+
+// ====== Rutas para la App Móvil (NO pisan nada) ======
+// Limitador solo para /auth/login (mitiga fuerza bruta)
+const loginLimiter = rateLimit({ windowMs: 60 * 1000, max: 20 });
+app.use('/auth/login', loginLimiter);
+
+// Prefijos NUEVOS (no afectan rutas actuales)
+app.use('/auth', authMobileRoutes);
+app.use('/app',  appMobileRoutes);
+// ======================================================
+
 
 // ===== Helpers de auth (admin panel) =====
 function verificarAdminJWT(req, res, next) {
