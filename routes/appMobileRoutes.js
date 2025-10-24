@@ -38,9 +38,10 @@ function ymKey(d) {
 /** GET /app/perfil */
 router.get('/perfil', async (req, res) => {
   try {
-    const alumnoId = req.user.uid; // 👈 usar el ID exacto del token
+    const alumnoId = req.user.uid;
 
-    const qConBecado = `
+    // 1) Intento traer con becado + estado_pago si existen
+    const qFull = `
       SELECT id,
              ${NUM_FIELD} AS numero,
              ${NAME_FIELD} AS nombre,
@@ -48,39 +49,25 @@ router.get('/perfil', async (req, res) => {
              ${START_FIELD} AS inicio_clases,
              ${TYPE_FIELD}  AS tipo_clase,
              ${SEDE_FIELD}  AS sede,
-             ${SCHOLAR_FIELD} AS becado
-      FROM ${TBL}
-      WHERE id = $1
-      LIMIT 1
-    `;
-    const qSinBecado = `
-      SELECT id,
-             ${NUM_FIELD} AS numero,
-             ${NAME_FIELD} AS nombre,
-             ${SURNAME_FIELD} AS apellido,
-             ${START_FIELD} AS inicio_clases,
-             ${TYPE_FIELD}  AS tipo_clase,
-             ${SEDE_FIELD}  AS sede,
-             FALSE AS becado
+             /* pueden o no existir en esta base */
+             CASE WHEN EXISTS (
+               SELECT 1 FROM information_schema.columns
+               WHERE table_name='${TBL}' AND column_name='becado'
+             ) THEN becado ELSE NULL END AS becado,
+             CASE WHEN EXISTS (
+               SELECT 1 FROM information_schema.columns
+               WHERE table_name='${TBL}' AND column_name='estado_pago'
+             ) THEN estado_pago ELSE NULL END AS estado_pago
       FROM ${TBL}
       WHERE id = $1
       LIMIT 1
     `;
 
-    let s;
-    try {
-      const { rows } = await db.query(qConBecado, [alumnoId]);
-      s = rows[0];
-    } catch (err) {
-      if (String(err.code) === '42703') {
-        const { rows } = await db.query(qSinBecado, [alumnoId]);
-        s = rows[0];
-      } else throw err;
-    }
-
+    const { rows: rs } = await db.query(qFull, [alumnoId]);
+    const s = rs[0];
     if (!s) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-    // último mes pagado (por ID, no por número)
+    // 2) Último mes pagado por ID (independiente del número)
     let maxMes = null;
     try {
       const { rows: rp } = await db.query(
@@ -92,20 +79,30 @@ router.get('/perfil', async (req, res) => {
       maxMes = rp[0]?.max_mes || null;
     } catch (_) {}
 
+    // 3) Reglas de estado
     const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const mesActual = ymKey(new Date());
 
-    const esBecado = s.becado === true || String(s.becado).toLowerCase() === 'true' || s.becado === 1;
+    // normalizo posibles valores de becado/estado_pago
+    const esBecado = s.becado === true || s.becado === 1 || String(s.becado).toLowerCase() == 'true';
+    const estadoPagoCol = (s.estado_pago || '').toString().toLowerCase();
+    const estadoPagoPositivo =
+      estadoPagoCol == 'al_dia' || estadoPagoCol == 'ok' || estadoPagoCol == 'pago' ||
+      estadoPagoCol == 'true'  || estadoPagoCol == '1';
+
     let estado = 'en_mora';
-    if (esBecado) estado = 'al_dia';
-    else if (maxMes && String(maxMes) >= mesActual) estado = 'al_dia';
+    if (esBecado || estadoPagoPositivo) {
+      estado = 'al_dia';
+    } else if (maxMes && String(maxMes) >= mesActual) {
+      estado = 'al_dia';
+    }
 
     res.json({
       numero: s.numero,
       nombre: s.nombre,
       apellido: s.apellido,
       inicio_clases: s.inicio_clases ? new Date(s.inicio_clases).toISOString() : null,
-      estado_pago: estado,
+      estado_pago: estado,         // 'al_dia' | 'en_mora'
       tipo_clase: s.tipo_clase || '',
       sede: s.sede || ''
     });
