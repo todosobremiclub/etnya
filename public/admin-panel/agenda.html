@@ -502,7 +502,8 @@ table.agenda td.slot + td.slot,
             <select id="selectHoraGeneral"><option value="">Seleccionar hora...</option></select>
           </div>
           <div id="perDia" style="margin-top:10px;"></div>
-          <small>Se generarán las clases seleccionadas desde la semana visible hasta fin de año.</small>
+          <small>Se generarán las clases seleccionadas desde la semana visible hasta el límite de agenda.</small>
+
         </div>
 
         <!-- Situación actual -->
@@ -674,6 +675,17 @@ table.agenda td.slot + td.slot,
     'Craig Circuito':{dias:[1,2,3,4,5],desde:9,hasta:20},
     'Pedro Goyena': {dias:[1,2,3,4,5,6],desde:8,hasta:21}
   };
+
+  // === Límite de agenda (configurable) ===
+  const MAX_FECHA_AGENDA = '2026-12-31';
+
+  // Evita corrimientos por UTC (GMT-3) al comparar/iterar por fechas "YYYY-MM-DD"
+  function parseISODateLocal(iso){
+    const [y,m,d] = iso.split('-').map(Number);
+    // mediodía local para evitar off-by-one por huso horario
+    return new Date(y, m-1, d, 12, 0, 0, 0);
+  }
+
 
   let sedeSeleccionada='Craig Reformer';
   let semanaInicio=getLunes(new Date());
@@ -871,9 +883,29 @@ function groupKey(dow, hora, sede){
   return `${dow}|${normTime(hora)}|${(sede||'').trim()}`;
 }
 
+function actualizarNavegacion(){
+  // week-nav: [◀][label][▶]  → 1er y 3er botón
+  const prevBtn = document.querySelector('.week-nav button:nth-child(1)');
+  const nextBtn = document.querySelector('.week-nav button:nth-child(3)');
+  if (!prevBtn || !nextBtn) return;
+
+  const lastMonday = getLunes(parseISODateLocal(MAX_FECHA_AGENDA));
+  const nextMonday = addDays(semanaInicio, 7);
+  nextBtn.disabled = nextMonday > lastMonday;
+}
+
+
 // ===== Header / navegación =====
 function actualizarHeader(){document.getElementById('labelMes').textContent=MESES[semanaInicio.getMonth()]+' '+semanaInicio.getFullYear()}
-function moverSemana(d){semanaInicio=addDays(semanaInicio,7*d);cargarSemana()}
+function moverSemana(d){
+  const target = addDays(semanaInicio, 7*d);
+  const lastMonday = getLunes(parseISODateLocal(MAX_FECHA_AGENDA));
+  // si intento avanzar y me paso, no hago nada
+  if (d > 0 && target > lastMonday) return;
+  semanaInicio = target;
+  cargarSemana();
+}
+
 function cambiarSede(s){sedeSeleccionada=s;['tabReformer','tabCircuito','tabGoyena'].forEach(id=>document.getElementById(id).classList.remove('active'));
   if(s==='Craig Reformer')tabReformer.classList.add('active');
   if(s==='Craig Circuito')tabCircuito.classList.add('active');
@@ -1339,7 +1371,7 @@ async function cargarSituacionAlumno(alumnoId) {
 
   // Rango: desde inicio de la semana hasta fin de año
   const desde = ymd(semanaInicio);
-  const fin   = ymd(new Date(semanaInicio.getFullYear(), 11, 31));
+  const fin   = MAX_FECHA_AGENDA;
 
   try {
     const res = await fetch(`/clases?alumno_id=${alumnoId}&desde=${desde}&hasta=${fin}`);
@@ -2046,7 +2078,7 @@ function cupoDisponible(fecha, hora, sede){
 // Genera todas las fechas (YYYY-MM-DD) desde la semana visible hasta dic-2100
 // para el día de la semana indicado (1=Lun . 7=Dom)
 function fechasHastaFinDeAnio(dow){
-  const fin = new Date(semanaInicio.getFullYear(), 11, 31);
+  const fin = parseISODateLocal(MAX_FECHA_AGENDA);
   let first = addDays(semanaInicio, dow - 1);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   if (first < hoy) first = addDays(first, 7);
@@ -2370,6 +2402,7 @@ if (btnEliminarClaseUnica){
 /* ===== Init ===== */
 async function cargarSemana() {
   actualizarHeader();
+  actualizarNavegacion(); // 👈 NUEVO
   construirTablaBase();
   await cargarFeriados();   // 👈 nuevo
   await cargarNoClases();
@@ -2426,6 +2459,10 @@ async function cargarFeriados() {
   const notaPrueba=document.getElementById('notaPrueba');
   const id = parseInt(selectAlumno.value, 10) || 0;
   cargarSituacionAlumno(id);
+
+  // Limitar selección de fechas al tope de agenda
+  [fechaUnica, fechaPrueba].forEach(el => el && el.setAttribute('max', MAX_FECHA_AGENDA));
+
 // Refs modal de clase
 const chkAsistio  = document.getElementById('chkAsistio');
 const chkSinAviso  = document.getElementById('chkSinAviso');
