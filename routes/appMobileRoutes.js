@@ -137,14 +137,19 @@ router.get('/clases', async (req, res) => {
     const { mes } = req.query;
     if (!mes) return res.status(400).json({ error: 'Parametro mes (YYYY-MM) requerido' });
 
-    const alumnoId = req.user.uid; // 👈 usar ID del token
+    const alumnoId = req.user.uid;
 
+    // Traemos:
+    // - fecha (timestamp o date)
+    // - hora_txt: si fecha tiene hora, la formateamos; si no, intentamos hora desde otra columna conocida
+    //   (si no existe ninguna, hora_txt quedará NULL y el front mostrará "00:00")
     const qClases = `
       SELECT id,
-             ${CLASES_FECHA}  AS fecha,
-             ${CLASES_SEDE}   AS sede,
-             ${CLASES_TIPO}   AS tipo,
-             ${CLASES_ESTADO} AS estado
+             ${CLASES_FECHA}                                      AS fecha,
+             to_char(${CLASES_FECHA}, 'HH24:MI')                  AS hora_txt,  -- si fecha tiene hora, sale acá
+             ${CLASES_SEDE}                                       AS sede,
+             ${CLASES_TIPO}                                       AS tipo,
+             ${CLASES_ESTADO}                                     AS estado
       FROM ${CLASES_TABLE}
       WHERE ${CLASES_ALUMNO_FK} = $1
         AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2
@@ -152,19 +157,49 @@ router.get('/clases', async (req, res) => {
     `;
     const { rows: rc } = await db.query(qClases, [alumnoId, mes]);
 
-    const tomadas = rc.filter(x => x.estado === 'asistio').length;
-    const suspendidas = rc.filter(x => x.estado === 'con_aviso' || x.estado === 'sin_aviso').length;
+    // Si la DB tiene una columna "hora" (texto o time), intentamos leerla en un segundo paso y combinarla
+    // sin romper si no existe.
+    let horasById = {};
+    try {
+      const qHora = `
+        SELECT id, 
+               CASE 
+                 WHEN EXISTS (
+                   SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='${CLASES_TABLE}' AND column_name='hora'
+                 ) THEN to_char(hora::time, 'HH24:MI')
+                 WHEN EXISTS (
+                   SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='${CLASES_TABLE}' AND column_name='hora_inicio'
+                 ) THEN to_char(hora_inicio::time, 'HH24:MI')
+                 ELSE NULL
+               END AS hora_extra
+        FROM ${CLASES_TABLE}
+        WHERE ${CLASES_ALUMNO_FK} = $1
+          AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2
+      `;
+      const { rows: rh } = await db.query(qHora, [alumnoId, mes]);
+      horasById = Object.fromEntries(rh.filter(x => x.hora_extra).map(x => [String(x.id), x.hora_extra]));
+    } catch (_) {}
 
-    res.json({
-      resumen: { tomadas, suspendidas },
-      items: rc.map(c => ({
+    const items = rc.map(c => {
+      // priorizamos: hora_extra > hora_txt derivada de fecha > null
+      const extra = horasById[String(c.id)] || null;
+      const hora = extra || c.hora_txt || null;
+      return {
         id: c.id,
-        fecha: c.fecha ? new Date(c.fecha).toISOString() : null,
+        fecha: c.fecha ? new Date(c.fecha).toISOString() : null, // ISO para la fecha
+        hora,                                                     // "HH:MM" si la tenemos
         sede: c.sede || '',
-        tipo: c.tipo || 'normal',
+        tipo: (c.tipo || 'normal'),
         estado: c.estado || ''
-      }))
+      };
     });
+
+    const tomadas = items.filter(x => x.estado === 'asistio').length;
+    const suspendidas = items.filter(x => x.estado === 'con_aviso' || x.estado === 'sin_aviso').length;
+
+    res.json({ resumen: { tomadas, suspendidas }, items });
   } catch (e) {
     console.error('/app/clases', e);
     res.status(500).json({ error: 'Error interno' });
