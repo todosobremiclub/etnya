@@ -139,60 +139,53 @@ router.get('/clases', async (req, res) => {
 
     const alumnoId = req.user.uid;
 
-    // Traemos:
-    // - fecha (timestamp o date)
-    // - hora_txt: si fecha tiene hora, la formateamos; si no, intentamos hora desde otra columna conocida
-    //   (si no existe ninguna, hora_txt quedará NULL y el front mostrará "00:00")
+    // Traemos fecha (date), hora (time) y demás
     const qClases = `
       SELECT id,
-             ${CLASES_FECHA}                                      AS fecha,
-             to_char(${CLASES_FECHA}, 'HH24:MI')                  AS hora_txt,  -- si fecha tiene hora, sale acá
-             ${CLASES_SEDE}                                       AS sede,
-             ${CLASES_TIPO}                                       AS tipo,
-             ${CLASES_ESTADO}                                     AS estado
+             ${CLASES_FECHA}  AS fecha,        -- DATE
+             hora,                              -- TIME (existe en tu tabla)
+             ${CLASES_SEDE}   AS sede,
+             ${CLASES_TIPO}   AS tipo,
+             ${CLASES_ESTADO} AS estado
       FROM ${CLASES_TABLE}
       WHERE ${CLASES_ALUMNO_FK} = $1
         AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2
-      ORDER BY ${CLASES_FECHA} ASC
+      ORDER BY ${CLASES_FECHA} ASC, hora ASC
     `;
-    const { rows: rc } = await db.query(qClases, [alumnoId, mes]);
+    const { rows } = await db.query(qClases, [alumnoId, mes]);
 
-    // Si la DB tiene una columna "hora" (texto o time), intentamos leerla en un segundo paso y combinarla
-    // sin romper si no existe.
-    let horasById = {};
-    try {
-      const qHora = `
-        SELECT id, 
-               CASE 
-                 WHEN EXISTS (
-                   SELECT 1 FROM information_schema.columns 
-                   WHERE table_name='${CLASES_TABLE}' AND column_name='hora'
-                 ) THEN to_char(hora::time, 'HH24:MI')
-                 WHEN EXISTS (
-                   SELECT 1 FROM information_schema.columns 
-                   WHERE table_name='${CLASES_TABLE}' AND column_name='hora_inicio'
-                 ) THEN to_char(hora_inicio::time, 'HH24:MI')
-                 ELSE NULL
-               END AS hora_extra
-        FROM ${CLASES_TABLE}
-        WHERE ${CLASES_ALUMNO_FK} = $1
-          AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2
-      `;
-      const { rows: rh } = await db.query(qHora, [alumnoId, mes]);
-      horasById = Object.fromEntries(rh.filter(x => x.hora_extra).map(x => [String(x.id), x.hora_extra]));
-    } catch (_) {}
+    const items = rows.map(r => {
+      let iso = null;
+      let hhmm = null;
 
-    const items = rc.map(c => {
-      // priorizamos: hora_extra > hora_txt derivada de fecha > null
-      const extra = horasById[String(c.id)] || null;
-      const hora = extra || c.hora_txt || null;
+      // hora puede venir como "HH:MM:SS" o "HH:MM"
+      if (r.hora) {
+        const parts = String(r.hora).split(':');
+        const hh = parseInt(parts[0] || '0', 10);
+        const mm = parseInt(parts[1] || '0', 10);
+        hhmm = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+      }
+
+      if (r.fecha) {
+        // armamos un Date con fecha y (si hay) hora. Usamos UTC para no desfasar.
+        const d = new Date(r.fecha);
+        if (hhmm) {
+          const [H, M] = hhmm.split(':').map(n => parseInt(n, 10));
+          // setUTC... para evitar corrimiento por timezone
+          d.setUTCHours(H, M, 0, 0);
+        } else {
+          d.setUTCHours(0, 0, 0, 0);
+        }
+        iso = d.toISOString();
+      }
+
       return {
-        id: c.id,
-        fecha: c.fecha ? new Date(c.fecha).toISOString() : null, // ISO para la fecha
-        hora,                                                     // "HH:MM" si la tenemos
-        sede: c.sede || '',
-        tipo: (c.tipo || 'normal'),
-        estado: c.estado || ''
+        id: r.id,
+        fecha_hora: iso,         // <-- ISO combinando fecha + hora
+        hora: hhmm,              // <-- HH:MM (útil de respaldo)
+        sede: r.sede || '',
+        tipo: r.tipo || 'normal',
+        estado: r.estado || ''
       };
     });
 
