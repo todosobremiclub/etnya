@@ -2,84 +2,128 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Etnya · Noticias</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Noticias - Etnya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    :root{
-      --bg:#0f172a;        /* azul grisáceo oscuro del panel */
-      --card:#111827;      /* tarjetas */
-      --muted:#9ca3af;     /* textos secundarios */
-      --acc:#22d3ee;       /* acento celeste */
-      --ok:#22c55e;        /* verde */
-      --danger:#ef4444;    /* rojo */
+    /* ====== Layout y estilo igual al resto ====== */
+    body { margin:0; font-family:'Inter', sans-serif; background:#cce1d6; color:#444; }
+    /* Sidebar */
+    .sidebar{
+      position:fixed; top:0; left:0; width:200px; height:100vh;
+      background:#91586d; padding-top:60px; box-shadow:2px 0 5px rgba(0,0,0,.1); z-index:1000;
     }
-    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:#e5e7eb;}
-    .layout{display:grid; grid-template-columns:260px 1fr; min-height:100vh;}
-    /* Sidebar muy simple (reutiliza estilo general del panel) */
-    aside{background:#0b1220; border-right:1px solid #1f2937; padding:18px;}
-    .brand{display:flex; gap:10px; align-items:center; font-weight:700; letter-spacing:.3px;}
-    .brand img{width:28px; height:28px}
-    nav{margin-top:18px; display:flex; flex-direction:column; gap:6px}
-    nav a{color:#cbd5e1; text-decoration:none; padding:10px 12px; border-radius:10px; display:block}
-    nav a.active, nav a:hover{background:#111827; color:#fff}
-    /* Content */
-    main{padding:22px}
-    h1{margin:0 0 16px 0; font-size:22px}
-    .row{display:grid; grid-template-columns: 480px 1fr; gap:20px}
-    @media (max-width: 980px){ .layout{grid-template-columns:1fr} .row{grid-template-columns:1fr} aside{position:sticky; top:0}}
-    .card{background:var(--card); border:1px solid #1f2937; border-radius:14px; padding:16px}
-    .card h2{margin:0 0 12px 0; font-size:16px; color:#fff}
-    .muted{color:var(--muted); font-size:12px}
-    label{display:block; font-size:13px; margin:10px 0 6px}
+    .sidebar a{
+      display:block; padding:10px 16px; color:#fff; text-decoration:none; font-weight:bold;
+      border-bottom:1px solid rgba(255,255,255,.1); font-size:13px;
+    }
+    .sidebar a:hover{ background:#6d3e4e; }
+    .sidebar a.active{ background:#6d3e4e; }
+
+    /* Header con logo y título centrado (igual patrón) */
+    .header-wrap{
+      margin-left:200px;
+      display:flex; align-items:center; justify-content:center;
+      padding:20px 0; transform:translateX(-10px);
+    }
+    .header-wrap img{ height:60px; margin-right:16px; }
+    .header-title{ margin:0; font-size:28px; color:#91586d; }
+
+    /* Contenido principal */
+    main{ margin-left:200px; padding:20px; }
+    #menuToggle{
+      display:none; position:fixed; top:10px; left:10px; z-index:1100;
+      background:#91586d; color:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:18px; cursor:pointer;
+    }
+    @media (max-width:768px){
+      #menuToggle{ display:block; }
+      .sidebar{ display:none; width:100%; height:auto; position:absolute; top:50px; left:0; }
+      .sidebar.mostrar{ display:block; }
+      .header-wrap{ margin-left:0; transform:none; }
+      main{ margin-left:0; }
+    }
+
+    /* Tarjetas/Formulario/Listado (misma estética que gastos/index) */
+    .card{
+      background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.1);
+      border:1px solid #eee; padding:16px;
+    }
+    h2{ margin:0 0 10px; color:#91586d; }
+    .muted{ color:#777; font-size:13px; }
+
+    .grid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:20px;
+    }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+
+    label{ display:block; font-weight:600; margin:12px 0 6px; }
     input[type="text"], textarea, select{
-      width:100%; background:#0b1220; color:#fff; border:1px solid #1f2937; border-radius:10px; padding:10px; outline:none;
+      width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; background:#fff;
     }
-    textarea{min-height:110px; resize:vertical}
-    .row-2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
-    .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
-    .chip{background:#0b1220; border:1px solid #1f2937; padding:6px 10px; border-radius:999px; font-size:12px; cursor:default}
-    .actions{display:flex; gap:10px; margin-top:14px}
-    .btn{border:0; border-radius:10px; padding:10px 14px; color:#000; background:var(--acc); cursor:pointer; font-weight:600}
-    .btn.secondary{background:#1f2937; color:#e5e7eb}
-    .btn.ok{background:var(--ok); color:#052e16}
-    .btn.danger{background:var(--danger); color:#fff}
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-    table{width:100%; border-collapse:collapse; margin-top:6px}
-    th, td{border-bottom:1px solid #1f2937; padding:10px; font-size:14px; vertical-align:top}
-    th{color:#cbd5e1; text-align:left}
-    .thumb{width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid #1f2937; background:#0b1220}
-    .pill{font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid #263247; background:#0b1220; color:#cbd5e1}
-    .status.ok{color:var(--ok)}
+    textarea{ min-height:120px; resize:vertical; }
+
+    .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:560px){ .row2{ grid-template-columns:1fr; } }
+
+    .actions{ display:flex; gap:10px; margin-top:14px; }
+    .btn{
+      border:none; border-radius:6px; padding:8px 14px; font-size:14px; cursor:pointer; font-weight:600;
+      background:#91586d; color:#fff;
+    }
+    .btn.secondary{ background:#b48a99; }
+    .btn.ok{ background:#2ecc71; }
+    .btn.danger{ background:#c0392b; }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+    table{
+      width:100%; background:#fff; border-collapse:collapse; border-radius:8px; overflow:hidden;
+      box-shadow:0 1px 6px rgba(0,0,0,.08); font-size:14px;
+    }
+    th, td{ padding:10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+    th{ background:#b48a99; color:#fff; }
+    .thumb{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid #eee; background:#f7f7f7; }
+    .pill{ display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px; background:#f0f0f0; border:1px solid #e3e3e3; color:#555; }
+
     /* Modal */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px}
-    .modal.active{display:flex}
-    .modal .card{max-width:720px; width:min(720px,96vw)}
-    .right{display:flex; justify-content:flex-end; gap:8px}
-    .hint{font-size:12px; color:#93c5fd}
+    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:16px; }
+    .modal.active{ display:flex; }
+    .modal .card{ width:min(720px,96vw); }
+
+    /* Encabezado Acciones centrado como en otras tablas */
+    thead th:last-child{ text-align:center; width:130px; }
+    td.acciones{ display:flex; gap:6px; justify-content:center; align-items:center; white-space:nowrap; }
   </style>
 </head>
 <body>
-<div class="layout">
-  <aside>
-    <div class="brand"><img src="../img/logo_etnya.png" alt=""/> <span>Panel Etnya</span></div>
-    <nav>
-      <a href="./index.html">Alumnos</a>
-      <a href="./pagos.html">Pagos</a>
-      <a href="./gastos.html">Gastos</a>
-      <a href="./agenda.html">Agenda</a>
-      <a href="./reportes.html">Reportes</a>
-      <a class="active" href="./noticias.html">Noticias</a>
-      <a href="./configuracion.html">Configuración</a>
-    </nav>
-  </aside>
 
+  <!-- Botón hamburguesa mobile -->
+  <button id="menuToggle" onclick="toggleMenu()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="index.html">📋 Alumnas/os</a>
+    <a href="pagos.html">💳 Pagos</a>
+    <a href="gastos.html">🧾 Gastos</a>
+    <a href="agenda.html">📅 Agenda</a>
+    <a href="configuracion.html">⚙️ Configuración</a>
+    <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
+    <a href="noticias.html" class="active">📰 Noticias</a>
+    <button onclick="cerrarSesion()" style="width:100%; text-align:left; padding:10px 16px; background:transparent; border:none; color:#fff; font-weight:bold; font-size:13px; cursor:pointer; border-top:1px solid rgba(255,255,255,.1);">🚪 Cerrar sesión</button>
+  </div>
+
+  <!-- Header -->
+  <div class="header-wrap">
+    <img src="logo.jpeg" alt="Logo">
+    <h1 class="header-title">Noticias</h1>
+  </div>
+
+  <!-- Contenido -->
   <main>
-    <h1>Noticias</h1>
-    <div class="row">
+    <div class="grid">
       <!-- Formulario -->
       <section class="card">
         <h2>Nueva noticia</h2>
-        <div class="muted">Publicá un aviso con título, texto y opcionalmente una imagen. Elegí “Todos” o sedes específicas.</div>
+        <div class="muted">Publicá un aviso con título, texto e imagen opcional. Elegí “Todos” o sedes específicas.</div>
 
         <label for="titulo">Título</label>
         <input id="titulo" type="text" placeholder="Ej: Feriado – No hay clases el lunes"/>
@@ -87,7 +131,7 @@
         <label for="texto">Texto</label>
         <textarea id="texto" placeholder="Detalle de la noticia..."></textarea>
 
-        <div class="row-2">
+        <div class="row2">
           <div>
             <label for="destino">Destino</label>
             <select id="destino">
@@ -108,7 +152,7 @@
             <option>Craig Circuito</option>
             <option>Goyena</option>
           </select>
-          <div class="muted">Ctrl/Cmd + clic para seleccionar varias.</div>
+          <div class="muted">Usá Ctrl/Cmd + clic para seleccionar varias.</div>
         </div>
 
         <div class="actions">
@@ -126,14 +170,14 @@
         </div>
         <table id="tabla">
           <thead>
-          <tr>
-            <th>Imagen</th>
-            <th>Título</th>
-            <th>Texto</th>
-            <th>Destino</th>
-            <th>Fecha</th>
-            <th style="width:110px">Acciones</th>
-          </tr>
+            <tr>
+              <th>Imagen</th>
+              <th>Título</th>
+              <th>Texto</th>
+              <th>Destino</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -141,288 +185,273 @@
       </section>
     </div>
   </main>
-</div>
 
-<!-- Modal Edición -->
-<div id="modal" class="modal" aria-hidden="true">
-  <div class="card">
-    <h2>Editar noticia</h2>
-    <input type="hidden" id="edit_id" />
-    <label for="edit_titulo">Título</label>
-    <input id="edit_titulo" type="text"/>
+  <!-- Modal edición -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="card">
+      <h2>Editar noticia</h2>
+      <input type="hidden" id="edit_id" />
 
-    <label for="edit_texto">Texto</label>
-    <textarea id="edit_texto"></textarea>
+      <label for="edit_titulo">Título</label>
+      <input id="edit_titulo" type="text"/>
 
-    <div class="row-2">
-      <div>
-        <label for="edit_destino">Destino</label>
-        <select id="edit_destino">
-          <option value="todos">Todos</option>
-          <option value="sede">Por sede</option>
+      <label for="edit_texto">Texto</label>
+      <textarea id="edit_texto"></textarea>
+
+      <div class="row2">
+        <div>
+          <label for="edit_destino">Destino</label>
+          <select id="edit_destino">
+            <option value="todos">Todos</option>
+            <option value="sede">Por sede</option>
+          </select>
+        </div>
+        <div>
+          <label for="edit_imagen">Reemplazar imagen (opcional)</label>
+          <input id="edit_imagen" type="file" accept="image/*"/>
+        </div>
+      </div>
+
+      <div id="edit_sedesBox" style="display:none">
+        <label for="edit_sedes">Sedes (múltiple)</label>
+        <select id="edit_sedes" multiple>
+          <option>Craig Reformer</option>
+          <option>Craig Circuito</option>
+          <option>Goyena</option>
         </select>
       </div>
-      <div>
-        <label for="edit_imagen">Reemplazar imagen (opcional)</label>
-        <input id="edit_imagen" type="file" accept="image/*"/>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px">
+        <button class="btn secondary" type="button" id="btnCerrar">Cancelar</button>
+        <button class="btn ok" id="btnGuardar">Guardar</button>
       </div>
+      <div id="msgEdit" class="muted" style="margin-top:8px"></div>
     </div>
-
-    <div id="edit_sedesBox" style="display:none">
-      <label for="edit_sedes">Sedes (múltiple)</label>
-      <select id="edit_sedes" multiple>
-        <option>Craig Reformer</option>
-        <option>Craig Circuito</option>
-        <option>Goyena</option>
-      </select>
-      <div class="muted">Si no cambiás la imagen, dejá el campo vacío.</div>
-    </div>
-
-    <div class="right" style="margin-top:12px">
-      <button class="btn secondary" type="button" id="btnCerrar">Cancelar</button>
-      <button class="btn ok" id="btnGuardar">Guardar</button>
-    </div>
-    <div id="msgEdit" class="muted" style="margin-top:8px"></div>
   </div>
-</div>
 
-<script>
-  // === Helpers token/fetch ===
-  function getToken(){ try{ return localStorage.getItem('token'); }catch(e){ return null; } }
-  async function fetchConToken(url, opts = {}){
-    const t = getToken();
-    const headers = Object.assign({}, opts.headers || {});
-    if (!(opts.body instanceof FormData)) headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-    if (t) headers['Authorization'] = 'Bearer ' + t;
-    return fetch(url, Object.assign({}, opts, { headers }));
-  }
-  // Si ya existe global fetchConToken en el panel, usa esa:
-  if (window.fetchConTokenGlobal) fetchConToken = window.fetchConTokenGlobal;
+  <script>
+    // ===== Seguridad: login/rol como en el resto =====
+    (function () {
+      if (localStorage.getItem('etnya_login') !== 'ok') { location = 'login.html'; return; }
+      const rol = localStorage.getItem('etnya_role') || '';
+      // Noticias accesible para admin y operador; si quisieras limitar, acá.
+      if (rol !== 'admin') {
+        // Ocultar secciones solo-admin
+        document.querySelectorAll('.menu-reportes').forEach(el => el.style.display='none');
+      }
+    })();
 
-  const API = {
-    listar:     () => fetchConToken('/noticias'),
-    crear:      (fd) => fetchConToken('/noticias', { method:'POST', body: fd }),
-    editar:     (id, fd) => fetchConToken('/noticias/'+id, { method:'PUT', body: fd }),
-    eliminar:   (id) => fetchConToken('/noticias/'+id, { method:'DELETE' })
-  };
-
-  // === UI refs ===
-  const destino     = document.getElementById('destino');
-  const sedesBox    = document.getElementById('sedesBox');
-  const sedesSel    = document.getElementById('sedes');
-  const btnCrear    = document.getElementById('btnCrear');
-  const btnLimpiar  = document.getElementById('btnLimpiar');
-  const tablaBody   = document.querySelector('#tabla tbody');
-  const msgForm     = document.getElementById('msgForm');
-  const btnRefrescar= document.getElementById('btnRefrescar');
-
-  const modal       = document.getElementById('modal');
-  const btnCerrar   = document.getElementById('btnCerrar');
-  const btnGuardar  = document.getElementById('btnGuardar');
-  const msgEdit     = document.getElementById('msgEdit');
-  const edit_id     = document.getElementById('edit_id');
-  const edit_titulo = document.getElementById('edit_titulo');
-  const edit_texto  = document.getElementById('edit_texto');
-  const edit_destino= document.getElementById('edit_destino');
-  const edit_sedesBox = document.getElementById('edit_sedesBox');
-  const edit_sedes  = document.getElementById('edit_sedes');
-  const edit_imagen = document.getElementById('edit_imagen');
-
-  // Mostrar/ocultar sedes según destino
-  function toggleSedes(selectEl, boxEl){
-    const val = selectEl.value;
-    boxEl.style.display = (val === 'sede') ? 'block' : 'none';
-  }
-  destino.addEventListener('change', ()=> toggleSedes(destino, sedesBox));
-  edit_destino.addEventListener('change', ()=> toggleSedes(edit_destino, edit_sedesBox));
-
-  // Leer múltiples seleccionadas a array de strings (tal como vienen las opciones)
-  function getMultiSelectValues(sel){
-    return Array.from(sel.selectedOptions).map(o => o.value);
-  }
-
-  // Render listado
-  function renderTabla(items){
-    tablaBody.innerHTML = '';
-    if (!items || !items.length){
-      tablaBody.innerHTML = '<tr><td colspan="6" class="muted">No hay noticias cargadas.</td></tr>';
-      return;
+    function cerrarSesion(){
+      localStorage.removeItem('etnya_login');
+      localStorage.removeItem('etnya_token');
+      localStorage.removeItem('etnya_role');
+      location = 'login.html';
     }
-    items.forEach(n => {
-      const tr = document.createElement('tr');
-      const sedesTxt = (n.destino === 'todos') ? '<span class="pill">Todos</span>' :
-        (Array.isArray(n.sedes) && n.sedes.length ? n.sedes.join(', ') : '—');
+    function toggleMenu(){ document.querySelector('.sidebar').classList.toggle('mostrar'); }
 
-      tr.innerHTML = `
-        <td>${n.imagen_url ? `<img class="thumb" src="${n.imagen_url}" alt=""/>` : ''}</td>
-        <td><strong>${escapeHtml(n.titulo)}</strong></td>
-        <td>${escapeHtml(n.texto)}</td>
-        <td>${sedesTxt}</td>
-        <td>${formatFecha(n.fecha)}</td>
-        <td>
-          <button class="btn secondary" data-editar="${n.id}">Editar</button>
-          <button class="btn danger" data-borrar="${n.id}">Borrar</button>
-        </td>
-      `;
-      tablaBody.appendChild(tr);
-    });
-  }
-
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-  function formatFecha(iso){
-    try{
-      const d = new Date(iso);
-      return d.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
-    }catch(_){ return iso || ''; }
-  }
-
-  // Cargar listado
-  async function cargar(){
-    msgForm.textContent = '';
-    const r = await API.listar();
-    if (!r.ok){
-      renderTabla([]);
-      msgForm.textContent = 'No se pudo cargar la lista (¿token vencido?)';
-      return;
+    // ===== fetch con token unificado =====
+    const nativeFetch = window.fetch.bind(window);
+    function fetchConToken(url, opts = {}){
+      const token = localStorage.getItem('etnya_token') || '';
+      const headers = { ...(opts.headers||{}), Authorization: \`Bearer \${token}\` };
+      return nativeFetch(url, { ...opts, headers });
     }
-    const data = await r.json();
-    renderTabla(data);
-  }
-
-  // Crear
-  btnCrear.addEventListener('click', async ()=>{
-    const titulo = document.getElementById('titulo').value.trim();
-    const texto  = document.getElementById('texto').value.trim();
-    const dest   = destino.value;
-    const img    = document.getElementById('imagen').files[0] || null;
-    const sedes  = (dest === 'sede') ? getMultiSelectValues(sedesSel) : null;
-
-    if (!titulo || !texto){ msgForm.textContent = 'Completá título y texto.'; return; }
-    if (dest === 'sede' && (!sedes || sedes.length===0)){ msgForm.textContent = 'Seleccioná al menos una sede.'; return; }
-
-    const fd = new FormData();
-    fd.append('titulo', titulo);
-    fd.append('texto', texto);
-    fd.append('destino', dest);
-    if (sedes) fd.append('sedes', JSON.stringify(sedes));
-    if (img) fd.append('imagen', img);
-
-    btnCrear.disabled = true;
-    const r = await API.crear(fd);
-    btnCrear.disabled = false;
-
-    if (!r.ok){
-      const e = await safeErr(r);
-      msgForm.textContent = 'Error: ' + e;
-      return;
+    function ensureJson(res){
+      const ct = (res.headers.get('content-type')||'').toLowerCase();
+      return ct.includes('application/json');
     }
-    msgForm.textContent = 'Publicado ✔️';
-    limpiarForm();
-    cargar();
-  });
+    async function jsonSeguro(res){
+      if (res.status === 401){
+        try{ console.warn('401:', await res.text()); }catch(e){}
+        alert('Tu sesión expiró. Iniciá sesión nuevamente.');
+        localStorage.removeItem('etnya_login');
+        localStorage.removeItem('etnya_token');
+        localStorage.removeItem('etnya_role');
+        location = 'login.html';
+        return null;
+      }
+      if (ensureJson(res)) return res.json();
+      const txt = await res.text();
+      if (res.ok) return txt;
+      throw new Error(txt || 'Respuesta no JSON del servidor');
+    }
 
-  btnLimpiar.addEventListener('click', limpiarForm);
-  function limpiarForm(){
-    document.getElementById('titulo').value = '';
-    document.getElementById('texto').value = '';
-    destino.value = 'todos';
-    document.getElementById('imagen').value = '';
-    Array.from(sedesSel.options).forEach(o => o.selected = false);
-    toggleSedes(destino, sedesBox);
-  }
+    // ===== API =====
+    const API = {
+      listar:   () => fetchConToken('/noticias'),
+      crear:    (fd) => fetchConToken('/noticias', { method:'POST', body: fd }),
+      editar:   (id, fd) => fetchConToken('/noticias/'+id, { method:'PUT', body: fd }),
+      eliminar: (id) => fetchConToken('/noticias/'+id, { method:'DELETE' })
+    };
 
-  // Acciones en tabla (delegación)
-  tablaBody.addEventListener('click', async (ev)=>{
-    const editId = ev.target.getAttribute('data-editar');
-    const delId  = ev.target.getAttribute('data-borrar');
-    if (editId){ abrirModalEdicion(editId); }
-    if (delId){
-      if (!confirm('¿Eliminar la noticia?')) return;
-      const r = await API.eliminar(delId);
-      if (!r.ok){ alert('No se pudo eliminar'); return; }
+    // ===== UI refs =====
+    const destino = document.getElementById('destino');
+    const sedesBox = document.getElementById('sedesBox');
+    const sedesSel = document.getElementById('sedes');
+    const btnCrear = document.getElementById('btnCrear');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const tablaBody = document.querySelector('#tabla tbody');
+    const msgForm = document.getElementById('msgForm');
+    const btnRefrescar = document.getElementById('btnRefrescar');
+
+    const modal = document.getElementById('modal');
+    const btnCerrar = document.getElementById('btnCerrar');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const msgEdit = document.getElementById('msgEdit');
+    const edit_id = document.getElementById('edit_id');
+    const edit_titulo = document.getElementById('edit_titulo');
+    const edit_texto = document.getElementById('edit_texto');
+    const edit_destino = document.getElementById('edit_destino');
+    const edit_sedesBox = document.getElementById('edit_sedesBox');
+    const edit_sedes = document.getElementById('edit_sedes');
+    const edit_imagen = document.getElementById('edit_imagen');
+
+    function toggleSedes(selectEl, boxEl){
+      const val = selectEl.value;
+      boxEl.style.display = (val === 'sede') ? 'block' : 'none';
+    }
+    destino.addEventListener('change', ()=> toggleSedes(destino, sedesBox));
+    edit_destino.addEventListener('change', ()=> toggleSedes(edit_destino, edit_sedesBox));
+
+    function getMultiSelectValues(sel){
+      return Array.from(sel.selectedOptions).map(o => o.value);
+    }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function formatFecha(iso){
+      try{ const d=new Date(iso); return d.toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires'}); }catch(_){ return iso||''; }
+    }
+
+    function renderTabla(items){
+      tablaBody.innerHTML='';
+      if (!items || !items.length){
+        tablaBody.innerHTML = '<tr><td colspan="6" class="muted">No hay noticias cargadas.</td></tr>';
+        return;
+      }
+      items.forEach(n=>{
+        const tr=document.createElement('tr');
+        const sedesTxt = (n.destino==='todos') ? '<span class="pill">Todos</span>' :
+          (Array.isArray(n.sedes)&&n.sedes.length ? n.sedes.join(', ') : '—');
+        tr.innerHTML = `
+          <td>${n.imagen_url ? `<img class="thumb" src="${n.imagen_url}" alt=""/>` : ''}</td>
+          <td><strong>${escapeHtml(n.titulo)}</strong></td>
+          <td>${escapeHtml(n.texto)}</td>
+          <td>${sedesTxt}</td>
+          <td>${formatFecha(n.fecha)}</td>
+          <td class="acciones">
+            <button class="btn secondary" data-editar="${n.id}">Editar</button>
+            <button class="btn danger" data-borrar="${n.id}">Borrar</button>
+          </td>`;
+        tablaBody.appendChild(tr);
+      });
+    }
+
+    async function cargar(){
+      msgForm.textContent='';
+      const r = await API.listar();
+      if (!r.ok){ renderTabla([]); msgForm.textContent='No se pudo cargar la lista (¿token vencido?)'; return; }
+      const data = await r.json();
+      cacheListado = data;
+      renderTabla(data);
+    }
+
+    btnCrear.addEventListener('click', async ()=>{
+      const titulo = document.getElementById('titulo').value.trim();
+      const texto  = document.getElementById('texto').value.trim();
+      const dest   = destino.value;
+      const img    = document.getElementById('imagen').files[0] || null;
+      const sedes  = (dest === 'sede') ? getMultiSelectValues(sedesSel) : null;
+
+      if (!titulo || !texto){ msgForm.textContent='Completá título y texto.'; return; }
+      if (dest==='sede' && (!sedes || sedes.length===0)){ msgForm.textContent='Seleccioná al menos una sede.'; return; }
+
+      const fd = new FormData();
+      fd.append('titulo', titulo);
+      fd.append('texto', texto);
+      fd.append('destino', dest);
+      if (sedes) fd.append('sedes', JSON.stringify(sedes));
+      if (img) fd.append('imagen', img);
+
+      btnCrear.disabled=true;
+      const r = await API.crear(fd);
+      btnCrear.disabled=false;
+
+      if (!r.ok){ const e = await safeErr(r); msgForm.textContent='Error: '+e; return; }
+      msgForm.textContent='Publicado ✔️';
+      limpiarForm();
       cargar();
+    });
+
+    function limpiarForm(){
+      document.getElementById('titulo').value='';
+      document.getElementById('texto').value='';
+      destino.value='todos';
+      document.getElementById('imagen').value='';
+      Array.from(sedesSel.options).forEach(o=>o.selected=false);
+      toggleSedes(destino, sedesBox);
     }
-  });
+    document.getElementById('btnLimpiar').addEventListener('click', limpiarForm);
 
-  // Abrir modal edición cargando datos desde la fila ya lista en memoria (mejor: pedir al backend)
-  let cacheListado = [];
-  async function abrirModalEdicion(id){
-    // si no tenemos cache, recargamos
-    if (!cacheListado.length){
-      const r = await API.listar(); cacheListado = r.ok ? await r.json() : [];
+    // Delegación acciones tabla
+    tablaBody.addEventListener('click', async (ev)=>{
+      const editId = ev.target.getAttribute('data-editar');
+      const delId  = ev.target.getAttribute('data-borrar');
+      if (editId) abrirModalEdicion(editId);
+      if (delId){
+        if (!confirm('¿Eliminar la noticia?')) return;
+        const r = await API.eliminar(delId);
+        await jsonSeguro(r);
+        if (r.ok) cargar(); else alert('Error al eliminar');
+      }
+    });
+
+    let cacheListado = [];
+    async function abrirModalEdicion(id){
+      if (!cacheListado.length){ const r = await API.listar(); cacheListado = r.ok ? await r.json() : []; }
+      const n = cacheListado.find(x=>String(x.id)===String(id));
+      if (!n){ alert('No se encontró la noticia'); return; }
+
+      edit_id.value = n.id;
+      edit_titulo.value = n.titulo||'';
+      edit_texto.value  = n.texto||'';
+      edit_destino.value= n.destino||'todos';
+      toggleSedes(edit_destino, edit_sedesBox);
+      Array.from(edit_sedes.options).forEach(o=> o.selected=(n.sedes||[]).map(s=>s.toLowerCase()).includes(o.value.toLowerCase()));
+      edit_imagen.value='';
+      msgEdit.textContent='';
+      modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
     }
-    const data = cacheListado.find(x => String(x.id) === String(id));
-    if (!data){
-      // fallback: recargar
-      const r = await API.listar(); cacheListado = r.ok ? await r.json() : [];
-    }
-    const n = cacheListado.find(x => String(x.id) === String(id));
-    if (!n){ alert('No se encontró la noticia'); return; }
+    function cerrarModal(){ modal.classList.remove('active'); modal.setAttribute('aria-hidden','true'); }
+    document.getElementById('btnCerrar').addEventListener('click', cerrarModal);
 
-    edit_id.value = n.id;
-    edit_titulo.value = n.titulo || '';
-    edit_texto.value  = n.texto || '';
-    edit_destino.value= n.destino || 'todos';
-    toggleSedes(edit_destino, edit_sedesBox);
-    // set multiselect
-    Array.from(edit_sedes.options).forEach(o => o.selected = (n.sedes||[]).map(s=>s.toLowerCase()).includes(o.value.toLowerCase()));
+    document.getElementById('btnGuardar').addEventListener('click', async ()=>{
+      const id=edit_id.value, tit=edit_titulo.value.trim(), txt=edit_texto.value.trim();
+      const dest=edit_destino.value; const img=edit_imagen.files[0]||null;
+      const sed=(dest==='sede')? getMultiSelectValues(edit_sedes) : null;
 
-    edit_imagen.value = '';
-    msgEdit.textContent = '';
-    modal.classList.add('active');
-    modal.setAttribute('aria-hidden','false');
-  }
+      if (!tit || !txt){ msgEdit.textContent='Completá título y texto.'; return; }
+      if (dest==='sede' && (!sed || sed.length===0)){ msgEdit.textContent='Seleccioná al menos una sede.'; return; }
 
-  btnCerrar.addEventListener('click', cerrarModal);
-  function cerrarModal(){
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden','true');
-  }
+      const fd = new FormData();
+      fd.append('titulo', tit); fd.append('texto', txt); fd.append('destino', dest);
+      if (sed) fd.append('sedes', JSON.stringify(sed));
+      if (img) fd.append('imagen', img);
 
-  // Guardar edición
-  btnGuardar.addEventListener('click', async ()=>{
-    const id   = edit_id.value;
-    const tit  = edit_titulo.value.trim();
-    const txt  = edit_texto.value.trim();
-    const dest = edit_destino.value;
-    const img  = edit_imagen.files[0] || null;
-    const sed  = (dest === 'sede') ? getMultiSelectValues(edit_sedes) : null;
+      btnGuardar.disabled=true;
+      const r = await API.editar(id, fd);
+      btnGuardar.disabled=false;
 
-    if (!tit || !txt){ msgEdit.textContent='Completá título y texto.'; return; }
-    if (dest === 'sede' && (!sed || sed.length===0)){ msgEdit.textContent='Seleccioná al menos una sede.'; return; }
+      if (!r.ok){ const e = await safeErr(r); msgEdit.textContent='Error: '+e; return; }
+      cerrarModal(); cacheListado=[]; cargar();
+    });
 
-    const fd = new FormData();
-    fd.append('titulo', tit);
-    fd.append('texto', txt);
-    fd.append('destino', dest);
-    if (sed) fd.append('sedes', JSON.stringify(sed));
-    if (img) fd.append('imagen', img);
+    async function safeErr(res){ try{ const j=await res.json(); return j.error || JSON.stringify(j); }catch{ return res.status+' '+res.statusText; } }
 
-    btnGuardar.disabled = true;
-    const r = await API.editar(id, fd);
-    btnGuardar.disabled = false;
-
-    if (!r.ok){
-      const e = await safeErr(r);
-      msgEdit.textContent = 'Error: ' + e;
-      return;
-    }
-    msgEdit.innerHTML = '<span class="status ok">Guardado ✔️</span>';
-    cerrarModal();
-    cacheListado = []; // invalidar cache
-    cargar();
-  });
-
-  async function safeErr(res){
-    try{ const j = await res.json(); return j.error || JSON.stringify(j); }catch{ return res.status+' '+res.statusText; }
-  }
-
-  // Arranque
-  (async function init(){
-    toggleSedes(destino, sedesBox);
-    await cargar();
-    btnRefrescar.addEventListener('click', async ()=>{ cacheListado = []; await cargar(); });
-  })();
-</script>
+    // init
+    (async function init(){
+      toggleSedes(destino, sedesBox);
+      await cargar();
+      btnRefrescar.addEventListener('click', async ()=>{ cacheListado=[]; await cargar(); });
+    })();
+  </script>
 </body>
 </html>
