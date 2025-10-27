@@ -2,9 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const db = require('../config/db');
-const verificarToken = require('../middlewares/verificarToken');
-const subirImagen = require('../utils/subirAFirebase'); // devuelve { url, path }
+const db = require('../db'); // antes: ../config/db
+const verificarToken = require('../middleware/verificarToken'); // antes: ../middlewares/verificarToken
+const subirImagen = require('../utils/subirAFirebase'); // (si aún no tenés este archivo, decime y te lo paso)
 
 // ---------- Multer (memoria) con validaciones ----------
 const upload = multer({
