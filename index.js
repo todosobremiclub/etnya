@@ -9,6 +9,7 @@ const app = express();
 const rateLimit = require('express-rate-limit');          // NUEVO
 const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
 const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
+const noticiasRoutes = require('./routes/noticiasRoutes');
 
 
 // ===== DB =====
@@ -45,6 +46,7 @@ const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'cambia-esto';
 // ===== Middlewares =====
 app.use(cors());
 app.use(express.json());
+app.use('/noticias', noticiasRoutes);
 
 // ====== Rutas para la App Móvil (NO pisan nada) ======
 // Limitador solo para /auth/login (mitiga fuerza bruta)
