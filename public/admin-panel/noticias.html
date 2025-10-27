@@ -253,7 +253,7 @@
     const nativeFetch = window.fetch.bind(window);
     function fetchConToken(url, opts = {}){
       const token = localStorage.getItem('etnya_token') || '';
-      const headers = { ...(opts.headers||{}), Authorization: \`Bearer \${token}\` };
+      const headers = { ...(opts.headers||{}), Authorization: `Bearer ${token}` };
       return nativeFetch(url, { ...opts, headers });
     }
     function ensureJson(res){
