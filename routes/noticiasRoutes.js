@@ -96,30 +96,32 @@ router.get('/', verificarToken, async (_req, res) => {
 
 // Para la app (filtrado por sede): incluye "todos" + las de esa sede
 // GET /noticias/para-app?sede=Craig Reformer
-router.get('/para-app', verificarToken, async (req, res) => {
+router.get('/para-app', async (req, res) => {
   try {
     const sedeQ = String(req.query.sede || '').trim();
-    if (!sedeQ) {
-      const { rows } = await db.query(
-        `SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
-           FROM public.noticias
-          WHERE destino = 'todos'
-          ORDER BY fecha DESC`
-      );
-      return res.json(rows);
-    }
+if (!sedeQ) {
+  const { rows } = await db.query(
+    `SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
+       FROM public.noticias
+      WHERE destino = 'todos'
+      ORDER BY fecha DESC
+      LIMIT 100`
+  );
+  return res.json(rows);
+}
+const claveSede = normalizarSede(sedeQ);
 
-    const claveSede = normalizarSede(sedeQ);
+const { rows } = await db.query(
+  `SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
+     FROM public.noticias
+    WHERE destino = 'todos'
+       OR (destino = 'sede' AND $1 = ANY(sedes))
+    ORDER BY fecha DESC
+    LIMIT 100`,
+  [claveSede]
+);
+return res.json(rows);
 
-    const { rows } = await db.query(
-      `SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
-         FROM public.noticias
-        WHERE destino = 'todos'
-           OR (destino = 'sede' AND sedes @> ARRAY[$1])
-        ORDER BY fecha DESC`,
-      [claveSede]
-    );
-    res.json(rows);
   } catch (err) {
     console.error('GET /noticias/para-app error:', err);
     res.status(500).json({ error: 'Error interno del servidor' });
