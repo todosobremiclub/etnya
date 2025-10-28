@@ -17,12 +17,12 @@ const upload = multer({
 });
 
 // ---------- Helpers ----------
-const normalizarSede = (s) =>
-  String(s || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // saca acentos
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_'); // "Craig Reformer" -> "craig_reformer"
+const normalizarSede = (s) => {
+  const val = String(s || '').trim().toLowerCase();
+  if (val.includes('craig')) return 'craig';
+  if (val.includes('goyena')) return 'goyena';
+  return '';
+};
 
 function parsearSedes(destino, sedesRaw) {
   if (destino !== 'sede') return null;
