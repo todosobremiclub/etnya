@@ -6,6 +6,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 
 const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 const rateLimit = require('express-rate-limit');          // NUEVO
 const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
 const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
