@@ -23,16 +23,17 @@ async function findUserByNumeroApellido(numero, apellido) {
   const ape = norm(apellido);
 
   const baseSelect = `
-    SELECT id,
-           ${NUM_FIELD}   AS numero,
-           ${NAME_FIELD}  AS nombre,
-           ${SURNAME_FIELD} AS apellido,
-           ${ACTIVE_FIELD} AS activo_raw
-    FROM ${TBL}
-    WHERE ${NUM_FIELD} = $1
-      AND %%APELLIDO_MATCH%%
-    LIMIT 1
-  `;
+  SELECT id,
+         ${NUM_FIELD}   AS numero,
+         ${NAME_FIELD}  AS nombre,
+         ${SURNAME_FIELD} AS apellido,
+         sede,  -- 👈 agregado
+         ${ACTIVE_FIELD} AS activo_raw
+  FROM ${TBL}
+  WHERE ${NUM_FIELD} = $1
+    AND %%APELLIDO_MATCH%%
+  LIMIT 1
+`;
 
   // 1) Intento con unaccent (si existe)
   const sqlUnaccent = baseSelect.replace(
@@ -82,9 +83,16 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ numero: u.numero, uid: u.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({
-      token,
-      usuario: { id: u.id, numero: u.numero, nombre: u.nombre, apellido: u.apellido }
-    });
+  token,
+  socio: {
+    id: u.id,
+    numero: u.numero,
+    nombre: u.nombre,
+    apellido: u.apellido,
+    sede: u.sede || null   // 👈 agregado
+  }
+});
+
   } catch (e) {
     console.error('authMobile/login', e);
     res.status(500).json({ error: 'Error interno' });
