@@ -1,6 +1,6 @@
 // routes/notificacionesRoutes.js
 const express = require("express");
-const pool = require("../db");
+const pool = require("../db"); // ✅ conexión a PostgreSQL
 const admin = require("../firebase.js");
 
 const router = express.Router();
