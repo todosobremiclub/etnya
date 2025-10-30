@@ -104,45 +104,48 @@ router.get('/', verificarToken, async (_req, res) => {
   }
 });
 
-// Obtener noticias para la app Flutter (filtradas por sede)
+// =====================================================
+//  Obtener noticias para la app Flutter (por sede)
+// =====================================================
 router.get('/para-app', async (req, res) => {
   try {
+    // Normalizar sede del parámetro
     const sedeRaw = (req.query.sede || '').toString().trim().toLowerCase();
-
-    // Normalizar sede
     let sede = '';
     if (sedeRaw.includes('craig')) sede = 'craig';
     else if (sedeRaw.includes('goyena')) sede = 'goyena';
 
     console.log('📰 /para-app -> sede solicitada:', sede || '(todas)');
 
-    let query, params;
+    // Base query: todas las noticias "para todos"
+    let query = `
+      SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
+      FROM public.noticias
+      WHERE destino = 'todos'
+    `;
+    const params = [];
 
+    // Agregar filtro por sede si corresponde
     if (sede) {
-      query = `
-        SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
-        FROM public.noticias
-        WHERE destino = 'todos'
-           OR (destino = 'sede' AND sedes && ARRAY[$1])
-        ORDER BY fecha DESC
-        LIMIT 100
+      query += `
+        OR (
+          destino = 'sede' AND (
+            -- para text[] válido
+            (ARRAY[$1] && sedes)
+            -- para texto plano en caso de sedes mal tipeadas
+            OR sedes::text ILIKE '%' || $1 || '%'
+          )
+        )
       `;
-      params = [sede];
-    } else {
-      query = `
-        SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
-        FROM public.noticias
-        WHERE destino = 'todos'
-        ORDER BY fecha DESC
-        LIMIT 100
-      `;
-      params = [];
+      params.push(sede);
     }
+
+    query += ' ORDER BY fecha DESC LIMIT 100;';
 
     const { rows } = await db.query(query, params);
     res.json(rows);
   } catch (err) {
-    console.error('GET /noticias/para-app error:', err);
+    console.error('❌ GET /noticias/para-app error:', err);
     res.status(500).json({ error: 'No se pudieron obtener las noticias' });
   }
 });
