@@ -94,27 +94,26 @@ router.get('/', verificarToken, async (_req, res) => {
   }
 });
 
-// Obtener noticias para la app Flutter
+// Obtener noticias para la app Flutter (filtradas por sede)
 router.get('/para-app', async (req, res) => {
   try {
     const sedeRaw = (req.query.sede || '').toString().trim().toLowerCase();
 
-    // Normalizar nombre de sede
+    // Normalizar sede
     let sede = '';
     if (sedeRaw.includes('craig')) sede = 'craig';
     else if (sedeRaw.includes('goyena')) sede = 'goyena';
 
-    console.log('📰 Consultando noticias para sede:', sede || '(todas)');
+    console.log('📰 /para-app -> sede solicitada:', sede || '(todas)');
 
-    let query;
-    let params = [];
+    let query, params;
 
     if (sede) {
       query = `
         SELECT id, titulo, texto, imagen_url, destino, sedes, fecha
         FROM public.noticias
         WHERE destino = 'todos'
-           OR (destino = 'sede' AND ARRAY[$1] && sedes)
+           OR (destino = 'sede' AND sedes && ARRAY[$1])
         ORDER BY fecha DESC
         LIMIT 100
       `;
@@ -127,6 +126,7 @@ router.get('/para-app', async (req, res) => {
         ORDER BY fecha DESC
         LIMIT 100
       `;
+      params = [];
     }
 
     const { rows } = await db.query(query, params);
