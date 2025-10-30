@@ -46,6 +46,20 @@ router.post('/', verificarToken, upload.single('imagen'), async (req, res) => {
   try {
     const { titulo, texto, destino } = req.body;
 
+    // --- NUEVO: parsear "sedes" manualmente desde FormData ---
+    let sedesLimpias = [];
+    if (req.body.sedes) {
+      try {
+        // Acepta tanto JSON como string simple
+        const parsed = JSON.parse(req.body.sedes);
+        sedesLimpias = Array.isArray(parsed) ? parsed.map(s => normalizarSede(s)) : [];
+      } catch (e) {
+        console.warn('⚠️ Error al parsear sedes:', req.body.sedes, e.message);
+        sedesLimpias = [];
+      }
+    }
+
+
     if (!titulo || !texto || !destino) {
       return res.status(400).json({ error: 'Faltan datos obligatorios: titulo, texto, destino' });
     }
@@ -53,12 +67,8 @@ router.post('/', verificarToken, upload.single('imagen'), async (req, res) => {
       return res.status(400).json({ error: 'destino inválido (use "todos" o "sede")' });
     }
 
-    let sedesArr = null;
-    try {
-      sedesArr = parsearSedes(destino, req.body.sedes);
-    } catch (e) {
-      return res.status(400).json({ error: e.message });
-    }
+        const sedesArr = destino === 'sede' ? sedesLimpias : null;
+
 
     let imagen_url = null;
     if (req.file) {
