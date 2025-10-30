@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notificaciones | Panel Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    main {
+      margin-left: 220px;
+      padding: 20px;
+      background: #f7f9fb;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin-bottom: 30px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f2f6ff;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        margin-left: 0;
+      }
+      form {
+        width: 100%;
+      }
+      table {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+<div class="sidebar">
+  <a href="index.html">📋 Alumnas/os</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
+  <a href="agenda.html">📅 Agenda</a>
+  <a href="notificaciones.html" class="active">📢 Notificaciones</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
+  <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
+    🚪 Cerrar sesión
+  </button>
+</div>
+
+
+  <!-- Contenido principal -->
+  <main>
+    <h1>📢 Enviar Notificación</h1>
+
+    <form id="formNotificacion">
+      <label>Título</label>
+      <input type="text" id="titulo" placeholder="Título de la notificación" required />
+      
+      <label>Mensaje</label>
+      <textarea id="mensaje" rows="4" placeholder="Escribí el mensaje..." required></textarea>
+      
+      <button type="submit">Enviar Notificación</button>
+    </form>
+
+    <h2>Historial de Notificaciones</h2>
+    <table id="tablaNotificaciones">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Título</th>
+          <th>Mensaje</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <script src="sidebar.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const API_URL = "/notificaciones";
+
+    // Cargar notificaciones al iniciar
+    document.addEventListener("DOMContentLoaded", cargarNotificaciones);
+
+    async function cargarNotificaciones() {
+      try {
+        const res = await fetchConToken(API_URL);
+        const notificaciones = await res.json();
+        const tbody = document.querySelector("#tablaNotificaciones tbody");
+        tbody.innerHTML = "";
+
+        notificaciones.forEach(n => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${new Date(n.fecha).toLocaleString("es-AR")}</td>
+            <td>${n.titulo}</td>
+            <td>${n.mensaje}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error al cargar notificaciones:", err);
+      }
+    }
+
+    // Enviar notificación
+    const form = document.getElementById("formNotificacion");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const titulo = document.getElementById("titulo").value.trim();
+      const mensaje = document.getElementById("mensaje").value.trim();
+
+      if (!titulo || !mensaje) return alert("Completá todos los campos.");
+
+      try {
+        const res = await fetchConToken(API_URL + "/enviar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titulo, mensaje }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert("✅ Notificación enviada correctamente.");
+          form.reset();
+          cargarNotificaciones();
+        } else {
+          alert("❌ Error: " + (data.error || "No se pudo enviar."));
+        }
+      } catch (err) {
+        console.error("Error al enviar notificación:", err);
+        alert("Error de conexión.");
+      }
+    });
+  </script>
+</body>
+</html>

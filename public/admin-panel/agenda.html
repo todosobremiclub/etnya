@@ -403,14 +403,18 @@ table.agenda td.slot + td.slot,
 <body>
 <button id="menuToggle" onclick="document.querySelector('.sidebar').classList.toggle('mostrar')">☰</button>
 
+<!-- Sidebar -->
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
-  <a href="gastos.html"   class="menu-gastos">🧾 Gastos</a>
+  <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
   <a href="agenda.html">📅 Agenda</a>
+  <a href="notificaciones.html" class="active">📢 Notificaciones</a>
   <a href="configuracion.html">⚙️ Configuración</a>
   <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
-  <button onclick="localStorage.removeItem('etnya_login');location='login.html'" style="width:100%;text-align:left;padding:10px 16px;background:transparent;border:none;color:#fff;font-weight:bold;font-size:13px;border-top:1px solid rgba(255,255,255,.1);cursor:pointer">🚪 Cerrar sesión</button>
+  <button onclick="cerrarSesion()" style="width: 100%; text-align: left; padding: 10px 16px; background-color: transparent; border: none; color: white; font-weight: bold; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1);">
+    🚪 Cerrar sesión
+  </button>
 </div>
 
 <main>
