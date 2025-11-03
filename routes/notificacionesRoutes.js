@@ -72,4 +72,26 @@ router.get("/", async (req, res) => {
   }
 });
 
+// =======================================================
+// 🔹 DELETE /notificaciones/:id
+// Elimina una notificación por ID
+// =======================================================
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query("DELETE FROM notificaciones WHERE id = $1", [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Notificación no encontrada." });
+    }
+
+    console.log(`🗑️ Notificación eliminada (ID: ${id})`);
+    res.json({ ok: true, mensaje: "Notificación eliminada correctamente." });
+  } catch (error) {
+    console.error("❌ Error al eliminar notificación:", error);
+    res.status(500).json({ error: "Error al eliminar la notificación." });
+  }
+});
+
 module.exports = router;
+
