@@ -1,11 +1,10 @@
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Noticias - Etnya</title>
+  <title>Agenda de Cobertura de Profesoras</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body { margin:0; font-family:'Inter', sans-serif; background:#cce1d6; color:#444; }
@@ -38,6 +37,18 @@
       .header-wrap{ margin-left:0; transform:none; }
       main{ margin-left:0; }
     }
+    /* Tarjetas y tablas */
+    .cards-container{ display: flex; gap: 24px; flex-wrap: wrap; }
+    .card{
+      background:#fff; border-radius:16px; box-shadow:0 2px 8px #0001;
+      border:1px solid #eee; padding:24px; flex:1; min-width:340px;
+    }
+    table{
+      width:100%; background:#fff; border-collapse:collapse; border-radius:8px; overflow:hidden;
+      box-shadow:0 1px 6px rgba(0,0,0,.08); font-size:14px;
+    }
+    th, td{ padding:10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+    th{ background:#b48a99; color:#fff; }
   </style>
 </head>
 <body>
@@ -60,64 +71,73 @@
     </button>
   </div>
 
+  <!-- Header -->
+  <header class="header-wrap">
+    <img src="logo.jpeg" alt="Logo" style="height:48px; margin-right:16px;">
+    <h2 class="header-title">Agenda de Cobertura de Profesoras</h2>
+  </header>
 
-    <!-- Contenido principal -->
-    <div class="main-content">
-        <header class="header">
-            <!-- Si tienes un logo, agrégalo aquí -->
-            <img src="logo.png" alt="Logo" style="height:48px; margin-right:16px;">
-            <h2 style="color: #8c5a6b; font-size: 2em; font-weight: 600;">Agenda de Cobertura de Profesoras</h2>
-        </header>
+  <!-- Contenido principal -->
+  <main>
+    <div class="cards-container">
+      <!-- Sede Craig -->
+      <section class="card">
+        <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Craig</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Día</th>
+              <th>Horario</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Ejemplo de fila -->
+            <!-- <tr>
+              <td>Nombre del profesor</td>
+              <td>Lunes</td>
+              <td>08:00 - 10:00</td>
+              <td>Observación</td>
+            </tr> -->
+          </tbody>
+        </table>
+      </section>
 
-        <div class="cards-container" style="display: flex; gap: 24px; flex-wrap: wrap;">
-            <!-- Sede Craig -->
-            <section class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; flex: 1; min-width: 340px;">
-                <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Craig</h3>
-                <table class="styled-table" style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #dbe7df;">
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Profesor</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Día</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Horario</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Ejemplo de fila -->
-                        <!-- <tr>
-                            <td style="padding: 8px;">Nombre del profesor</td>
-                            <td style="padding: 8px;">Lunes</td>
-                            <td style="padding: 8px;">08:00 - 10:00</td>
-                            <td style="padding: 8px;">Observación</td>
-                        </tr> -->
-                    </tbody>
-                </table>
-            </section>
-
-            <!-- Sede Pedro Goyena -->
-            <section class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; flex: 1; min-width: 340px;">
-                <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Pedro Goyena</h3>
-                <table class="styled-table" style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #dbe7df;">
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Profesor</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Día</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Horario</th>
-                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Ejemplo de fila -->
-                        <!-- <tr>
-                            <td style="padding: 8px;">Nombre del profesor</td>
-                            <td style="padding: 8px;">Martes</td>
-                            <td style="padding: 8px;">10:00 - 12:00</td>
-                            <td style="padding: 8px;">Observación</td>
-                        </tr> -->
-                    </tbody>
-                </table>
-            </section>
-        </div>
+      <!-- Sede Pedro Goyena -->
+      <section class="card">
+        <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Pedro Goyena</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Día</th>
+              <th>Horario</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Ejemplo de fila -->
+            <!-- <tr>
+              <td>Nombre del profesor</td>
+              <td>Martes</td>
+              <td>10:00 - 12:00</td>
+              <td>Observación</td>
+            </tr> -->
+          </tbody>
+        </table>
+      </section>
     </div>
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.querySelector('.sidebar').classList.toggle('mostrar');
+    }
+    function cerrarSesion() {
+      // Tu lógica de logout
+      alert('Cerrar sesión');
+    }
+  </script>
 </body>
 </html>
