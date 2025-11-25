@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Agenda de Cobertura de Profesores</title>
-    estilos.css
+    <link rel="stylesheet" href="estilos.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <!-- Menú lateral responsive -->
+    <!-- Menú lateral -->
     <div class="sidebar">
         index.html📋 Alumnas/os</a>
         pagos.html💳 Pagos</a>
@@ -27,54 +27,55 @@
     <!-- Contenido principal -->
     <div class="main-content">
         <header class="header">
-            logo.png
+            <!-- Si tienes un logo, agrégalo aquí -->
+            <img src="logo.png" alt="Logo" style="height:48px; margin-right:16px;">
             <h2 style="color: #8c5a6b; font-size: 2em; font-weight: 600;">Agenda de Cobertura de Profesores</h2>
         </header>
 
-        <div class="cards-container">
+        <div class="cards-container" style="display: flex; gap: 24px; flex-wrap: wrap;">
             <!-- Sede Craig -->
-            <section class="card">
-                <h3>Sede: Craig</h3>
-                <table class="styled-table">
+            <section class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; flex: 1; min-width: 340px;">
+                <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Craig</h3>
+                <table class="styled-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Profesor</th>
-                            <th>Día</th>
-                            <th>Horario</th>
-                            <th>Observaciones</th>
+                        <tr style="background: #dbe7df;">
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Profesor</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Día</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Horario</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Ejemplo de fila -->
                         <!-- <tr>
-                            <td>Nombre del profesor</td>
-                            <td>Lunes</td>
-                            <td>08:00 - 10:00</td>
-                            <td>Observación</td>
+                            <td style="padding: 8px;">Nombre del profesor</td>
+                            <td style="padding: 8px;">Lunes</td>
+                            <td style="padding: 8px;">08:00 - 10:00</td>
+                            <td style="padding: 8px;">Observación</td>
                         </tr> -->
                     </tbody>
                 </table>
             </section>
 
             <!-- Sede Pedro Goyena -->
-            <section class="card">
-                <h3>Sede: Pedro Goyena</h3>
-                <table class="styled-table">
+            <section class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; flex: 1; min-width: 340px;">
+                <h3 style="color: #8c5a6b; font-size: 1.3em; margin-bottom: 16px;">Sede: Pedro Goyena</h3>
+                <table class="styled-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Profesor</th>
-                            <th>Día</th>
-                            <th>Horario</th>
-                            <th>Observaciones</th>
+                        <tr style="background: #dbe7df;">
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Profesor</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Día</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Horario</th>
+                            <th style="padding: 8px; color: #8c5a6b; font-weight: 600;">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Ejemplo de fila -->
                         <!-- <tr>
-                            <td>Nombre del profesor</td>
-                            <td>Martes</td>
-                            <td>10:00 - 12:00</td>
-                            <td>Observación</td>
+                            <td style="padding: 8px;">Nombre del profesor</td>
+                            <td style="padding: 8px;">Martes</td>
+                            <td style="padding: 8px;">10:00 - 12:00</td>
+                            <td style="padding: 8px;">Observación</td>
                         </tr> -->
                     </tbody>
                 </table>
