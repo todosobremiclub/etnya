@@ -15,8 +15,13 @@ const config = {
   }
 };
 
-// Array de asignaciones (simula la base de datos)
-let asignaciones = [];
+// Array de asignaciones (persistencia con localStorage)
+let asignaciones = JSON.parse(localStorage.getItem("asignaciones")) || [];
+
+// Guardar en localStorage
+function guardarLocal() {
+  localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
+}
 
 // Renderiza la agenda semanal para una sede
 function renderAgenda(sede, tableId) {
@@ -26,17 +31,14 @@ function renderAgenda(sede, tableId) {
 
   for (let hora = cfg.horaInicio; hora <= cfg.horaFin; hora++) {
     const row = document.createElement("tr");
-    // Columna de hora
     const horaStr = hora.toString().padStart(2, "0") + ":00";
     row.innerHTML = `<td>${horaStr}</td>`;
 
-    // Columnas de días
-    cfg.dias.forEach((dia, idx) => {
-      // Busca si hay profesor asignado para ese día y hora
+    cfg.dias.forEach(dia => {
       const prof = asignaciones.find(a =>
         a.sede === sede &&
         a.dias.includes(dia) &&
-        hora >= a.horaDesde && hora < a.horaHasta
+        a.horas.includes(hora)
       );
       row.innerHTML += `<td>${prof ? prof.profesor : ""}</td>`;
     });
@@ -45,7 +47,7 @@ function renderAgenda(sede, tableId) {
   }
 }
 
-// Renderiza la tabla de asignaciones abajo
+// Renderiza la tabla de asignaciones
 function renderAsignaciones() {
   const tbody = document.querySelector("#tablaAsignaciones tbody");
   tbody.innerHTML = "";
@@ -56,7 +58,7 @@ function renderAsignaciones() {
         <td>${a.profesor}</td>
         <td>${a.sede}</td>
         <td>${dia}</td>
-        <td>${a.horaDesde.toString().padStart(2, "0")}:00 - ${a.horaHasta.toString().padStart(2, "0")}:00</td>
+        <td>${a.horas.map(h => h.toString().padStart(2, "0") + ":00").join(", ")}</td>
         <td>${a.observaciones || ""}</td>
         <td>
           <button class="btn secondary" onclick="editarAsignacion(${idx})">Editar</button>
@@ -68,41 +70,22 @@ function renderAsignaciones() {
   });
 }
 
-// Convierte un string de rango horario a números
-function parseHorario(horarioStr) {
-  // Ejemplo: "09:00-12:00"
-  const match = horarioStr.match(/^(\d{2}):\d{2}\s*-\s*(\d{2}):\d{2}$/);
-  if (!match) return null;
-  return { desde: parseInt(match[1]), hasta: parseInt(match[2]) };
-}
-
-// Maneja el submit del formulario de asignación
+// Maneja el submit del formulario
 document.getElementById("asignacionForm").addEventListener("submit", function(e) {
   e.preventDefault();
   const profesor = document.getElementById("profesorInput").value.trim();
   const sede = document.getElementById("sedeSelect").value;
-  const diasSelect = document.getElementById("diasSelect");
-  const dias = Array.from(diasSelect.selectedOptions).map(opt => opt.text);
-  const horarioStr = document.getElementById("horarioInput").value.trim();
+  const dias = Array.from(document.getElementById("diasSelect").selectedOptions).map(opt => opt.value);
+  const horas = Array.from(document.getElementById("horasSelect").selectedOptions).map(opt => parseInt(opt.value));
   const obs = document.getElementById("obsInput").value.trim();
 
-  if (!profesor || !dias.length || !horarioStr) {
+  if (!profesor || !dias.length || !horas.length) {
     alert("Completa todos los campos obligatorios.");
     return;
   }
-  const horario = parseHorario(horarioStr);
-  if (!horario) {
-    alert("El horario debe tener formato HH:MM-HH:MM (ej: 09:00-12:00)");
-    return;
-  }
-  asignaciones.push({
-    profesor,
-    sede,
-    dias,
-    horaDesde: horario.desde,
-    horaHasta: horario.hasta,
-    observaciones: obs
-  });
+
+  asignaciones.push({ profesor, sede, dias, horas, observaciones: obs });
+  guardarLocal();
   this.reset();
   actualizarTodo();
 });
@@ -112,16 +95,22 @@ window.editarAsignacion = function(idx) {
   const a = asignaciones[idx];
   document.getElementById("profesorInput").value = a.profesor;
   document.getElementById("sedeSelect").value = a.sede;
+
+  // Seleccionar días
   const diasSelect = document.getElementById("diasSelect");
   Array.from(diasSelect.options).forEach(opt => {
-    opt.selected = a.dias.includes(opt.text);
+    opt.selected = a.dias.includes(opt.value);
   });
-  document.getElementById("horarioInput").value =
-    a.horaDesde.toString().padStart(2, "0") + ":00-" +
-    a.horaHasta.toString().padStart(2, "0") + ":00";
+
+  // Seleccionar horas
+  const horasSelect = document.getElementById("horasSelect");
+  Array.from(horasSelect.options).forEach(opt => {
+    opt.selected = a.horas.includes(parseInt(opt.value));
+  });
+
   document.getElementById("obsInput").value = a.observaciones || "";
-  // Elimina la anterior para reemplazar
   asignaciones.splice(idx, 1);
+  guardarLocal();
   actualizarTodo();
 };
 
@@ -129,33 +118,45 @@ window.editarAsignacion = function(idx) {
 window.eliminarAsignacion = function(idx) {
   if (confirm("¿Eliminar esta asignación?")) {
     asignaciones.splice(idx, 1);
+    guardarLocal();
     actualizarTodo();
   }
 };
 
-// Actualiza agendas y tabla de asignaciones
+// Actualiza agendas y tabla
 function actualizarTodo() {
   renderAgenda("Craig", "agendaCraig");
   renderAgenda("Goyena", "agendaGoyena");
   renderAsignaciones();
 }
 
-// Inicializa los selects de días según sede
+// Genera opciones dinámicas para días y horas
 document.getElementById("sedeSelect").addEventListener("change", function() {
   const sede = this.value;
+
+  // Actualizar días
   const diasSelect = document.getElementById("diasSelect");
   diasSelect.innerHTML = "";
-  config[sede].dias.forEach((dia, idx) => {
+  config[sede].dias.forEach(dia => {
     const opt = document.createElement("option");
-    opt.value = (idx + 1).toString();
+    opt.value = dia;
     opt.text = dia;
     diasSelect.appendChild(opt);
   });
+
+  // Actualizar horas
+  const horasSelect = document.getElementById("horasSelect");
+  horasSelect.innerHTML = "";
+  for (let h = config[sede].horaInicio; h <= config[sede].horaFin; h++) {
+    const opt = document.createElement("option");
+    opt.value = h;
+    opt.text = h.toString().padStart(2, "0") + ":00";
+    horasSelect.appendChild(opt);
+  }
 });
 
 // Inicializa la página
 function init() {
-  // Inicializa los días para la sede Craig por defecto
   document.getElementById("sedeSelect").value = "Craig";
   document.getElementById("sedeSelect").dispatchEvent(new Event("change"));
   actualizarTodo();
