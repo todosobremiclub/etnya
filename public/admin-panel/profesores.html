@@ -63,10 +63,8 @@
   </style>
 </head>
 <body>
-  <!-- Botón hamburguesa mobile -->
   <button id="menuToggle" onclick="toggleMenu()">☰</button>
 
-  <!-- Sidebar -->
   <div class="sidebar">
     <a href="index.html">📋 Alumnas/os</a>
     <a href="pagos.html">💳 Pagos</a>
@@ -82,15 +80,12 @@
     </button>
   </div>
 
-  <!-- Header -->
   <header class="header-wrap">
     <img src="logo.jpeg" alt="Logo" style="height:48px; margin-right:16px;">
     <h2 class="header-title">Agenda de Cobertura de Profesoras</h2>
   </header>
 
-  <!-- Contenido principal -->
   <main>
-    <!-- Agenda Craig -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Agenda semanal Craig (Lunes a Viernes, 9-20hs)</h3>
       <table id="agendaCraig">
@@ -104,13 +99,10 @@
             <th>Viernes</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Se genera dinámicamente -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
 
-    <!-- Agenda Goyena -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Agenda semanal Goyena (Lunes a Sábado, 8-21hs)</h3>
       <table id="agendaGoyena">
@@ -125,13 +117,10 @@
             <th>Sábado</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Se genera dinámicamente -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
 
-    <!-- Maestro de asignaciones -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Asignación de profesores</h3>
       <form id="asignacionForm">
@@ -151,14 +140,7 @@
         <div class="row2">
           <div>
             <label for="diasSelect">Días</label>
-            <select id="diasSelect" multiple>
-              <option value="Lunes">Lunes</option>
-              <option value="Martes">Martes</option>
-              <option value="Miércoles">Miércoles</option>
-              <option value="Jueves">Jueves</option>
-              <option value="Viernes">Viernes</option>
-              <option value="Sábado">Sábado</option>
-            </select>
+            <select id="diasSelect" multiple></select>
           </div>
           <div>
             <label for="horarioInput">Horario (Ej: 09:00-12:00)</label>
@@ -182,9 +164,7 @@
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Se genera dinámicamente -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
   </main>
@@ -197,27 +177,21 @@
       alert('Cerrar sesión');
     }
 
-    // --- JS de agenda y asignaciones ---
     const config = {
-      Craig: {
-        dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
-        horaInicio: 9,
-        horaFin: 20
-      },
-      Goyena: {
-        dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-        horaInicio: 8,
-        horaFin: 21
-      }
+      Craig: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
+      Goyena: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], horaInicio: 8, horaFin: 21 }
     };
 
-    let asignaciones = [];
+    let asignaciones = JSON.parse(localStorage.getItem("asignaciones")) || [];
+
+    function guardarLocal() {
+      localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
+    }
 
     function renderAgenda(sede, tableId) {
       const cfg = config[sede];
       const tbody = document.querySelector(`#${tableId} tbody`);
       tbody.innerHTML = "";
-
       for (let hora = cfg.horaInicio; hora <= cfg.horaFin; hora++) {
         const row = document.createElement("tr");
         const horaStr = hora.toString().padStart(2, "0") + ":00";
@@ -288,6 +262,7 @@
         horaHasta: horario.hasta,
         observaciones: obs
       });
+      guardarLocal();
       this.reset();
       actualizarTodo();
     });
@@ -305,12 +280,14 @@
         a.horaHasta.toString().padStart(2, "0") + ":00";
       document.getElementById("obsInput").value = a.observaciones || "";
       asignaciones.splice(idx, 1);
+      guardarLocal();
       actualizarTodo();
     };
 
     window.eliminarAsignacion = function(idx) {
       if (confirm("¿Eliminar esta asignación?")) {
         asignaciones.splice(idx, 1);
+        guardarLocal();
         actualizarTodo();
       }
     };
@@ -342,4 +319,3 @@
     window.onload = init;
   </script>
 </body>
-</html>
