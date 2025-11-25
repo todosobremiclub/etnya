@@ -7,21 +7,23 @@
     <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-    <div style="display: flex;">
-        <!-- Menú lateral -->
-        <aside style="background: #8c5a6b; width: 220px; min-height: 100vh; padding: 20px 0;">
-            <nav style="display: flex; flex-direction: column; gap: 18px;">
-                <a href="index.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">📋 Alumnas/os</a>
-                <a href="pagos.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">💳 Pagos</a>
-                <a href="gastos.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">🧾 Gastos</a>
-                <a href="agenda.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">📅 Agenda</a>
-                <a href="noticias.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">📰 Noticias</a>
-                <a href="notificaciones.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">📢 Notificaciones</a>
-                <a href="configuracion.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">⚙️ Configuración</a>
-                <a href="reportes.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">📈 Reportes</a>
-                <a href="logout.html" style="color: #fff; text-decoration: none; font-size: 1.1em; padding: 8px 24px;">🚪 Cerrar sesión</a>
-            </nav>
-        </aside>
+   <!-- Sidebar -->
+<div class="sidebar">
+  <a href="index.html">📋 Alumnas/os</a>
+  <a href="pagos.html">💳 Pagos</a>
+  <a href="gastos.html" class="menu-gastos">🧾 Gastos</a>
+  <a href="agenda.html">📅 Agenda</a>
+  <a href="profesores.html">👨‍🏫 Profesores</a>
+  <a href="noticias.html">📰 Noticias</a>
+  <a href="notificaciones.html">📢 Notificaciones</a>
+  <a href="configuracion.html">⚙️ Configuración</a>
+  <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
+  <button onclick="cerrarSesion()" style="width:100%; text-align:left; padding:10px 16px; background-color:transparent; border:none; color:white; font-weight:bold; font-size:13px; cursor:pointer; border-top:1px solid rgba(255,255,255,0.1);">
+    🚪 Cerrar sesión
+  </button>
+</div>
+
+
 
         <!-- Contenido principal -->
         <main style="background: #dbe7df; flex: 1; min-height: 100vh; padding: 32px 0 0 0;">
