@@ -86,6 +86,7 @@
   </header>
 
   <main>
+    <!-- Agenda Craig -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Agenda semanal Craig (Lunes a Viernes, 9-20hs)</h3>
       <table id="agendaCraig">
@@ -103,6 +104,7 @@
       </table>
     </section>
 
+    <!-- Agenda Goyena -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Agenda semanal Goyena (Lunes a Sábado, 8-21hs)</h3>
       <table id="agendaGoyena">
@@ -121,6 +123,7 @@
       </table>
     </section>
 
+    <!-- Formulario -->
     <section class="card">
       <h3 style="color:#91586d; margin-top:0;">Asignación de profesores</h3>
       <form id="asignacionForm">
@@ -137,18 +140,16 @@
             </select>
           </div>
         </div>
-        
-<div class="row2">
-  <div>
-    <label for="diasSelect">Días</label>
-    <select id="diasSelect" multiple></select>
-  </div>
-  <div>
-    <label for="horasSelect">Horarios</label>
-    <select id="horasSelect" multiple></select>
-  </div>
-</div>
-
+        <div class="row2">
+          <div>
+            <label for="diasSelect">Días</label>
+            <select id="diasSelect" multiple></select>
+          </div>
+          <div>
+            <label for="horasSelect">Horarios</label>
+            <select id="horasSelect" multiple></select>
+          </div>
+        </div>
         <label for="obsInput">Observaciones</label>
         <input type="text" id="obsInput">
         <div class="actions">
@@ -202,7 +203,7 @@
           const prof = asignaciones.find(a =>
             a.sede === sede &&
             a.dias.includes(dia) &&
-            hora >= a.horaDesde && hora < a.horaHasta
+            a.horas.includes(hora)
           );
           row.innerHTML += `<td>${prof ? prof.profesor : ""}</td>`;
         });
@@ -220,7 +221,7 @@
             <td>${a.profesor}</td>
             <td>${a.sede}</td>
             <td>${dia}</td>
-            <td>${a.horaDesde.toString().padStart(2, "0")}:00 - ${a.horaHasta.toString().padStart(2, "0")}:00</td>
+            <td>${a.horas.map(h => h.toString().padStart(2, "0") + ":00").join(", ")}</td>
             <td>${a.observaciones || ""}</td>
             <td class="actions">
               <button class="btn secondary" onclick="editarAsignacion(${idx})">Editar</button>
@@ -232,38 +233,20 @@
       });
     }
 
-    function parseHorario(horarioStr) {
-      const match = horarioStr.match(/^(\d{2}):\d{2}\s*-\s*(\d{2}):\d{2}$/);
-      if (!match) return null;
-      return { desde: parseInt(match[1]), hasta: parseInt(match[2]) };
-    }
-
     document.getElementById("asignacionForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const profesor = document.getElementById("profesorInput").value.trim();
       const sede = document.getElementById("sedeSelect").value;
-      const diasSelect = document.getElementById("diasSelect");
-      const dias = Array.from(diasSelect.selectedOptions).map(opt => opt.value);
-      const horarioStr = document.getElementById("horarioInput").value.trim();
+      const dias = Array.from(document.getElementById("diasSelect").selectedOptions).map(opt => opt.value);
+      const horas = Array.from(document.getElementById("horasSelect").selectedOptions).map(opt => parseInt(opt.value));
       const obs = document.getElementById("obsInput").value.trim();
 
-      if (!profesor || !dias.length || !horarioStr) {
+      if (!profesor || !dias.length || !horas.length) {
         alert("Completa todos los campos obligatorios.");
         return;
       }
-      const horario = parseHorario(horarioStr);
-      if (!horario) {
-        alert("El horario debe tener formato HH:MM-HH:MM (ej: 09:00-12:00)");
-        return;
-      }
-      asignaciones.push({
-        profesor,
-        sede,
-        dias: dias.map(d => d.charAt(0).toUpperCase() + d.slice(1)),
-        horaDesde: horario.desde,
-        horaHasta: horario.hasta,
-        observaciones: obs
-      });
+
+      asignaciones.push({ profesor, sede, dias, horas, observaciones: obs });
       guardarLocal();
       this.reset();
       actualizarTodo();
@@ -273,13 +256,17 @@
       const a = asignaciones[idx];
       document.getElementById("profesorInput").value = a.profesor;
       document.getElementById("sedeSelect").value = a.sede;
+
       const diasSelect = document.getElementById("diasSelect");
       Array.from(diasSelect.options).forEach(opt => {
         opt.selected = a.dias.includes(opt.value);
       });
-      document.getElementById("horarioInput").value =
-        a.horaDesde.toString().padStart(2, "0") + ":00-" +
-        a.horaHasta.toString().padStart(2, "0") + ":00";
+
+      const horasSelect = document.getElementById("horasSelect");
+      Array.from(horasSelect.options).forEach(opt => {
+        opt.selected = a.horas.includes(parseInt(opt.value));
+      });
+
       document.getElementById("obsInput").value = a.observaciones || "";
       asignaciones.splice(idx, 1);
       guardarLocal();
@@ -302,6 +289,7 @@
 
     document.getElementById("sedeSelect").addEventListener("change", function() {
       const sede = this.value;
+
       const diasSelect = document.getElementById("diasSelect");
       diasSelect.innerHTML = "";
       config[sede].dias.forEach(dia => {
@@ -310,6 +298,15 @@
         opt.text = dia;
         diasSelect.appendChild(opt);
       });
+
+      const horasSelect = document.getElementById("horasSelect");
+      horasSelect.innerHTML = "";
+      for (let h = config[sede].horaInicio; h <= config[sede].horaFin; h++) {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.text = h.toString().padStart(2, "0") + ":00";
+        horasSelect.appendChild(opt);
+      }
     });
 
     function init() {
@@ -321,3 +318,4 @@
     window.onload = init;
   </script>
 </body>
+</html>
