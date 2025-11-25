@@ -42,12 +42,24 @@
       background:#fff; border-radius:16px; box-shadow:0 2px 8px #0001;
       border:1px solid #eee; padding:24px; flex:1; min-width:340px;
     }
-    table{
-      width:100%; background:#fff; border-collapse:collapse; border-radius:8px; overflow:hidden;
-      box-shadow:0 1px 6px rgba(0,0,0,.08); font-size:14px;
+    /* Estilo tipo Excel */
+    table {
+      width:100%; border-collapse:collapse; font-size:14px;
     }
-    th, td{ padding:10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
-    th{ background:#b48a99; color:#fff; }
+    th, td {
+      padding:8px; text-align:center; border:1px solid #ccc;
+    }
+    th {
+      background:#b48a99; color:#fff; font-weight:bold;
+    }
+    tbody tr td:first-child {
+      font-weight:bold; background:#f9f9f9;
+    }
+    /* Bordes gruesos entre columnas de días */
+    thead th:not(:first-child),
+    tbody td:not(:first-child) {
+      border-left:3px solid #91586d;
+    }
     .actions .btn { margin-right: 4px; }
     .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
     .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -200,12 +212,10 @@
         const horaStr = hora.toString().padStart(2, "0") + ":00";
         row.innerHTML = `<td>${horaStr}</td>`;
         cfg.dias.forEach(dia => {
-          const prof = asignaciones.find(a =>
-            a.sede === sede &&
-            a.dias.includes(dia) &&
-            a.horas.includes(hora)
-          );
-          row.innerHTML += `<td>${prof ? prof.profesor : ""}</td>`;
+          const profesores = asignaciones
+            .filter(a => a.sede === sede && a.dias.includes(dia) && a.horas.includes(hora))
+            .map(a => a.profesor);
+          row.innerHTML += `<td>${profesores.length ? profesores.join(" / ") : ""}</td>`;
         });
         tbody.appendChild(row);
       }
