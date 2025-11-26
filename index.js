@@ -50,6 +50,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/noticias', noticiasRoutes);
 app.use("/notificaciones", notificacionesRoutes);
+app.use("/api/asignaciones", profesoresRoutes);
 
 // ====== Rutas para la App Móvil (NO pisan nada) ======
 // Limitador solo para /auth/login (mitiga fuerza bruta)
