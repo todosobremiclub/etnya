@@ -1,34 +1,36 @@
 
 // profesores.js
 
+const API_BASE = "https://etnya.onrender.com/api/asignaciones"; // Ajusta si tu backend tiene otra ruta
+
 // Configuración de horarios y días por sede
 const config = {
-  CraigReformer: {
-    dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
-    horaInicio: 9,
-    horaFin: 20
-  },
-  CraigCircuito: {
-    dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
-    horaInicio: 9,
-    horaFin: 20
-  },
-  Goyena: {
-    dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-    horaInicio: 8,
-    horaFin: 21
-  }
+  CraigReformer: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
+  CraigCircuito: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
+  Goyena: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], horaInicio: 8, horaFin: 21 }
 };
 
-// Array de asignaciones (persistencia con localStorage)
-let asignaciones = JSON.parse(localStorage.getItem("asignaciones")) || [];
+let asignaciones = [];
 
-// Guardar en localStorage
-function guardarLocal() {
-  localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
+// ✅ Funciones para API
+async function fetchAsignaciones() {
+  const res = await fetch(API_BASE);
+  asignaciones = await res.json();
 }
 
-// Renderiza la agenda semanal para una sede
+async function crearAsignacion(payload) {
+  await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function eliminarAsignacionRemoto(id) {
+  await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+}
+
+// ✅ Renderiza la agenda semanal para una sede
 function renderAgenda(sede, tableId) {
   const cfg = config[sede];
   const tbody = document.querySelector(`#${tableId} tbody`);
@@ -50,11 +52,11 @@ function renderAgenda(sede, tableId) {
   }
 }
 
-// Renderiza la tabla de asignaciones
+// ✅ Renderiza la tabla de asignaciones
 function renderAsignaciones() {
   const tbody = document.querySelector("#tablaAsignaciones tbody");
   tbody.innerHTML = "";
-  asignaciones.forEach((a, idx) => {
+  asignaciones.forEach(a => {
     a.dias.forEach(dia => {
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -64,8 +66,7 @@ function renderAsignaciones() {
         <td>${a.horas.map(h => h.toString().padStart(2, "0") + ":00").join(", ")}</td>
         <td>${a.observaciones || ""}</td>
         <td>
-          <button class="btn secondary" onclick="editarAsignacion(${idx})">Editar</button>
-          <button class="btn danger" onclick="eliminarAsignacion(${idx})">Eliminar</button>
+          <button class="btn danger" onclick="eliminarAsignacion(${a.id})">Eliminar</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -73,8 +74,8 @@ function renderAsignaciones() {
   });
 }
 
-// Maneja el submit del formulario
-document.getElementById("asignacionForm").addEventListener("submit", function(e) {
+// ✅ Maneja el submit del formulario
+document.getElementById("asignacionForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   const profesor = document.getElementById("profesorInput").value.trim();
   const sede = document.getElementById("sedeSelect").value;
@@ -87,46 +88,22 @@ document.getElementById("asignacionForm").addEventListener("submit", function(e)
     return;
   }
 
-  asignaciones.push({ profesor, sede, dias, horas, observaciones: obs });
-  guardarLocal();
+  await crearAsignacion({ profesor, sede, dias, horas, observaciones: obs });
   this.reset();
+  await fetchAsignaciones();
   actualizarTodo();
 });
 
-// Editar asignación
-window.editarAsignacion = function(idx) {
-  const a = asignaciones[idx];
-  document.getElementById("profesorInput").value = a.profesor;
-  document.getElementById("sedeSelect").value = a.sede;
-
-  // Seleccionar días
-  const diasSelect = document.getElementById("diasSelect");
-  Array.from(diasSelect.options).forEach(opt => {
-    opt.selected = a.dias.includes(opt.value);
-  });
-
-  // Seleccionar horas
-  const horasSelect = document.getElementById("horasSelect");
-  Array.from(horasSelect.options).forEach(opt => {
-    opt.selected = a.horas.includes(parseInt(opt.value));
-  });
-
-  document.getElementById("obsInput").value = a.observaciones || "";
-  asignaciones.splice(idx, 1);
-  guardarLocal();
-  actualizarTodo();
-};
-
-// Eliminar asignación
-window.eliminarAsignacion = function(idx) {
+// ✅ Eliminar asignación
+window.eliminarAsignacion = async function(id) {
   if (confirm("¿Eliminar esta asignación?")) {
-    asignaciones.splice(idx, 1);
-    guardarLocal();
+    await eliminarAsignacionRemoto(id);
+    await fetchAsignaciones();
     actualizarTodo();
   }
 };
 
-// Actualiza agendas y tabla
+// ✅ Actualiza agendas y tabla
 function actualizarTodo() {
   renderAgenda("CraigReformer", "agendaCraigReformer");
   renderAgenda("CraigCircuito", "agendaCraigCircuito");
@@ -134,11 +111,10 @@ function actualizarTodo() {
   renderAsignaciones();
 }
 
-// Genera opciones dinámicas para días y horas
+// ✅ Genera opciones dinámicas para días y horas
 document.getElementById("sedeSelect").addEventListener("change", function() {
   const sede = this.value;
 
-  // Actualizar días
   const diasSelect = document.getElementById("diasSelect");
   diasSelect.innerHTML = "";
   config[sede].dias.forEach(dia => {
@@ -148,7 +124,6 @@ document.getElementById("sedeSelect").addEventListener("change", function() {
     diasSelect.appendChild(opt);
   });
 
-  // Actualizar horas
   const horasSelect = document.getElementById("horasSelect");
   horasSelect.innerHTML = "";
   for (let h = config[sede].horaInicio; h <= config[sede].horaFin; h++) {
@@ -159,11 +134,11 @@ document.getElementById("sedeSelect").addEventListener("change", function() {
   }
 });
 
-// Inicializa la página
-function init() {
+// ✅ Inicializa la página
+async function init() {
   document.getElementById("sedeSelect").value = "CraigReformer";
   document.getElementById("sedeSelect").dispatchEvent(new Event("change"));
+  await fetchAsignaciones();
   actualizarTodo();
 }
 
-window.onload = init;
