@@ -17,6 +17,7 @@
       border-bottom:1px solid rgba(255,255,255,.1); font-size:13px;
     }
     .sidebar a:hover{ background:#6d3e4e; }
+    .sidebar a.active{ background:#6d3e4e; }
     .header-wrap{
       margin-left:200px; display:flex; align-items:center; justify-content:center;
       padding:20px 0; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1);
@@ -84,10 +85,28 @@
   </header>
 
   <main>
-    <!-- Agenda Craig -->
+    <!-- Agenda Craig Reformer -->
     <section class="card">
-      <h3 style="color:#91586d;">Agenda semanal Craig (Lunes a Viernes, 9-20hs)</h3>
-      <table id="agendaCraig">
+      <h3 style="color:#91586d;">Agenda Craig Reformer (Lunes a Viernes, 9-20hs)</h3>
+      <table id="agendaCraigReformer">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Lunes</th>
+            <th>Martes</th>
+            <th>Miércoles</th>
+            <th>Jueves</th>
+            <th>Viernes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Agenda Craig Circuito -->
+    <section class="card">
+      <h3 style="color:#91586d;">Agenda Craig Circuito (Lunes a Viernes, 9-20hs)</h3>
+      <table id="agendaCraigCircuito">
         <thead>
           <tr>
             <th>Hora</th>
@@ -104,7 +123,7 @@
 
     <!-- Agenda Goyena -->
     <section class="card">
-      <h3 style="color:#91586d;">Agenda semanal Goyena (Lunes a Sábado, 8-21hs)</h3>
+      <h3 style="color:#91586d;">Agenda Goyena (Lunes a Sábado, 8-21hs)</h3>
       <table id="agendaGoyena">
         <thead>
           <tr>
@@ -133,7 +152,8 @@
           <div>
             <label for="sedeSelect">Sede</label>
             <select id="sedeSelect">
-              <option value="Craig">Craig</option>
+              <option value="CraigReformer">Craig Reformer</option>
+              <option value="CraigCircuito">Craig Circuito</option>
               <option value="Goyena">Goyena</option>
             </select>
           </div>
@@ -174,7 +194,8 @@
 
   <script>
     const config = {
-      Craig: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
+      CraigReformer: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
+      CraigCircuito: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
       Goyena: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], horaInicio: 8, horaFin: 21 }
     };
 
@@ -277,7 +298,8 @@
     };
 
     function actualizarTodo() {
-      renderAgenda("Craig", "agendaCraig");
+      renderAgenda("CraigReformer", "agendaCraigReformer");
+      renderAgenda("CraigCircuito", "agendaCraigCircuito");
       renderAgenda("Goyena", "agendaGoyena");
       renderAsignaciones();
     }
@@ -305,12 +327,9 @@
     });
 
     function init() {
-      document.getElementById("sedeSelect").value = "Craig";
+      document.getElementById("sedeSelect").value = "CraigReformer";
       document.getElementById("sedeSelect").dispatchEvent(new Event("change"));
       actualizarTodo();
     }
 
     window.onload = init;
-  </script>
-</body>
-</html>

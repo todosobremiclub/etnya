@@ -3,7 +3,12 @@
 
 // Configuración de horarios y días por sede
 const config = {
-  Craig: {
+  CraigReformer: {
+    dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
+    horaInicio: 9,
+    horaFin: 20
+  },
+  CraigCircuito: {
     dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
     horaInicio: 9,
     horaFin: 20
@@ -35,12 +40,10 @@ function renderAgenda(sede, tableId) {
     row.innerHTML = `<td>${horaStr}</td>`;
 
     cfg.dias.forEach(dia => {
-      const prof = asignaciones.find(a =>
-        a.sede === sede &&
-        a.dias.includes(dia) &&
-        a.horas.includes(hora)
-      );
-      row.innerHTML += `<td>${prof ? prof.profesor : ""}</td>`;
+      const profesores = asignaciones
+        .filter(a => a.sede === sede && a.dias.includes(dia) && a.horas.includes(hora))
+        .map(a => a.profesor);
+      row.innerHTML += `<td>${profesores.length ? profesores.join(" / ") : ""}</td>`;
     });
 
     tbody.appendChild(row);
@@ -125,7 +128,8 @@ window.eliminarAsignacion = function(idx) {
 
 // Actualiza agendas y tabla
 function actualizarTodo() {
-  renderAgenda("Craig", "agendaCraig");
+  renderAgenda("CraigReformer", "agendaCraigReformer");
+  renderAgenda("CraigCircuito", "agendaCraigCircuito");
   renderAgenda("Goyena", "agendaGoyena");
   renderAsignaciones();
 }
@@ -157,7 +161,7 @@ document.getElementById("sedeSelect").addEventListener("change", function() {
 
 // Inicializa la página
 function init() {
-  document.getElementById("sedeSelect").value = "Craig";
+  document.getElementById("sedeSelect").value = "CraigReformer";
   document.getElementById("sedeSelect").dispatchEvent(new Event("change"));
   actualizarTodo();
 }
