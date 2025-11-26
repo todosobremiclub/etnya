@@ -12,6 +12,7 @@ const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
 const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
 const noticiasRoutes = require('./routes/noticiasRoutes');
 const notificacionesRoutes = require("./routes/notificacionesRoutes");
+const profesoresRoutes = require('./routes/profesores.js');
 
 
 // ===== DB =====
