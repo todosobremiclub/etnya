@@ -12,6 +12,11 @@ const config = {
 
 let asignaciones = [];
 
+// ✅ Función para mostrar/ocultar selects de días y horarios
+function toggleSelect(id) {
+  document.getElementById(id).classList.toggle('hidden');
+}
+
 // Funciones para API
 async function fetchAsignaciones() {
   const res = await fetch(API_BASE);
