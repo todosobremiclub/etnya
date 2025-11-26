@@ -25,13 +25,11 @@
     .header-title{ margin:0; font-size:28px; color:#91586d; }
     main{ margin-left:200px; padding:20px; }
 
-    /* Tarjetas */
     .card{
       background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08);
       padding:16px; margin-bottom:20px;
     }
 
-    /* Contenedor para las agendas de Craig */
     .agendas-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -39,7 +37,6 @@
       margin-bottom: 20px;
     }
 
-    /* Tablas más compactas */
     table {
       width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;
     }
@@ -48,10 +45,10 @@
     }
     th {
       background:#b48a99; color:#fff; font-weight:bold;
-      position: sticky; top: 0; /* Encabezado fijo */
+      position: sticky; top: 0;
     }
     tbody tr:nth-child(even) {
-      background:#f9f9f9; /* Filas alternadas */
+      background:#f9f9f9;
     }
     tbody tr td:first-child {
       font-weight:bold; background:#f4f4f4;
@@ -208,147 +205,7 @@
     </section>
   </main>
 
-  <script>
-    const config = {
-      CraigReformer: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
-      CraigCircuito: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], horaInicio: 9, horaFin: 20 },
-      Goyena: { dias: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], horaInicio: 8, horaFin: 21 }
-    };
-
-    let asignaciones = JSON.parse(localStorage.getItem("asignaciones")) || [];
-
-    function guardarLocal() {
-      localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
-    }
-
-    function toggleSelect(id) {
-      document.getElementById(id).classList.toggle('hidden');
-    }
-
-    function renderAgenda(sede, tableId) {
-      const cfg = config[sede];
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML = "";
-      for (let hora = cfg.horaInicio; hora <= cfg.horaFin; hora++) {
-        const row = document.createElement("tr");
-        const horaStr = hora.toString().padStart(2, "0") + ":00";
-        row.innerHTML = `<td>${horaStr}</td>`;
-        cfg.dias.forEach(dia => {
-          const profesores = asignaciones
-            .filter(a => a.sede === sede && a.dias.includes(dia) && a.horas.includes(hora))
-            .map(a => a.profesor);
-          row.innerHTML += `<td>${profesores.length ? profesores.join(" / ") : ""}</td>`;
-        });
-        tbody.appendChild(row);
-      }
-    }
-
-    function renderAsignaciones() {
-      const tbody = document.querySelector("#tablaAsignaciones tbody");
-      tbody.innerHTML = "";
-      asignaciones.forEach((a, idx) => {
-        a.dias.forEach(dia => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${a.profesor}</td>
-            <td>${a.sede}</td>
-            <td>${dia}</td>
-            <td>${a.horas.map(h => h.toString().padStart(2, "0") + ":00").join(", ")}</td>
-            <td>${a.observaciones || ""}</td>
-            <td>
-              <button class="btn secondary" onclick="editarAsignacion(${idx})">Editar</button>
-              <button class="btn danger" onclick="eliminarAsignacion(${idx})">Eliminar</button>
-            </td>
-          `;
-          tbody.appendChild(row);
-        });
-      });
-    }
-
-    document.getElementById("asignacionForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const profesor = document.getElementById("profesorInput").value.trim();
-      const sede = document.getElementById("sedeSelect").value;
-      const dias = Array.from(document.getElementById("diasSelect").selectedOptions).map(opt => opt.value);
-      const horas = Array.from(document.getElementById("horasSelect").selectedOptions).map(opt => parseInt(opt.value));
-      const obs = document.getElementById("obsInput").value.trim();
-
-      if (!profesor || !dias.length || !horas.length) {
-        alert("Completa todos los campos obligatorios.");
-        return;
-      }
-
-      asignaciones.push({ profesor, sede, dias, horas, observaciones: obs });
-      guardarLocal();
-      this.reset();
-      actualizarTodo();
-    });
-
-    window.editarAsignacion = function(idx) {
-      const a = asignaciones[idx];
-      document.getElementById("profesorInput").value = a.profesor;
-      document.getElementById("sedeSelect").value = a.sede;
-
-      const diasSelect = document.getElementById("diasSelect");
-      Array.from(diasSelect.options).forEach(opt => {
-        opt.selected = a.dias.includes(opt.value);
-      });
-
-      const horasSelect = document.getElementById("horasSelect");
-      Array.from(horasSelect.options).forEach(opt => {
-        opt.selected = a.horas.includes(parseInt(opt.value));
-      });
-
-      document.getElementById("obsInput").value = a.observaciones || "";
-      asignaciones.splice(idx, 1);
-      guardarLocal();
-      actualizarTodo();
-    };
-
-    window.eliminarAsignacion = function(idx) {
-      if (confirm("¿Eliminar esta asignación?")) {
-        asignaciones.splice(idx, 1);
-        guardarLocal();
-        actualizarTodo();
-      }
-    };
-
-    function actualizarTodo() {
-      renderAgenda("CraigReformer", "agendaCraigReformer");
-      renderAgenda("CraigCircuito", "agendaCraigCircuito");
-      renderAgenda("Goyena", "agendaGoyena");
-      renderAsignaciones();
-    }
-
-    document.getElementById("sedeSelect").addEventListener("change", function() {
-      const sede = this.value;
-
-      const diasSelect = document.getElementById("diasSelect");
-      diasSelect.innerHTML = "";
-      config[sede].dias.forEach(dia => {
-        const opt = document.createElement("option");
-        opt.value = dia;
-        opt.text = dia;
-        diasSelect.appendChild(opt);
-      });
-
-      const horasSelect = document.getElementById("horasSelect");
-      horasSelect.innerHTML = "";
-      for (let h = config[sede].horaInicio; h <= config[sede].horaFin; h++) {
-        const opt = document.createElement("option");
-        opt.value = h;
-        opt.text = h.toString().padStart(2, "0") + ":00";
-        horasSelect.appendChild(opt);
-      }
-    });
-
-    function init() {
-      document.getElementById("sedeSelect").value = "CraigReformer";
-      document.getElementById("sedeSelect").dispatchEvent(new Event("change"));
-      actualizarTodo();
-    }
-
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
+  <!-- Aquí va el script, por ahora embebido -->
+  <script src="profesores.js"></script>
 </body>
 </html>
