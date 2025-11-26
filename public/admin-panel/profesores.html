@@ -28,7 +28,6 @@
       background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08);
       padding:24px; margin-bottom:20px;
     }
-    /* Estilo tipo Excel */
     table {
       width:100%; border-collapse:collapse; font-size:14px; margin-top:10px;
     }
@@ -63,7 +62,6 @@
   </style>
 </head>
 <body>
-  <!-- Menú lateral -->
   <div class="sidebar">
     <a href="index.html">📋 Alumnas/os</a>
     <a href="pagos.html">💳 Pagos</a>
@@ -79,13 +77,11 @@
     </button>
   </div>
 
-  <!-- Encabezado -->
   <header class="header-wrap">
     <h2 class="header-title">Agenda de Cobertura de Profesoras</h2>
   </header>
 
   <main>
-    <!-- Agenda Craig Reformer -->
     <section class="card">
       <h3 style="color:#91586d;">Agenda Craig Reformer (Lunes a Viernes, 9-20hs)</h3>
       <table id="agendaCraigReformer">
@@ -103,7 +99,6 @@
       </table>
     </section>
 
-    <!-- Agenda Craig Circuito -->
     <section class="card">
       <h3 style="color:#91586d;">Agenda Craig Circuito (Lunes a Viernes, 9-20hs)</h3>
       <table id="agendaCraigCircuito">
@@ -121,7 +116,6 @@
       </table>
     </section>
 
-    <!-- Agenda Goyena -->
     <section class="card">
       <h3 style="color:#91586d;">Agenda Goyena (Lunes a Sábado, 8-21hs)</h3>
       <table id="agendaGoyena">
@@ -140,7 +134,6 @@
       </table>
     </section>
 
-    <!-- Formulario -->
     <section class="card">
       <h3 style="color:#91586d;">Asignación de profesores</h3>
       <form id="asignacionForm">
@@ -332,4 +325,7 @@
       actualizarTodo();
     }
 
-    window.onload = init;
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
