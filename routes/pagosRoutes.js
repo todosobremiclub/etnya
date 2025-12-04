@@ -1,8 +1,10 @@
+
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { asegurarSnapshotMes } = require('./reportesRoutes'); // Importamos la función para congelar esperado
 
-// routes/pagosRoutes.js  -> dentro de router.post('/', ...)
+// Registrar pago
 router.post('/', async (req, res) => {
   const { alumno_id, mes_pagado, monto, cuenta } = req.body;
   const fecha_pago = new Date();
@@ -46,6 +48,15 @@ router.post('/', async (req, res) => {
         mes_pagado, monto, cuenta, fecha_pago
       ]
     );
+
+    // ✅ Congelar esperado del mes si no existe
+    try {
+      const mes = String(mes_pagado).slice(0, 7); // Normaliza a 'YYYY-MM'
+      await asegurarSnapshotMes(mes);
+      console.log(`Snapshot de esperado creado para el mes ${mes}`);
+    } catch (e) {
+      console.error('Error al congelar esperado del mes:', e);
+    }
 
     res.status(200).json({ message: 'Pago registrado correctamente.' });
   } catch (error) {
@@ -139,6 +150,8 @@ router.delete('/prueba/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar pago de prueba.' });
   }
 });
+
+
 
 
 module.exports = router;
