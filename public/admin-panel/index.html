@@ -931,6 +931,7 @@ async function cargarAlumnos() {
     
 
 
+
 function calcularEstadoPago(alumno) {
   if (alumno.becado) return 'al_dia';
   const ultimo = alumno.ultimo_mes_pagado;
@@ -944,19 +945,20 @@ function calcularEstadoPago(alumno) {
   const mesActual = hoy.getMonth() + 1;
   const diaActual = hoy.getDate();
 
-  // Si pagó un mes posterior → verde
-  if (anioPago > anioActual || (anioPago === anioActual && mesPago > mesActual)) {
+  // ✅ Si pagó el mes actual o posterior → verde
+  if (anioPago > anioActual || (anioPago === anioActual && mesPago >= mesActual)) {
     return 'al_dia';
   }
 
-  // Si pagó el mes actual → verde hasta el día 10
-  if (anioPago === anioActual && mesPago === mesActual) {
-    return diaActual <= 10 ? 'al_dia' : 'mora';
+  // ✅ Caso especial: último pago diciembre del año anterior
+  if (anioPago === anioActual - 1 && mesPago === 12) {
+    return diaActual <= 10 && mesActual === 1 ? 'al_dia' : 'mora';
   }
 
-  // Si pagó un mes anterior → rojo
+  // ✅ Si pagó antes de diciembre del año anterior → rojo
   return 'mora';
 }
+
 
 
 
