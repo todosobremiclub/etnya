@@ -501,11 +501,24 @@ fetch('/pagos')
     .then(lista => {
         pagosAlumno = lista
             .filter(p => String(p.alumno_id) === String(id))
-            .map(p => String(p.mes_pagado).slice(0, 7)); // queda "YYYY-MM"
+            .map(p => {
+                // Normalizamos a "YYYY-MM"
+                const raw = String(p.mes_pagado || '').trim();
+                if (!raw) return null;
+                // puede venir "YYYY-MM" o "YYYY-MM-DD..." -> siempre cortamos a 7
+                return raw.slice(0, 7);
+            })
+            .filter(Boolean);
+
+        console.log('Pagos del alumno', id, pagosAlumno);
         mesSeleccionado = null;
         initMeses();
+    })
+    .catch(err => {
+        console.error('Error cargando pagos del alumno', id, err);
+        pagosAlumno = [];
+        initMeses();
     });
-
 
 /* ====== UI: monto parcial ====== */
 document.getElementById("parcial").addEventListener("change", (e) => {
