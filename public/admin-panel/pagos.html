@@ -499,26 +499,24 @@ function cambiarAnio(dir) {
 fetch('/pagos')
     .then(r => r.json())
     .then(lista => {
-        pagosAlumno = lista
-            .filter(p => String(p.alumno_id) === String(id))
-            .map(p => {
-                // Normalizamos a "YYYY-MM"
-                const raw = String(p.mes_pagado || '').trim();
-                if (!raw) return null;
-                // puede venir "YYYY-MM" o "YYYY-MM-DD..." -> siempre cortamos a 7
-                return raw.slice(0, 7);
-            })
-            .filter(Boolean);
+        const alumnoIdSeleccionado = String(this.value);
 
-        console.log('Pagos del alumno', id, pagosAlumno);
+        pagosAlumno = lista
+            .filter(p => String(p.alumno_id) === alumnoIdSeleccionado)
+            .map(p => {
+                const raw = String(p.mes_pagado || '').trim();
+                return raw.slice(0, 7); // YYYY-MM
+            });
+
         mesSeleccionado = null;
         initMeses();
     })
     .catch(err => {
-        console.error('Error cargando pagos del alumno', id, err);
+        console.error('Error cargando pagos del alumno', err);
         pagosAlumno = [];
         initMeses();
     });
+
 
 /* ====== UI: monto parcial ====== */
 document.getElementById("parcial").addEventListener("change", (e) => {
