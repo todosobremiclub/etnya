@@ -496,6 +496,7 @@ function cambiarAnio(dir) {
 }
 
 // cargar meses pagados del alumno
+// cargar meses pagados del alumno
 const alumnoIdSeleccionado = String(id);
 
 fetch('/pagos')
@@ -505,20 +506,20 @@ fetch('/pagos')
             .filter(p => String(p.alumno_id) === alumnoIdSeleccionado)
             .map(p => {
                 const raw = String(p.mes_pagado || '').trim();
-                return raw.slice(0, 7); // YYYY-MM
+                return raw.slice(0, 7); // normalizar YYYY-MM
             })
             .filter(Boolean);
 
-        console.log('Pagos del alumno', alumnoIdSeleccionado, pagosAlumno);
+        console.log("Pagos detectados:", pagosAlumno);
+
         mesSeleccionado = null;
         initMeses();
     })
     .catch(err => {
-        console.error('Error cargando pagos del alumno', alumnoIdSeleccionado, err);
+        console.error("Error cargando meses pagados:", err);
         pagosAlumno = [];
         initMeses();
     });
-
 /* ====== UI: monto parcial ====== */
 document.getElementById("parcial").addEventListener("change", (e) => {
   const grupo = document.getElementById("grupoMontoManual");
