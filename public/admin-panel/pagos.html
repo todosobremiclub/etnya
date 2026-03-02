@@ -203,6 +203,25 @@ input[type="month"].fake-placeholder:invalid:before {
   #grupoPrueba{ grid-template-columns: 1fr; }
 }
 
+.mesBtn {
+    padding: 10px 0;
+    border-radius: 8px;
+    background: #e1c6cd;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mesBtn.pago {
+    background: #d4f8d4;
+    border: 2px solid #4caf50;
+}
+
+.mesBtn.seleccionado {
+    background: #91586d;
+    color: white;
+}
+
 
   </style>
 </head>
@@ -268,8 +287,20 @@ input[type="month"].fake-placeholder:invalid:before {
     <label for="alumno-select">Buscar y seleccionar alumno:</label>
     <select id="alumno-select" style="width: 100%"></select>
 
-    <label for="mesPago">Mes a pagar:</label>
-    <input type="month" id="mesPago" required class="fake-placeholder">
+    <!-- Selector de meses -->
+<div id="selectorMeses" style="margin-top: 10px;">
+    <div style="text-align:center; margin-bottom:10px;">
+        <button onclick="cambiarAnio(-1)" style="padding:4px 12px;">◀</button>
+        <span id="anioActual" style="font-size:18px; font-weight:bold; margin:0 12px;"></span>
+        <button onclick="cambiarAnio(1)" style="padding:4px 12px;">▶</button>
+    </div>
+
+    <div id="mesesGrid" style="
+        display:grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap:8px;">
+    </div>
+</div>
 
 
     <label for="modalidad">Modalidad:</label>
@@ -426,6 +457,54 @@ function getMesKey(p) {
   }
   return p.mes_pagado || 'Sin Mes';
 }
+
+// ======== Selector de meses ========
+let anioSeleccionado = new Date().getFullYear();
+let mesSeleccionado = null;
+let pagosAlumno = [];
+
+function initMeses() {
+    document.getElementById("anioActual").textContent = anioSeleccionado;
+    const cont = document.getElementById("mesesGrid");
+    cont.innerHTML = "";
+
+    const nombres = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+    for (let i = 0; i < 12; i++) {
+        const nombre = nombres[i];
+        const mesClave = `${anioSeleccionado}-${String(i+1).padStart(2,'0')}`;
+        const pagado = pagosAlumno.includes(mesClave);
+
+        const div = document.createElement("div");
+        div.className = "mesBtn" + (pagado ? " pago" : "");
+        if (mesSeleccionado === mesClave) div.classList.add("seleccionado");
+        div.textContent = nombre;
+        div.onclick = () => seleccionarMes(mesClave);
+
+        cont.appendChild(div);
+    }
+}
+
+function seleccionarMes(mes) {
+    mesSeleccionado = mes;
+    initMeses();
+}
+
+function cambiarAnio(dir) {
+    anioSeleccionado += dir;
+    initMeses();
+}
+
+// cargar meses pagados del alumno
+fetch('/pagos')
+    .then(r => r.json())
+    .then(lista => {
+        pagosAlumno = lista
+            .filter(p => String(p.alumno_id) === String(id))
+            .map(p => p.mes_pagado);
+        mesSeleccionado = null;
+        initMeses();
+    });
 
 
 /* ====== UI: monto parcial ====== */
@@ -614,7 +693,11 @@ if (!sede) {
   }
 
   // Flujo alumno normal
-  const mes = document.getElementById("mesPago").value;
+  const mes = mesSeleccionado;
+if (!mes) {
+    alert("Seleccioná el mes a pagar.");
+    return;
+}
   let monto = '';
   if (document.getElementById("parcial").checked) {
     monto = document.getElementById("montoParcial").value;
