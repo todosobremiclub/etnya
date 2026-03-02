@@ -1,9 +1,11 @@
-<script>
+
 // ===== Config =====
 const SESSION_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 horas
-const KEY_LOGIN     = 'etnya_login';
-const KEY_LAST_ACT  = 'etnya_lastActivity';
-const LOGIN_PAGE    = 'login.html';
+const KEY_LOGIN = 'etnya_login';
+const KEY_LAST_ACT = 'etnya_lastActivity';
+const LOGIN_PAGE = 'login.html';
+
+
 
 // ===== Helpers =====
 function now() { return Date.now(); }
@@ -72,4 +74,4 @@ setInterval(checkTimeout, 60 * 1000); // chequear cada 1 minuto
 
 // Marcar actividad al cargar si estamos logueados
 if (isLoggedIn()) setLastActivity();
-</script>
+
