@@ -495,7 +495,7 @@ function cambiarAnio(dir) {
     initMeses();
 }
 
-// cargar meses pagados del alumno
+
 // cargar meses pagados del alumno
 const alumnoIdSeleccionado = String(id);
 
@@ -598,48 +598,78 @@ window.onload = async () => {
     const esPrueba = (id === OPT_PRUEBA_VALUE);
 
     // Bloques a ocultar/mostrar
-    const $mesPago     = document.getElementById('mesPago')?.parentElement;
     const $modalidad   = document.getElementById('modalidad')?.parentElement;
     const $montoStd    = document.getElementById('monto')?.parentElement;
     const $grupoManual = document.getElementById('grupoMontoManual');
     const $chkParcial  = document.getElementById('parcial');
 
-    // Grupo especial (debe existir en el HTML, ver instrucciones previas)
+    // Grupo especial (pagos de prueba)
     const $grupoPrueba = document.getElementById('grupoPrueba');
     if ($grupoPrueba) $grupoPrueba.style.display = esPrueba ? 'block' : 'none';
 
     // Campos estándar
-    if ($mesPago)     $mesPago.style.display     = esPrueba ? 'none' : 'block';
-    if ($modalidad)   $modalidad.style.display   = esPrueba ? 'none' : 'block';
-    if ($montoStd)    $montoStd.style.display    = esPrueba ? 'none' : 'block';
-    if ($grupoManual) $grupoManual.style.display = esPrueba ? 'none' : ($chkParcial.checked ? 'block' : 'none');
+    if ($modalidad) $modalidad.style.display = esPrueba ? 'none' : 'block';
+    if ($montoStd)  $montoStd.style.display  = esPrueba ? 'none' : 'block';
+    if ($grupoManual) {
+        $grupoManual.style.display = esPrueba ? 'none' : ($chkParcial.checked ? 'block' : 'none');
+    }
 
     if ($chkParcial) {
-      $chkParcial.disabled = esPrueba;
-      if (esPrueba) {
-        $chkParcial.checked = false;
-        document.getElementById('montoParcial').value = '';
-      }
+        $chkParcial.disabled = esPrueba;
+        if (esPrueba) {
+            $chkParcial.checked = false;
+            document.getElementById('montoParcial').value = '';
+        }
     }
 
+    // 👉 Si es pago de prueba, solo ajustamos UI y salimos
     if (esPrueba) {
-      // Limpiar modalidad/monto si venías de un alumno normal
-      document.getElementById("modalidad").value = '';
-      document.getElementById("monto").value     = '';
-      return;
+        document.getElementById("modalidad").value = '';
+        document.getElementById("monto").value     = '';
+        // limpiar meses
+        pagosAlumno = [];
+        mesSeleccionado = null;
+        initMeses();
+        return;
     }
 
-    // Alumno normal
+    // 👉 Alumno normal
     const alumno = alumnos.find(a => String(a.id) === String(id));
     if (!alumno) return;
 
     const tipo = tiposClase.find(t =>
-      normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
+        normalizarTexto(t.modalidad) === normalizarTexto(alumno.tipo_clase)
     );
 
     document.getElementById("modalidad").value = alumno.tipo_clase || '';
     document.getElementById("monto").value     = tipo?.precio || '';
-  });
+
+    // ===== Cargar meses pagados de este alumno =====
+    const alumnoIdSeleccionado = String(id);
+
+    fetch('/pagos')
+        .then(r => r.json())
+        .then(lista => {
+            pagosAlumno = lista
+                .filter(p => String(p.alumno_id) === alumnoIdSeleccionado)
+                .map(p => {
+                    const raw = String(p.mes_pagado || '').trim();
+                    return raw.slice(0, 7); // YYYY-MM
+                })
+                .filter(Boolean);
+
+            console.log('Pagos del alumno', alumnoIdSeleccionado, pagosAlumno);
+
+            mesSeleccionado = null;
+            initMeses();
+        })
+        .catch(err => {
+            console.error('Error cargando pagos del alumno', alumnoIdSeleccionado, err);
+            pagosAlumno = [];
+            mesSeleccionado = null;
+            initMeses();
+        });
+});
 
   // 4) Buscador
   document.getElementById('buscadorPagos').addEventListener('input', (e) => {
