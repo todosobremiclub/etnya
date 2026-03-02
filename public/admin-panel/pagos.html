@@ -496,27 +496,28 @@ function cambiarAnio(dir) {
 }
 
 // cargar meses pagados del alumno
+const alumnoIdSeleccionado = String(id);
+
 fetch('/pagos')
     .then(r => r.json())
     .then(lista => {
-        const alumnoIdSeleccionado = String(this.value);
-
         pagosAlumno = lista
             .filter(p => String(p.alumno_id) === alumnoIdSeleccionado)
             .map(p => {
                 const raw = String(p.mes_pagado || '').trim();
                 return raw.slice(0, 7); // YYYY-MM
-            });
+            })
+            .filter(Boolean);
 
+        console.log('Pagos del alumno', alumnoIdSeleccionado, pagosAlumno);
         mesSeleccionado = null;
         initMeses();
     })
     .catch(err => {
-        console.error('Error cargando pagos del alumno', err);
+        console.error('Error cargando pagos del alumno', alumnoIdSeleccionado, err);
         pagosAlumno = [];
         initMeses();
     });
-
 
 /* ====== UI: monto parcial ====== */
 document.getElementById("parcial").addEventListener("change", (e) => {
