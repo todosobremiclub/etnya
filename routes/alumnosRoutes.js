@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const bucket = require('../config/firebase-config');
+const { bucket } = require('../config/firebase-config');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { v4: uuidv4 } = require('uuid');
