@@ -593,7 +593,7 @@ window.onload = async () => {
   });
 
   // 3) Cambio de alumno => conmuta UI (normal vs prueba)
-  $('#alumno-select').on('change', function () {
+ $('#alumno-select').on('change', function () {
     const id = this.value;
     const esPrueba = (id === OPT_PRUEBA_VALUE);
 
@@ -602,17 +602,14 @@ window.onload = async () => {
     const $montoStd    = document.getElementById('monto')?.parentElement;
     const $grupoManual = document.getElementById('grupoMontoManual');
     const $chkParcial  = document.getElementById('parcial');
-
-    // Grupo especial (pagos de prueba)
     const $grupoPrueba = document.getElementById('grupoPrueba');
-    if ($grupoPrueba) $grupoPrueba.style.display = esPrueba ? 'block' : 'none';
 
-    // Campos estándar
-    if ($modalidad) $modalidad.style.display = esPrueba ? 'none' : 'block';
-    if ($montoStd)  $montoStd.style.display  = esPrueba ? 'none' : 'block';
-    if ($grupoManual) {
+    if ($grupoPrueba) $grupoPrueba.style.display = esPrueba ? 'block' : 'none';
+    if ($modalidad)   $modalidad.style.display   = esPrueba ? 'none' : 'block';
+    if ($montoStd)    $montoStd.style.display    = esPrueba ? 'none' : 'block';
+
+    if ($grupoManual)
         $grupoManual.style.display = esPrueba ? 'none' : ($chkParcial.checked ? 'block' : 'none');
-    }
 
     if ($chkParcial) {
         $chkParcial.disabled = esPrueba;
@@ -622,18 +619,15 @@ window.onload = async () => {
         }
     }
 
-    // 👉 Si es pago de prueba, solo ajustamos UI y salimos
+    // 🔥 Si es PRUEBA, limpiamos meses y salimos
     if (esPrueba) {
-        document.getElementById("modalidad").value = '';
-        document.getElementById("monto").value     = '';
-        // limpiar meses
         pagosAlumno = [];
         mesSeleccionado = null;
         initMeses();
         return;
     }
 
-    // 👉 Alumno normal
+    // Alumno normal
     const alumno = alumnos.find(a => String(a.id) === String(id));
     if (!alumno) return;
 
@@ -644,27 +638,30 @@ window.onload = async () => {
     document.getElementById("modalidad").value = alumno.tipo_clase || '';
     document.getElementById("monto").value     = tipo?.precio || '';
 
-    // ===== Cargar meses pagados de este alumno =====
-    const alumnoIdSeleccionado = String(id);
+    // ============================================================
+    // 🔥🔥🔥 CARGAR MESES PAGADOS DEL ALUMNO — ACÁ ESTABA EL ERROR
+    // ============================================================
 
     fetch('/pagos')
         .then(r => r.json())
         .then(lista => {
+            const alumnoIdSeleccionado = String(id);
+
             pagosAlumno = lista
                 .filter(p => String(p.alumno_id) === alumnoIdSeleccionado)
                 .map(p => {
                     const raw = String(p.mes_pagado || '').trim();
-                    return raw.slice(0, 7); // YYYY-MM
+                    return raw.slice(0, 7); // → YYYY-MM
                 })
                 .filter(Boolean);
 
-            console.log('Pagos del alumno', alumnoIdSeleccionado, pagosAlumno);
+            console.log("Meses pagados detectados:", pagosAlumno);
 
             mesSeleccionado = null;
             initMeses();
         })
         .catch(err => {
-            console.error('Error cargando pagos del alumno', alumnoIdSeleccionado, err);
+            console.error("Error cargando meses pagados:", err);
             pagosAlumno = [];
             mesSeleccionado = null;
             initMeses();
