@@ -501,7 +501,7 @@ fetch('/pagos')
     .then(lista => {
         pagosAlumno = lista
             .filter(p => String(p.alumno_id) === String(id))
-            .map(p => p.mes_pagado);
+            .map(p => String(p.mes_pagado).slice(0, 7)); // queda "YYYY-MM"
         mesSeleccionado = null;
         initMeses();
     });
