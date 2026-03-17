@@ -1564,11 +1564,16 @@ syncTooltip(quickMenuTarget, quickMenuTarget.dataset.observacion || '');
 
     if (id){
       try{
-        const r = await fetch(`/clases/${id}`,{
-          method:'PATCH',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ estado: estado || null })
-        });
+        const obsKeep = (quickMenuTarget?.dataset?.observacion || '').trim();
+
+const r = await fetch(`/clases/${id}`,{
+  method:'PATCH',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({
+    estado: estado ?? null,
+    observacion: obsKeep || null
+  })
+});
         if (!r.ok) console.error('PATCH estado falló', await r.text());
       }catch(err){ console.error(err); }
     }

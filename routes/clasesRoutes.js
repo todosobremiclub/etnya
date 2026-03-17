@@ -106,12 +106,24 @@ router.post('/bulk-delete', async (req, res) => {
 // PATCH /clases/:id  { estado: 'asistio'|'sin_aviso'|'con_aviso'|'sobre_hora'|null }
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { estado, observacion } = req.body;  
-try {
-    const r = await pool.query(
-      'UPDATE clases SET estado = $1, observacion = $2 WHERE id = $3',
-      [estado ?? null, observacion ?? null, id]
-    );
+  const { estado, observacion } = req.body;
+
+  try {
+    let r;
+
+    // Si NO mandaron observacion, NO la tocamos
+    if (typeof observacion === 'undefined') {
+      r = await pool.query(
+        'UPDATE clases SET estado = $1 WHERE id = $2',
+        [estado ?? null, id]
+      );
+    } else {
+      r = await pool.query(
+        'UPDATE clases SET estado = $1, observacion = $2 WHERE id = $3',
+        [estado ?? null, observacion ?? null, id]
+      );
+    }
+
     res.json({ updated: r.rowCount });
   } catch (err) {
     console.error('Error al actualizar estado:', err);
