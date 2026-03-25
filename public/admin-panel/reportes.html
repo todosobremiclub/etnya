@@ -343,26 +343,148 @@
 
     <div class="dashboard-grid">
 
-      <!-- 1. Alumnas por modalidad (Donut) -->
-      <div class="dashboard-card">
-  <div class="card-header">
-    <span>Socias nuevas por mes</span>
-    <div class="card-nav">
-      <button onclick="cambiarMesSocias(-1)">◀</button>
-      <span id="titulo-mes-socias" style="min-width:90px;text-align:center;"></span>
-      <button onclick="cambiarMesSocias(1)">▶</button>
+  <!-- 1. Socias por actividad / modalidad (DONUT + detalle abajo) -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Socias por actividad / modalidad</span>
+      <small>Distribución de alumnas activas</small>
+    </div>
+
+    <!-- Gráfico donut -->
+    <div style="height:170px;">
+      <canvas id="chart-modalidades"></canvas>
+    </div>
+
+    <!-- Detalle de modalidades abajo -->
+    <div id="lista-modalidades" class="lista-modalidades">
+      <!-- Se rellena por JS -->
     </div>
   </div>
-  <div class="card-subtitle">
-    Altas según fecha de ingreso.
+
+  <!-- 2. Cuotas impagas -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Cuotas impagas</span>
+      <div class="card-nav">
+        <button onclick="cambiarMesCuotas(-1)">◀</button>
+        <span id="titulo-mes-cuotas" style="min-width:90px;text-align:center;"></span>
+        <button onclick="cambiarMesCuotas(1)">▶</button>
+      </div>
+    </div>
+    <div class="card-subtitle">
+      Morosidad mensual de socias activas. Considera la fecha de ingreso.
+    </div>
+    <div class="card-main-number">
+      <span id="card-cuotas-impagas-numero" class="clickable" onclick="abrirDetalleCuotasMes()">0</span>
+      <small>socias sin pago en el mes seleccionado</small>
+    </div>
+    <div style="height:120px;">
+      <canvas id="chart-cuotas"></canvas>
+    </div>
   </div>
-  <div class="card-main-number">
-    <span id="card-socias-nuevas-numero" class="clickable" onclick="abrirDetalleSociasMes()">0</span>
-    <small>socias nuevas en el mes seleccionado</small>
+
+  <!-- 3. Ingresos vs gastos -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Ingresos vs gastos</span>
+      <div class="card-nav">
+        <button onclick="cambiarMesIngGas(-1)">◀</button>
+        <span id="titulo-mes-ing-gas" style="min-width:90px;text-align:center;"></span>
+        <button onclick="cambiarMesIngGas(1)">▶</button>
+      </div>
+    </div>
+    <div class="card-subtitle">
+      Comparativo mensual y anual.
+    </div>
+
+    <!-- Resumen del mes arriba del gráfico -->
+    <div class="card-resumen-mes">
+      <div>
+        <span class="lbl">Ingresos mes</span><br>
+        <span id="lbl-ingresos-mes"></span>
+      </div>
+      <div>
+        <span class="lbl">Gastos mes</span><br>
+        <span id="lbl-gastos-mes"></span>
+      </div>
+      <div>
+        <span class="lbl">Resultado mes</span><br>
+        <span id="lbl-resultado-mes"></span>
+      </div>
+    </div>
+
+    <div style="height:140px;">
+      <canvas id="chart-ing-gas"></canvas>
+    </div>
+
+    <!-- Resumen anual debajo del gráfico -->
+    <div class="card-resumen-mes">
+      <div>
+        <span class="lbl">Ingresos año</span><br>
+        <span id="lbl-ingresos-anio"></span>
+      </div>
+      <div>
+        <span class="lbl">Gastos año</span><br>
+        <span id="lbl-gastos-anio"></span>
+      </div>
+      <div>
+        <span class="lbl">Resultado año</span><br>
+        <span id="lbl-resultado-anio"></span>
+      </div>
+    </div>
   </div>
-  <div class="card-table-wrapper" id="tabla-socias-mes">
-    <!-- JS arma tabla meses/nuevas -->
+
+  <!-- 4. Socias nuevas por mes (UNA sola card, abajo a la izquierda) -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Socias nuevas por mes</span>
+      <div class="card-nav">
+        <button onclick="cambiarMesSocias(-1)">◀</button>
+        <span id="titulo-mes-socias" style="min-width:90px;text-align:center;"></span>
+        <button onclick="cambiarMesSocias(1)">▶</button>
+      </div>
+    </div>
+    <div class="card-subtitle">
+      Altas según fecha de ingreso.
+    </div>
+    <div class="card-main-number">
+      <span id="card-socias-nuevas-numero" class="clickable" onclick="abrirDetalleSociasMes()">0</span>
+      <small>socias nuevas en el mes seleccionado</small>
+    </div>
+    <div class="card-table-wrapper" id="tabla-socias-mes">
+      <!-- JS arma tabla Mes / Nuevas -->
+    </div>
   </div>
+
+  <!-- 5. Ranking ingresos / gastos -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Ranking ingresos / gastos</span>
+      <div class="card-nav">
+        <span id="titulo-mes-ranking" style="font-size:11px;"></span>
+      </div>
+    </div>
+    <div class="card-subtitle">
+      Top cuentas por ingresos (incluye cuotas) y por gastos.
+    </div>
+    <div id="card-ranking"></div>
+  </div>
+
+  <!-- 6. Ingresos y gastos por cuenta -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <span>Ingresos y gastos por cuenta</span>
+      <div class="card-nav">
+        <span id="titulo-mes-cuentas" style="font-size:11px;"></span>
+      </div>
+    </div>
+    <div class="card-table-wrapper">
+      <table class="card-table" id="tabla-cuentas">
+        <!-- Se rellena por JS -->
+      </table>
+    </div>
+  </div>
+
 </div>
 
 
@@ -440,29 +562,8 @@
   </div>
 </div>
 
-      <!-- 4. Socias nuevas por mes -->
-      <div class="dashboard-card">
-        <div class="card-header">
-          <span>Socias nuevas por mes</span>
-          <div class="card-nav">
-            <button onclick="cambiarMesSocias(-1)">◀</button>
-            <span id="titulo-mes-socias" style="min-width:80px;text-align:center;"></span>
-            <button onclick="cambiarMesSocias(1)">▶</button>
-          </div>
-        </div>
-        <div class="card-subtitle">
-          Altas según fecha de ingreso.
-        </div>
-        <div class="card-main-number">
-          <span id="card-socias-nuevas-numero" class="clickable" onclick="abrirDetalleSociasMes()">0</span>
-          <small>socias nuevas en el mes seleccionado</small>
-        </div>
-        <div class="card-table-wrapper" id="tabla-socias-mes">
-          <!-- Se lista meses / nuevas -->
-        </div>
-      </div>
-
-      <!-- 5. Ranking ingresos / gastos -->
+  
+          <!-- 5. Ranking ingresos / gastos -->
       <div class="dashboard-card">
         <div class="card-header">
           <span>Ranking ingresos / gastos</span>
