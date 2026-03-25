@@ -17,8 +17,9 @@ async function ensureTablaEsperados() {
 
 function yyyymmHoy() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
 }
+
 function esMesCerrado(mes) {
   // mes: 'YYYY-MM' ; está cerrado si es < mes actual
   return String(mes) < yyyymmHoy();
@@ -28,7 +29,7 @@ function esMesCerrado(mes) {
 async function calcularEsperadosActualesPorSede() {
   const mRes = await pool.query(`SELECT modalidad, precio FROM tipos_clase`);
   const precios = {};
-  (mRes.rows||[]).forEach(r => precios[(r.modalidad||'').trim()] = Number(r.precio||0));
+  (mRes.rows || []).forEach(r => precios[(r.modalidad || '').trim()] = Number(r.precio || 0));
 
   const aRes = await pool.query(`
     SELECT a.sede, a.tipo_clase
@@ -38,14 +39,14 @@ async function calcularEsperadosActualesPorSede() {
   `);
 
   const porSede = {}; // { Craig: subtotal, Goyena: subtotal, General: subtotal }
-  (aRes.rows||[]).forEach(a => {
+  (aRes.rows || []).forEach(a => {
     const sede = normalizeSedeTxt(a.sede);
-    const mod  = (a.tipo_clase||'').trim();
+    const mod  = (a.tipo_clase || '').trim();
     if (!mod) return;
-    porSede[sede] = (porSede[sede]||0) + (precios[mod]||0);
+    porSede[sede] = (porSede[sede] || 0) + (precios[mod] || 0);
   });
 
-  const global = Object.values(porSede).reduce((s,n)=>s+Number(n||0),0);
+  const global = Object.values(porSede).reduce((s,n) => s + Number(n || 0), 0);
   return { porSede, global };
 }
 
@@ -54,27 +55,39 @@ async function asegurarSnapshotMes(mes) {
   await ensureTablaEsperados();
 
   // Si ya hay GLOBAL, asumimos que ese mes quedó congelado
-  const ya = await pool.query(`SELECT 1 FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL' LIMIT 1`, [mes]);
+  const ya = await pool.query(
+    `SELECT 1 FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL' LIMIT 1`,
+    [mes]
+  );
   if (ya.rowCount > 0) return;
 
   const { porSede, global } = await calcularEsperadosActualesPorSede();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
     for (const sede of Object.keys(porSede)) {
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO esperados_mensuales (mes, sede, valor)
         VALUES ($1, $2, $3)
         ON CONFLICT (mes, sede) DO NOTHING
-      `, [mes, sede, porSede[sede]]);
+      `,
+        [mes, sede, porSede[sede]]
+      );
     }
-    await client.query(`
+
+    await client.query(
+      `
       INSERT INTO esperados_mensuales (mes, sede, valor)
       VALUES ($1, 'GLOBAL', $2)
       ON CONFLICT (mes, sede) DO NOTHING
-    `, [mes, global]);
+    `,
+      [mes, global]
+    );
+
     await client.query('COMMIT');
-  } catch(e){
+  } catch (e) {
     await client.query('ROLLBACK');
     throw e;
   } finally {
@@ -85,9 +98,13 @@ async function asegurarSnapshotMes(mes) {
 // Devuelve esperado (número) priorizando snapshot si está cerrado; si falta y es cerrado, lo crea
 async function getEsperadoMesGlobal(mes) {
   await ensureTablaEsperados();
+
   if (esMesCerrado(mes)) {
     await asegurarSnapshotMes(mes);
-    const r = await pool.query(`SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL'`, [mes]);
+    const r = await pool.query(
+      `SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede='GLOBAL'`,
+      [mes]
+    );
     return Number(r.rows?.[0]?.valor || 0);
   } else {
     const { global } = await calcularEsperadosActualesPorSede();
@@ -99,17 +116,19 @@ async function getEsperadoMesGlobal(mes) {
 async function getEsperadoMesSede(mes, sede) {
   await ensureTablaEsperados();
   const sedeNorm = normalizeSedeTxt(sede);
+
   if (esMesCerrado(mes)) {
     await asegurarSnapshotMes(mes);
-    const r = await pool.query(`SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede=$2`, [mes, sedeNorm]);
+    const r = await pool.query(
+      `SELECT valor FROM esperados_mensuales WHERE mes=$1 AND sede=$2`,
+      [mes, sedeNorm]
+    );
     return Number(r.rows?.[0]?.valor || 0);
   } else {
     const { porSede } = await calcularEsperadosActualesPorSede();
     return Number(porSede[sedeNorm] || 0);
   }
 }
-
-
 
 // -- Asegura la tabla de pagos de prueba (por si aún no existe)
 async function ensureTablaPagosPrueba() {
@@ -133,10 +152,10 @@ function normalizeSedeTxt(s) {
   return 'General';
 }
 
-
 // 1. Monto por cuenta
 router.get('/por-cuenta-filtrado', async (req, res) => {
   const { mes, anio } = req.query;
+
   try {
     await ensureTablaPagosPrueba();
 
@@ -176,9 +195,9 @@ router.get('/por-mes-pagado', async (_req, res) => {
       ORDER BY mes_pagado
     `);
 
-        const filas = [];
+    const filas = [];
     for (const row of result.rows) {
-      const mes = String(row.mes || '').slice(0,7); // normalizo a 'YYYY-MM'
+      const mes = String(row.mes || '').slice(0, 7); // normalizo a 'YYYY-MM'
       if (!mes.match(/^\d{4}-\d{2}$/)) continue;
 
       const total = Number(row.total || 0);
@@ -191,7 +210,6 @@ router.get('/por-mes-pagado', async (_req, res) => {
       });
     }
     res.json(filas);
-
   } catch (err) {
     console.error('Error en /por-mes-pagado:', err);
     res.status(500).send('Error en reporte por mes pagado');
@@ -221,9 +239,8 @@ router.get('/por-fecha-pago', async (_req, res) => {
   }
 });
 
-
 // 4. Alumnos por sede
-router.get('/alumnos-por-sede', async (req, res) => {
+router.get('/alumnos-por-sede', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT sede, COUNT(*) AS cantidad
@@ -240,7 +257,7 @@ router.get('/alumnos-por-sede', async (req, res) => {
 });
 
 // 5. Alumnos por modalidad
-router.get('/alumnos-por-modalidad', async (req, res) => {
+router.get('/alumnos-por-modalidad', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT tipo_clase AS modalidad, COUNT(*) AS cantidad
@@ -259,6 +276,7 @@ router.get('/alumnos-por-modalidad', async (req, res) => {
 // 6. Total anual por cuenta
 router.get('/total-anual-por-cuenta', async (req, res) => {
   const { anio } = req.query;
+
   try {
     await ensureTablaPagosPrueba();
 
@@ -280,7 +298,7 @@ router.get('/total-anual-por-cuenta', async (req, res) => {
 });
 
 // 7. Alumnos por mes de ingreso (conteo)
-router.get('/ingresos-por-mes', async (req, res) => {
+router.get('/ingresos-por-mes', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -301,8 +319,10 @@ router.get('/ingresos-por-mes', async (req, res) => {
 // 8. Detalle de alumnos por mes de ingreso
 router.get('/detalle-ingresos', async (req, res) => {
   const { mes } = req.query;
+
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT
         numero_alumno AS "Número",
         nombre AS "Nombre",
@@ -311,7 +331,9 @@ router.get('/detalle-ingresos', async (req, res) => {
       FROM alumnos
       WHERE TO_CHAR(fecha_inicio, 'YYYY-MM') = $1
       ORDER BY apellido, nombre
-    `, [mes]);
+    `,
+      [mes]
+    );
 
     res.json(result.rows);
   } catch (err) {
@@ -320,11 +342,13 @@ router.get('/detalle-ingresos', async (req, res) => {
   }
 });
 
-// 9. Alumnos por modalidad seleccionada
+// 9. Detalle alumnos por modalidad seleccionada
 router.get('/detalle-modalidad', async (req, res) => {
   const { modalidad } = req.query;
+
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT 
         numero_alumno AS "Número",
         nombre AS "Nombre",
@@ -332,7 +356,9 @@ router.get('/detalle-modalidad', async (req, res) => {
       FROM alumnos
       WHERE tipo_clase = $1 AND activo = true
       ORDER BY apellido, nombre
-    `, [modalidad]);
+    `,
+      [modalidad]
+    );
 
     res.json(result.rows);
   } catch (err) {
@@ -382,15 +408,16 @@ router.get('/recaudacion-por-sede', async (_req, res) => {
       GROUP BY mes, sede
       ORDER BY mes DESC, sede;
     `;
+
     const recaudado = await pool.query(qRecaudado);
 
-    // ← ÚNICA salida: usa snapshot si el mes está cerrado, en vivo si es mes actual
     const out = [];
     for (const r of recaudado.rows) {
       const mes  = String(r.mes || '').slice(0, 7);   // 'YYYY-MM'
       const sede = normalizeSedeTxt(r.sede);
       const total = Number(r.total || 0);
       const esperado = await getEsperadoMesSede(mes, sede);
+
       out.push({ mes, sede, total, esperado, diferencia: total - esperado });
     }
 
@@ -402,7 +429,7 @@ router.get('/recaudacion-por-sede', async (_req, res) => {
 });
 
 // 11. Gastos por cuenta (mensual, todos los meses)
-router.get('/gastos-por-cuenta-mensual', async (req, res) => {
+router.get('/gastos-por-cuenta-mensual', async (_req, res) => {
   try {
     const q = `
       SELECT
@@ -424,7 +451,9 @@ router.get('/gastos-por-cuenta-mensual', async (req, res) => {
 // 12. Gastos por cuenta (filtrado por mes/año)
 router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
   const { mes, anio } = req.query; // mes: 1..12  |  anio: 2025, etc.
+
   if (!mes || !anio) return res.status(400).json({ error: 'Faltan mes y anio' });
+
   try {
     const q = `
       SELECT
@@ -445,7 +474,7 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
 });
 
 // 13) Pagos parciales: RESUMEN por mes (YYYY-MM) y sede, con TOTAL en pesos
-router.get('/pagos-parciales-resumen', async (req, res) => {
+router.get('/pagos-parciales-resumen', async (_req, res) => {
   try {
     const q = `
       WITH pagos_norm AS (
@@ -474,7 +503,7 @@ router.get('/pagos-parciales-resumen', async (req, res) => {
         pn.ym  AS mes,
         a.sede AS sede,
         COUNT(*)         AS cantidad,
-        SUM(pn.monto)    AS total     -- ← NUEVO: total en pesos
+        SUM(pn.monto)    AS total
       FROM pagos_norm pn
       JOIN alumnos a ON a.id = pn.alumno_id
       LEFT JOIN tipos_clase t
@@ -495,6 +524,7 @@ router.get('/pagos-parciales-resumen', async (req, res) => {
 // 14) Pagos parciales: DETALLE por mes (YYYY-MM) y sede
 router.get('/pagos-parciales-detalle', async (req, res) => {
   const { mes, sede } = req.query; // ej: '2025-08'
+
   try {
     const q = `
       WITH pagos_norm AS (
@@ -544,6 +574,220 @@ router.get('/pagos-parciales-detalle', async (req, res) => {
 });
 
 
+// 15. Cuotas impagas por mes (resumen)
+// Tiene en cuenta la fecha de ingreso: meses anteriores a fecha_inicio NO se cuentan.
+router.get('/cuotas-impagas-resumen', async (_req, res) => {
+  try {
+    const q = `
+      WITH alumnos_activos AS (
+        SELECT id, fecha_inicio::date
+        FROM alumnos
+        WHERE activo = true
+          AND fecha_inicio IS NOT NULL
+      ),
+      meses AS (
+        SELECT date_trunc('month', MIN(fecha_inicio))::date AS min_mes,
+               date_trunc('month', NOW())::date             AS max_mes
+        FROM alumnos_activos
+      ),
+      serie_meses AS (
+        SELECT generate_series(
+          (SELECT min_mes FROM meses),
+          (SELECT max_mes FROM meses),
+          interval '1 month'
+        )::date AS mes
+      ),
+      cuotas AS (
+        SELECT
+          a.id   AS alumno_id,
+          s.mes  AS mes
+        FROM alumnos_activos a
+        JOIN serie_meses s
+          ON s.mes >= date_trunc('month', a.fecha_inicio)
+      ),
+      pagos_norm AS (
+        SELECT
+          p.alumno_id,
+          date_trunc(
+            'month',
+            CASE
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM')
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM-DD')
+              WHEN pg_typeof(p.mes_pagado) = 'date'::regtype
+                THEN p.mes_pagado::date
+              ELSE NULL
+            END
+          ) AS mes
+        FROM pagos p
+        WHERE p.mes_pagado IS NOT NULL
+      ),
+      cuotas_con_pagos AS (
+        SELECT
+          c.mes,
+          c.alumno_id,
+          EXISTS (
+            SELECT 1
+            FROM pagos_norm pn
+            WHERE pn.alumno_id = c.alumno_id
+              AND pn.mes = c.mes
+          ) AS pagado
+        FROM cuotas c
+      )
+      SELECT
+        to_char(mes, 'YYYY-MM') AS mes,
+        COUNT(*) FILTER (WHERE NOT pagado) AS sin_pago
+      FROM cuotas_con_pagos
+      GROUP BY mes
+      HAVING COUNT(*) FILTER (WHERE NOT pagado) > 0
+      ORDER BY mes;
+    `;
 
+    const { rows } = await pool.query(q);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /cuotas-impagas-resumen:', err);
+    res.status(500).json({ error: 'Error al calcular cuotas impagas' });
+  }
+});
+
+// 16. Detalle de cuotas impagas por mes
+router.get('/cuotas-impagas-detalle', async (req, res) => {
+  const { mes } = req.query; // 'YYYY-MM'
+  if (!mes) {
+    return res.status(400).json({ error: 'Falta parámetro mes (YYYY-MM)' });
+  }
+
+  try {
+    const q = `
+      WITH alumnos_activos AS (
+        SELECT id, numero_alumno, nombre, apellido, fecha_inicio::date
+        FROM alumnos
+        WHERE activo = true
+          AND fecha_inicio IS NOT NULL
+      ),
+      mes_obj AS (
+        SELECT to_date($1 || '-01', 'YYYY-MM-DD')::date AS mes
+      ),
+      cuotas AS (
+        SELECT
+          a.id,
+          a.numero_alumno,
+          a.nombre,
+          a.apellido,
+          a.fecha_inicio,
+          (SELECT mes FROM mes_obj) AS mes
+        FROM alumnos_activos a,
+             mes_obj
+        WHERE date_trunc('month', (SELECT mes FROM mes_obj))
+              >= date_trunc('month', a.fecha_inicio)
+      ),
+      pagos_norm AS (
+        SELECT
+          p.alumno_id,
+          date_trunc(
+            'month',
+            CASE
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM')
+              WHEN (p.mes_pagado::text) ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                THEN to_date(p.mes_pagado::text, 'YYYY-MM-DD')
+              WHEN pg_typeof(p.mes_pagado) = 'date'::regtype
+                THEN p.mes_pagado::date
+              ELSE NULL
+            END
+          ) AS mes
+        FROM pagos p
+        WHERE p.mes_pagado IS NOT NULL
+      )
+      SELECT
+        c.numero_alumno AS "Número",
+        c.nombre        AS "Nombre",
+        c.apellido      AS "Apellido",
+        to_char(c.fecha_inicio, 'DD/MM/YYYY') AS "Fecha ingreso"
+      FROM cuotas c
+      LEFT JOIN pagos_norm pn
+        ON pn.alumno_id = c.id
+       AND pn.mes = date_trunc('month', c.mes)
+      WHERE pn.alumno_id IS NULL
+      ORDER BY c.apellido, c.nombre;
+    `;
+
+    const { rows } = await pool.query(q, [mes]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error en /cuotas-impagas-detalle:', err);
+    res.status(500).json({ error: 'Error al obtener detalle de cuotas impagas' });
+  }
+});
+
+// 17. Ingresos vs gastos por mes
+router.get('/ingresos-vs-gastos', async (_req, res) => {
+  try {
+    // Ingresos (pagos + pagos_prueba) por mes
+    const qIng = `
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', fecha_pago), 'YYYY-MM') AS mes,
+        SUM(monto) AS ingresos
+      FROM (
+        SELECT p.fecha_pago, p.monto
+        FROM pagos p
+        WHERE p.fecha_pago IS NOT NULL
+        UNION ALL
+        SELECT pp.fecha_pago, pp.monto
+        FROM pagos_prueba pp
+        WHERE pp.fecha_pago IS NOT NULL
+      ) t
+      GROUP BY DATE_TRUNC('month', fecha_pago)
+      ORDER BY mes;
+    `;
+
+    // Gastos por mes
+    const qGas = `
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', fecha), 'YYYY-MM') AS mes,
+        SUM(monto) AS gastos
+      FROM gastos
+      GROUP BY DATE_TRUNC('month', fecha)
+      ORDER BY mes;
+    `;
+
+    const [rIng, rGas] = await Promise.all([
+      pool.query(qIng),
+      pool.query(qGas)
+    ]);
+
+    const mapa = new Map();
+
+    (rIng.rows || []).forEach(r => {
+      const m = r.mes;
+      mapa.set(m, {
+        mes: m,
+        ingresos: Number(r.ingresos || 0),
+        gastos: 0
+      });
+    });
+
+    (rGas.rows || []).forEach(r => {
+      const m = r.mes;
+      const fila = mapa.get(m) || { mes: m, ingresos: 0, gastos: 0 };
+      fila.gastos = Number(r.gastos || 0);
+      mapa.set(m, fila);
+    });
+
+    const out = Array.from(mapa.values())
+      .sort((a, b) => a.mes.localeCompare(b.mes))
+      .map(x => ({
+        ...x,
+        resultado: x.ingresos - x.gastos
+      }));
+
+    res.json(out);
+  } catch (err) {
+    console.error('Error en /ingresos-vs-gastos:', err);
+    res.status(500).json({ error: 'Error al obtener ingresos vs gastos' });
+  }
+});
 
 module.exports = router;
