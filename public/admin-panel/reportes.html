@@ -4,166 +4,291 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reportes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Fuente -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Chart.js para los gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {margin:0;font-family:'Inter',sans-serif;background-color:#cce1d6;color:#333}
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #e4f0fb;
+      color: #333;
+    }
 
     /* Sidebar */
     .sidebar {
-      position:fixed;top:0;left:0;width:200px;height:100vh;
-      background-color:#91586d;padding-top:60px;
-      box-shadow:2px 0 5px rgba(0,0,0,.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background-color: #1c4e80;
+      padding-top: 60px;
+      box-shadow: 2px 0 6px rgba(0,0,0,.15);
+      z-index: 1000;
     }
     .sidebar a {
-      display:flex;align-items:center;gap:10px;
-      padding:10px 16px;
-      color:#fff;text-decoration:none;font-weight:bold;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      transition:background 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      transition: background 0.15s ease;
+      font-size: 13px;
     }
-    .sidebar a:hover {background-color:rgba(0,0,0,0.12);}
+    .sidebar a:hover {
+      background-color: rgba(0,0,0,0.12);
+    }
     .sidebar a.active {
-      background-color:rgba(0,0,0,0.25);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
-                  inset 0 -1px 0 rgba(0,0,0,.18);
+      background-color: rgba(0,0,0,0.25);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        inset 0 -1px 0 rgba(0,0,0,.18);
     }
-
-    /* Botón cerrar sesión en sidebar */
     .sidebar button {
-      width:100%;text-align:left;padding:10px 16px;
-      background:transparent;border:none;color:#fff;
-      font-weight:bold;font-size:13px;cursor:pointer;
-      border-top:1px solid rgba(255,255,255,.1)
-    }
-
-    .contenido {margin-left:210px;padding:20px}
-    h2 {margin-top:40px;color:#555}
-    .bloque-reporte {
-      background:#fff;padding:16px;border-radius:8px;
-      margin-bottom:30px;
-      box-shadow:0 2px 4px rgba(0,0,0,.1)
-    }
-
-    /* Tabla base */
-    table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
-    th,td{padding:8px;border-bottom:1px solid #ccc;text-align:left}
-    th{background-color:#eee}
-
-    /* Botonera de reportes */
-    .report-switcher {
-      display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 18px
-    }
-    .report-btn {
-      border:none;border-radius:999px;padding:8px 14px;cursor:pointer;
-      font-weight:600;background:#e9dbe0;color:#6b3b4b;
-      box-shadow:0 1px 2px rgba(0,0,0,.06)
-    }
-    .report-btn:hover {filter:brightness(0.98)}
-    .report-btn.active {
-      background:#91586d;color:#fff;
-      box-shadow:0 2px 6px rgba(0,0,0,.12)
+      width: 100%;
+      text-align: left;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      border-top: 1px solid rgba(255,255,255,.1);
     }
 
     /* Header */
-    .header-wrap {margin-left:200px}
+    .header-wrap {
+      margin-left: 200px;
+    }
     .header {
-      display:flex;align-items:center;justify-content:center;
-      padding:20px 0;transform:translateX(-10px)
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px 10px;
     }
-    .header img {height:60px;margin-right:16px}
-    .header h2 {margin:0;font-size:28px;color:#91586d}
-
-    /* Hamburguesa + responsive */
-    .hamburguesa {
-      display:none;position:fixed;top:10px;left:10px;z-index:2000;
-      font-size:26px;background:transparent;color:white;border:none;cursor:pointer
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:12px;
     }
-    @media (max-width:768px){
-      .hamburguesa{display:block}
-      .sidebar{
-        display:none;position:fixed;top:0;left:0;width:100%;
-        background-color:#91586d;z-index:1500;
-        flex-direction:column;height:auto;padding-top:0
-      }
-      .sidebar.mostrar{display:flex}
-      .sidebar a,.sidebar button{
-        flex:1 0 50%;text-align:center;
-        border-bottom:1px solid rgba(255,255,255,.1)
-      }
-      .contenido{margin-left:0;padding:70px 16px 16px}
-      .header-wrap{margin-left:0}
-      table{display:block;width:100%;overflow-x:auto;white-space:nowrap}
-      th,td{font-size:13px}
+    .header-title {
+      font-size: 23px;
+      color: #1c4e80;
+      margin: 0;
+    }
+    .header-subtitle {
+      margin: 0;
+      font-size: 13px;
+      color: #667;
     }
 
-    /* DASHBOARD GRID */
+    /* Botonera */
+    .report-switcher {
+      display:flex;
+      justify-content:center;
+      margin: 0 0 10px;
+    }
+    .report-btn {
+      border:none;
+      border-radius:999px;
+      padding:6px 18px;
+      cursor:pointer;
+      font-weight:600;
+      background:#1c4e80;
+      color:#fff;
+      box-shadow:0 1px 2px rgba(0,0,0,.15);
+      font-size:13px;
+    }
+
+    /* Layout contenido */
+    .contenido {
+      margin-left: 210px;
+      padding: 0 20px 20px;
+    }
+
+    .bloque-reporte {
+      background:#fff;
+      padding:16px 20px 20px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,.08);
+    }
+
+    /* Dashboard grid */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-      gap: 16px;
-      margin-top: 10px;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      grid-template-rows: auto auto;
+      gap: 12px;
+      margin-top: 6px;
     }
 
+    /* Cada tarjeta */
     .dashboard-card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.08);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background:#fbfdff;
+      border-radius:10px;
+      padding:12px 14px;
+      box-shadow:0 1px 3px rgba(0,0,0,.08);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      border:1px solid #dde7f3;
     }
-
     .card-header {
       display:flex;
-      justify-content: space-between;
+      justify-content:space-between;
       align-items:center;
       font-weight:600;
+      color:#1c4e80;
+      font-size:14px;
+    }
+    .card-header small {
+      font-weight:400;
+      color:#888;
+      font-size:11px;
+    }
+    .card-nav {
+      display:flex;
+      align-items:center;
+      gap:4px;
+      font-size:12px;
       color:#555;
     }
-
-    .card-nav button{
+    .card-nav button {
       border:none;
-      background:#e6e6e6;
+      background:#eef3fb;
       width:22px;
       height:22px;
       border-radius:50%;
       cursor:pointer;
-    }
-
-    .card-main-number{
-      font-size:32px;
-      color:#91586d;
-      font-weight:600;
-    }
-
-    .card-main-number small{
+      display:flex;
+      justify-content:center;
+      align-items:center;
       font-size:12px;
+      padding:0;
+      color:#1c4e80;
+    }
+    .card-nav select {
+      border-radius:999px;
+      border:1px solid #ccd4e0;
+      font-size:11px;
+      padding:2px 10px;
+      background:#fff;
+      color:#333;
+    }
+
+    .card-main-number {
+      font-size:30px;
+      color:#d7263d;
+      font-weight:700;
+      line-height:1.2;
+    }
+    .card-main-number small {
+      font-size:11px;
+      color:#666;
+      display:block;
+      margin-top:2px;
+    }
+
+    .card-table-wrapper {
+      max-height:160px;
+      overflow-y:auto;
+      margin-top:4px;
+    }
+    .card-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    .card-table th,
+    .card-table td {
+      padding:3px 4px;
+      border-bottom:1px solid #e3ebf5;
+      text-align:left;
+    }
+    .card-table th {
+      background:#f6f9ff;
+      font-weight:600;
+      color:#555;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+
+    .card-subtitle {
+      font-size:11px;
       color:#777;
+      margin-top:-2px;
+      margin-bottom:2px;
     }
 
-    .card-stats{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:8px;
-      font-size:13px;
+    canvas {
+      max-width:100%;
     }
 
-    .card-stats .label{ color:#777; }
-    .card-stats .value{ font-weight:600; }
+    .clickable {
+      cursor:pointer;
+      text-decoration:underline;
+    }
 
-    .clickable{ cursor:pointer; text-decoration:underline; }
+    /* Responsive */
+    @media (max-width:1024px){
+      .dashboard-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+      }
+    }
+    @media (max-width:768px){
+      .hamburguesa{
+        display:block;
+      }
+      .sidebar{
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        background-color:#1c4e80;
+        z-index:1500;
+        flex-direction:column;
+        height:auto;
+        padding-top:0
+      }
+      .sidebar.mostrar{display:flex}
+      .sidebar a,.sidebar button{
+        flex:1 0 50%;
+        text-align:center;
+        border-bottom:1px solid rgba(255,255,255,.1)
+      }
+      .header-wrap{margin-left:0}
+      .contenido{margin-left:0;padding:70px 10px 16px}
+      .dashboard-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header-wrap">
   <div class="header">
-    <img src="logo.jpeg" alt="Logo">
-    <h2>Reportes Etnya</h2>
+    <div class="header-left">
+      <h2 class="header-title">Dashboard de Reportes</h2>
+      <div>
+        <p class="header-subtitle">
+          Resumen visual de alumnas, morosidad, ingresos y gastos. Todo en una sola vista.
+        </p>
+      </div>
+    </div>
   </div>
 
-  <!-- BOTONERA DE REPORTES -->
+  <!-- BOTÓN (solo Dashboard) -->
   <div class="report-switcher">
     <button class="report-btn active" data-report="dashboard" onclick="mostrarReporte('dashboard')">
       Dashboard
@@ -173,7 +298,7 @@
 
 <button id="toggleMenu" class="hamburguesa">☰</button>
 
-<!-- Sidebar -->
+<!-- SIDEBAR -->
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
@@ -184,69 +309,76 @@
   <a href="notificaciones.html">📢 Notificaciones</a>
   <a href="configuracion.html">⚙️ Configuración</a>
   <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
-  <button onclick="cerrarSesion()" style="width:100%; text-align:left; padding:10px 16px; background-color:transparent; border:none; color:white; font-weight:bold; font-size:13px; cursor:pointer; border-top:1px solid rgba(255,255,255,0.1);">
+  <button onclick="cerrarSesion()">
     🚪 Cerrar sesión
   </button>
 </div>
 
+<!-- CONTENIDO -->
 <div class="contenido">
-  <!-- DASHBOARD PRINCIPAL -->
   <div class="bloque-reporte" data-report="dashboard" style="display:block">
-    <h2 style="margin-top:0;">Dashboard General</h2>
+    <h2 style="margin-top:0;color:#1c4e80;font-size:18px;">Dashboard General</h2>
 
     <div class="dashboard-grid">
 
-      <!-- 1. Alumnas por modalidad -->
+      <!-- 1. Alumnas por modalidad (Donut) -->
       <div class="dashboard-card">
         <div class="card-header">
           <span>Alumnas por modalidad</span>
+          <small>Distribución de alumnas activas</small>
         </div>
-        <div id="card-alumnas-modalidad"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <canvas id="chart-modalidades"></canvas>
+          </div>
+          <div style="flex:1.1;min-width:0;font-size:11px;color:#444;" id="lista-modalidades">
+            <!-- Se rellena por JS -->
+          </div>
+        </div>
       </div>
 
-      <!-- 2. Cuotas impagas (fecha ingreso respetada) -->
+      <!-- 2. Cuotas impagas (barras + tabla corta) -->
       <div class="dashboard-card">
         <div class="card-header">
           <span>Cuotas impagas</span>
           <div class="card-nav">
             <button onclick="cambiarMesCuotas(-1)">◀</button>
-            <span id="titulo-mes-cuotas"></span>
+            <span id="titulo-mes-cuotas" style="min-width:80px;text-align:center;"></span>
             <button onclick="cambiarMesCuotas(1)">▶</button>
           </div>
         </div>
-
+        <div class="card-subtitle">
+          Morosidad mensual de socias activas.
+        </div>
         <div class="card-main-number">
-          <span id="card-cuotas-impagas-numero" class="clickable" onclick="abrirDetalleCuotasMes()">
-            0
-          </span>
-          <small>alumnas sin pago</small>
+          <span id="card-cuotas-impagas-numero" class="clickable" onclick="abrirDetalleCuotasMes()">0</span>
+          <small>socias sin pago en el mes seleccionado</small>
+        </div>
+        <div style="height:120px;">
+          <canvas id="chart-cuotas"></canvas>
         </div>
       </div>
 
-      <!-- 3. Ingresos vs gastos -->
+      <!-- 3. Ingresos vs gastos (barras) -->
       <div class="dashboard-card">
         <div class="card-header">
-          <span>Ingresos vs gastos</span>
+          <span>Ingresos vs Gastos</span>
           <div class="card-nav">
             <button onclick="cambiarMesIngGas(-1)">◀</button>
-            <span id="titulo-mes-ing-gas"></span>
+            <span id="titulo-mes-ing-gas" style="min-width:80px;text-align:center;"></span>
             <button onclick="cambiarMesIngGas(1)">▶</button>
           </div>
         </div>
-
-        <div class="card-stats">
-          <div>
-            <span class="label">Ingresos</span>
-            <span class="value" id="card-ingresos-mes"></span>
-          </div>
-          <div>
-            <span class="label">Gastos</span>
-            <span class="value" id="card-gastos-mes"></span>
-          </div>
-          <div>
-            <span class="label">Resultado</span>
-            <span class="value" id="card-resultado-mes"></span>
-          </div>
+        <div class="card-subtitle">
+          Comparativo mensual y anual.
+        </div>
+        <div style="height:130px;">
+          <canvas id="chart-ing-gas"></canvas>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;">
+          <div>Ingresos: <span id="lbl-ingresos-mes"></span></div>
+          <div>Gastos: <span id="lbl-gastos-mes"></span></div>
+          <div>Resultado: <span id="lbl-resultado-mes"></span></div>
         </div>
       </div>
 
@@ -256,21 +388,32 @@
           <span>Socias nuevas por mes</span>
           <div class="card-nav">
             <button onclick="cambiarMesSocias(-1)">◀</button>
-            <span id="titulo-mes-socias"></span>
+            <span id="titulo-mes-socias" style="min-width:80px;text-align:center;"></span>
             <button onclick="cambiarMesSocias(1)">▶</button>
           </div>
         </div>
-
+        <div class="card-subtitle">
+          Altas según fecha de ingreso.
+        </div>
         <div class="card-main-number">
           <span id="card-socias-nuevas-numero" class="clickable" onclick="abrirDetalleSociasMes()">0</span>
-          <small>nuevas en el mes</small>
+          <small>socias nuevas en el mes seleccionado</small>
+        </div>
+        <div class="card-table-wrapper" id="tabla-socias-mes">
+          <!-- Se lista meses / nuevas -->
         </div>
       </div>
 
-      <!-- 5. Ranking ingresos/gastos -->
+      <!-- 5. Ranking ingresos / gastos -->
       <div class="dashboard-card">
         <div class="card-header">
           <span>Ranking ingresos / gastos</span>
+          <div class="card-nav">
+            <span id="titulo-mes-ranking" style="font-size:11px;"></span>
+          </div>
+        </div>
+        <div class="card-subtitle">
+          Top cuentas por ingresos y por gastos.
         </div>
         <div id="card-ranking"></div>
       </div>
@@ -279,32 +422,32 @@
       <div class="dashboard-card">
         <div class="card-header">
           <span>Ingresos y gastos por cuenta</span>
+          <div class="card-nav">
+            <span id="titulo-mes-cuentas" style="font-size:11px;"></span>
+          </div>
         </div>
-        <div id="card-cuentas"></div>
+        <div class="card-table-wrapper">
+          <table class="card-table" id="tabla-cuentas">
+            <!-- Se rellena por JS -->
+          </table>
+        </div>
       </div>
 
     </div>
   </div>
 </div>
 
-<!-- Modal reutilizable -->
+<!-- Modal detalle reutilizable -->
 <div id="modalDetalleIngresos" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center;">
-  <div style="background:#fff;padding:24px;border-radius:10px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;position:relative;">
+  <div style="background:#fff;padding:24px;border-radius:10px;width:90%;max-width:720px;max-height:90vh;overflow-y:auto;position:relative;">
     <button onclick="cerrarDetalleIngresos()" style="position:absolute;top:10px;right:10px;border:none;background:none;font-size:20px;cursor:pointer">✖</button>
-    <h3 id="tituloDetalleIngreso" style="color:#91586d;margin-top:0;"></h3>
+    <h3 id="tituloDetalleIngreso" style="color:#1c4e80;margin-top:0;"></h3>
     <div id="contenidoDetalleIngreso"></div>
   </div>
 </div>
 
 <script>
-  // Helper para enviar el JWT en cada request
-  function fetchConToken(url, opts = {}) {
-    const token = localStorage.getItem('etnya_token') || '';
-    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
-    return fetch(url, { ...opts, headers });
-  }
-
-  // 🔒 Chequeo de login y rol + marcado de menú activo
+  // === LOGIN / ROL / SIDEBAR ===
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('etnya_login') !== 'ok') {
       location = 'login.html';
@@ -315,18 +458,15 @@
     const restr = ['reportes.html', 'gastos.html'];
     const actual = (location.pathname || '').split('/').pop().toLowerCase();
 
-    // Bloquear acceso directo si no es admin
     if (rol !== 'admin' && restr.includes(actual)) {
       alert('No autorizado');
       location = 'index.html';
     }
 
-    // Ocultar opciones de menú
     if (rol !== 'admin') {
       document.querySelectorAll('.menu-reportes, .menu-gastos').forEach(el => el.style.display = 'none');
     }
 
-    // Marcar item activo en sidebar
     const here = location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.sidebar a').forEach(a => {
       if (a.getAttribute('href') === here) a.classList.add('active');
@@ -338,12 +478,27 @@
     window.location.href = 'login.html';
   }
 
-  // Toggle menú en móvil
   document.getElementById('toggleMenu').addEventListener('click',() => {
     document.querySelector('.sidebar').classList.toggle('mostrar');
   });
 
-  /* Utilidad de tabla genérica para el modal */
+  // === Helper fetch con token ===
+  function fetchConToken(url, opts = {}) {
+    const token = localStorage.getItem('etnya_token') || '';
+    const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    return fetch(url, { ...opts, headers });
+  }
+
+  // === Utilidades de formato ===
+  const mesesTxt = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function formatearMesYYYYMM(yyyyMM){
+    const [a,m] = String(yyyyMM||'').split('-');
+    const idx = parseInt(m,10)-1;
+    if (isNaN(idx) || idx < 0 || idx > 11) return yyyyMM || '';
+    return `${mesesTxt[idx+1]} ${a}`;
+  }
+
   function renderTabla(idContenedor, columnas, datos){
     const cont = document.getElementById(idContenedor);
     cont.innerHTML = '';
@@ -352,18 +507,17 @@
       return;
     }
     const t = document.createElement('table');
+    t.className = 'card-table';
     const thead = document.createElement('thead');
     const tbody = document.createElement('tbody');
     const trh = document.createElement('tr');
-
     columnas.forEach(c => {
       const th = document.createElement('th');
       th.textContent = c;
       trh.appendChild(th);
     });
     thead.appendChild(trh);
-
-    const monetarios = ['total','monto supervisora','monto supervisora 2','esperado','diferencia','ingresos','gastos','resultado'];
+    const monetarios = ['total','ingresos','gastos','resultado'];
 
     datos.forEach(row => {
       const tr = document.createElement('tr');
@@ -380,86 +534,126 @@
       });
       tbody.appendChild(tr);
     });
-
     t.appendChild(thead);
     t.appendChild(tbody);
     cont.appendChild(t);
   }
 
-  // ==== Utilidades de fechas ====
-  const mesesTxt = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-  function formatearMesYYYYMM(yyyyMM){
-    const [a,m] = String(yyyyMM||'').split('-');
-    const idx = parseInt(m,10)-1;
-    if (isNaN(idx) || idx < 0 || idx > 11) return yyyyMM || '';
-    const nombre = mesesTxt[idx+1];
-    return `${nombre} ${a}`;
-  }
-
-  // ==== ESTADO DASHBOARD ====
+  // === ESTADO GLOBAL DASHBOARD ===
   let resumenCuotas = [];
   let idxMesCuotas = 0;
+  let chartCuotas = null;
 
   let ingVsGas = [];
   let idxMesIngGas = 0;
+  let chartIngGas = null;
 
   let ingresosPorMes = [];
   let idxMesSocias = 0;
 
-  // ====== CARD 1: ALUMNAS POR MODALIDAD ======
+  let chartModalidades = null;
+
+  // ===== CARD 1: ALUMNAS POR MODALIDAD =====
   async function cargarCardAlumnasPorModalidad(){
     try{
       const r = await fetchConToken('/reportes/alumnos-por-modalidad');
       const data = await r.json();
-      const cont = document.getElementById('card-alumnas-modalidad');
-      cont.innerHTML = '';
+      const ctx = document.getElementById('chart-modalidades').getContext('2d');
+      const lista = document.getElementById('lista-modalidades');
+      lista.innerHTML = '';
 
       if (!data.length){
-        cont.innerHTML = '<p>No hay alumnas activas.</p>';
+        lista.innerHTML = '<p>No hay alumnas activas.</p>';
         return;
       }
 
-      const total = data.reduce((s,x) => s + Number(x.cantidad || 0), 0);
+      const labels = data.map(x => x.modalidad);
+      const valores = data.map(x => Number(x.cantidad||0));
+      const total = valores.reduce((s,n) => s+n, 0);
+
       const ul = document.createElement('ul');
       ul.style.listStyle = 'none';
       ul.style.padding = '0';
       ul.style.margin = '0';
+      ul.style.fontSize = '11px';
 
-      data.forEach(row => {
+      data.forEach((row, i) => {
         const li = document.createElement('li');
-        const cant = Number(row.cantidad || 0);
-        const pct = total > 0 ? Math.round(100 * cant / total) : 0;
-        li.textContent = `${row.modalidad}: ${cant} (${pct}%)`;
+        const pct = total>0 ? Math.round(100*row.cantidad/total) : 0;
+        li.textContent = `${row.modalidad}: ${row.cantidad} (${pct}%)`;
         ul.appendChild(li);
       });
+      lista.appendChild(ul);
 
-      cont.appendChild(ul);
+      if (chartModalidades) chartModalidades.destroy();
+      chartModalidades = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: valores,
+            backgroundColor: [
+              '#1c4e80','#ff6b6b','#4ecdc4','#ffa600',
+              '#9b5de5','#00bbf9','#f15bb5','#2ec4b6'
+            ]
+          }]
+        },
+        options: {
+          plugins:{
+            legend:{display:false}
+          },
+          cutout:'55%'
+        }
+      });
+
     }catch(e){
-      console.error('Card alumnas modalidad:', e);
+      console.error('Error card modalidades:', e);
     }
   }
 
-  // ====== CARD 2: CUOTAS IMPAGAS ======
+  // ===== CARD 2: CUOTAS IMPAGAS =====
   async function cargarCardCuotasImpagas(){
     try{
       const r = await fetchConToken('/reportes/cuotas-impagas-resumen');
       resumenCuotas = await r.json();
-
-      const titulo = document.getElementById('titulo-mes-cuotas');
-      const lbl = document.getElementById('card-cuotas-impagas-numero');
+      const ctx = document.getElementById('chart-cuotas').getContext('2d');
 
       if (!resumenCuotas.length){
-        titulo.textContent = '-';
-        lbl.textContent = '0';
+        document.getElementById('titulo-mes-cuotas').textContent = '-';
+        document.getElementById('card-cuotas-impagas-numero').textContent = '0';
+        if (chartCuotas) chartCuotas.destroy();
         return;
       }
 
       resumenCuotas.sort((a,b) => a.mes.localeCompare(b.mes));
       idxMesCuotas = resumenCuotas.length - 1;
+
+      const labels = resumenCuotas.map(r => r.mes.slice(5)+'/'+r.mes.slice(0,4));
+      const valores = resumenCuotas.map(r => Number(r.sin_pago || 0));
+
+      if (chartCuotas) chartCuotas.destroy();
+      chartCuotas = new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels,
+          datasets:[{
+            label:'Socias sin pago',
+            data:valores,
+            backgroundColor:'#ff6b6b'
+          }]
+        },
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{ticks:{font:{size:10}}},
+            y:{ticks:{stepSize:1}}
+          }
+        }
+      });
+
       refrescarCardCuotas();
     }catch(e){
-      console.error('Card cuotas impagas:', e);
+      console.error('Error card cuotas:', e);
     }
   }
 
@@ -473,7 +667,7 @@
   function cambiarMesCuotas(delta){
     if (!resumenCuotas.length) return;
     idxMesCuotas += delta;
-    if (idxMesCuotas < 0) idxMesCuotas = resumenCuotas.length - 1;
+    if (idxMesCuotas < 0) idxMesCuotas = resumenCuotas.length-1;
     if (idxMesCuotas >= resumenCuotas.length) idxMesCuotas = 0;
     refrescarCardCuotas();
   }
@@ -493,23 +687,54 @@
         d
       );
     }catch(e){
-      console.error('Detalle cuotas impagas:', e);
+      console.error('Error detalle cuotas:', e);
       document.getElementById('contenidoDetalleIngreso').innerHTML =
         '<p>Error al cargar datos.</p>';
     }
   }
 
-  // ====== CARD 3: INGRESOS VS GASTOS ======
+  // ===== CARD 3: INGRESOS VS GASTOS =====
   async function cargarCardIngresosVsGastos(){
     try{
       const r = await fetchConToken('/reportes/ingresos-vs-gastos');
       ingVsGas = await r.json();
-      if (!ingVsGas.length) return;
+      const ctx = document.getElementById('chart-ing-gas').getContext('2d');
+
+      if (!ingVsGas.length){
+        document.getElementById('titulo-mes-ing-gas').textContent = '-';
+        return;
+      }
+
       ingVsGas.sort((a,b) => a.mes.localeCompare(b.mes));
       idxMesIngGas = ingVsGas.length - 1;
+
+      const ultimos = ingVsGas.slice(-6);
+      const labels = ultimos.map(r => r.mes.slice(5)+'/'+r.mes.slice(2,4));
+      const ingresosData = ultimos.map(r => Number(r.ingresos||0));
+      const gastosData   = ultimos.map(r => Number(r.gastos||0));
+
+      if (chartIngGas) chartIngGas.destroy();
+      chartIngGas = new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels,
+          datasets:[
+            {label:'Ingresos', data:ingresosData, backgroundColor:'#1c8c5a'},
+            {label:'Gastos', data:gastosData, backgroundColor:'#ff6b6b'}
+          ]
+        },
+        options:{
+          plugins:{legend:{position:'bottom'}},
+          scales:{
+            x:{ticks:{font:{size:10}}},
+            y:{ticks:{font:{size:9}}}
+          }
+        }
+      });
+
       refrescarCardIngGas();
     }catch(e){
-      console.error('Card ingresos vs gastos:', e);
+      console.error('Error card ing/gas:', e);
     }
   }
 
@@ -517,33 +742,59 @@
     if (!ingVsGas.length) return;
     const row = ingVsGas[idxMesIngGas];
     document.getElementById('titulo-mes-ing-gas').textContent = formatearMesYYYYMM(row.mes);
-    document.getElementById('card-ingresos-mes').textContent =
-      `$ ${Math.round(row.ingresos || 0).toLocaleString('es-AR')}`;
-    document.getElementById('card-gastos-mes').textContent =
-      `$ ${Math.round(row.gastos || 0).toLocaleString('es-AR')}`;
-    document.getElementById('card-resultado-mes').textContent =
-      `$ ${Math.round(row.resultado || 0).toLocaleString('es-AR')}`;
+    document.getElementById('lbl-ingresos-mes').textContent =
+      `$ ${Math.round(row.ingresos||0).toLocaleString('es-AR')}`;
+    document.getElementById('lbl-gastos-mes').textContent =
+      `$ ${Math.round(row.gastos||0).toLocaleString('es-AR')}`;
+    document.getElementById('lbl-resultado-mes').textContent =
+      `$ ${Math.round(row.resultado||0).toLocaleString('es-AR')}`;
   }
 
   function cambiarMesIngGas(delta){
     if (!ingVsGas.length) return;
     idxMesIngGas += delta;
-    if (idxMesIngGas < 0) idxMesIngGas = ingVsGas.length - 1;
+    if (idxMesIngGas < 0) idxMesIngGas = ingVsGas.length-1;
     if (idxMesIngGas >= ingVsGas.length) idxMesIngGas = 0;
     refrescarCardIngGas();
+    // También sincronizamos mes para ranking/cuentas
+    actualizarMesRankingYCuentas();
   }
 
-  // ====== CARD 4: SOCIAS NUEVAS POR MES ======
+  // ===== CARD 4: SOCIAS NUEVAS =====
   async function cargarCardSociasNuevas(){
     try{
       const r = await fetchConToken('/reportes/ingresos-por-mes');
       ingresosPorMes = await r.json();
-      if (!ingresosPorMes.length) return;
+      const contTabla = document.getElementById('tabla-socias-mes');
+      contTabla.innerHTML = '';
+
+      if (!ingresosPorMes.length){
+        document.getElementById('titulo-mes-socias').textContent = '-';
+        document.getElementById('card-socias-nuevas-numero').textContent = '0';
+        contTabla.innerHTML = '<p>No hay datos.</p>';
+        return;
+      }
+
       ingresosPorMes.sort((a,b) => a.mes.localeCompare(b.mes));
       idxMesSocias = ingresosPorMes.length - 1;
       refrescarCardSocias();
+
+      // Tabla resumen últimos meses
+      const ultimos = ingresosPorMes.slice(-6).reverse(); // últimos primero
+      const t = document.createElement('table');
+      t.className = 'card-table';
+      t.innerHTML = '<thead><tr><th>Mes</th><th>Nuevas</th></tr></thead>';
+      const tb = document.createElement('tbody');
+      ultimos.forEach(rw => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${formatearMesYYYYMM(rw.mes)}</td><td>${rw.cantidad}</td>`;
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb);
+      contTabla.appendChild(t);
+
     }catch(e){
-      console.error('Card socias nuevas:', e);
+      console.error('Error card socias nuevas:', e);
     }
   }
 
@@ -557,7 +808,7 @@
   function cambiarMesSocias(delta){
     if (!ingresosPorMes.length) return;
     idxMesSocias += delta;
-    if (idxMesSocias < 0) idxMesSocias = ingresosPorMes.length - 1;
+    if (idxMesSocias < 0) idxMesSocias = ingresosPorMes.length-1;
     if (idxMesSocias >= ingresosPorMes.length) idxMesSocias = 0;
     refrescarCardSocias();
   }
@@ -565,7 +816,7 @@
   async function abrirDetalleSociasMes(){
     if (!ingresosPorMes.length) return;
     const mes = ingresosPorMes[idxMesSocias].mes;
-    document.getElementById('modalDetalleIngresos').style.display = 'flex';
+    document.getElementById('modalDetalleIngresos').style.display='flex';
     document.getElementById('tituloDetalleIngreso').textContent =
       `Socias nuevas — ${formatearMesYYYYMM(mes)}`;
     try{
@@ -576,119 +827,97 @@
         d
       );
     }catch(e){
-      console.error('Detalle socias nuevas:', e);
+      console.error('Error detalle socias:', e);
       document.getElementById('contenidoDetalleIngreso').innerHTML =
         '<p>Error al cargar datos.</p>';
     }
   }
 
   function cerrarDetalleIngresos(){
-    document.getElementById('modalDetalleIngresos').style.display = 'none';
-    document.getElementById('contenidoDetalleIngreso').innerHTML = '';
+    document.getElementById('modalDetalleIngresos').style.display='none';
+    document.getElementById('contenidoDetalleIngreso').innerHTML='';
   }
 
-  // ====== CARD 5: RANKING INGRESOS / GASTOS (MES ACTUAL) ======
-  async function cargarCardRanking(){
+  // ===== CARD 5 y 6: RANKING + CUENTAS (comparten mes) =====
+  async function cargarCardRankingYCuentas(){
     try{
       const hoy = new Date();
-      const mes = hoy.getMonth() + 1;
-      const anio = hoy.getFullYear();
+      const mesActual = hoy.getMonth() + 1;
+      const anioActual = hoy.getFullYear();
 
+      await actualizarRankingYCuentas(mesActual, anioActual);
+    }catch(e){
+      console.error('Error inicial ranking/cuentas:', e);
+    }
+  }
+
+  async function actualizarRankingYCuentas(mes, anio){
+    try{
       const [rIng, rGas] = await Promise.all([
         fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
         fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
       ]);
-
       const ing = await rIng.json();
       const gas = await rGas.json();
 
-      const cont = document.getElementById('card-ranking');
-      cont.innerHTML = '';
+      document.getElementById('titulo-mes-ranking').textContent =
+        `${mesesTxt[mes]} ${anio}`;
+      document.getElementById('titulo-mes-cuentas').textContent =
+        `${mesesTxt[mes]} ${anio}`;
 
-      const titulo = document.createElement('div');
-      titulo.style.fontSize = '12px';
-      titulo.style.color = '#777';
-      titulo.textContent = `Mes actual: ${mesesTxt[mes]} ${anio}`;
-      cont.appendChild(titulo);
+      // Card Ranking
+      const contR = document.getElementById('card-ranking');
+      contR.innerHTML = '';
 
       const wrap = document.createElement('div');
       wrap.style.display = 'grid';
       wrap.style.gridTemplateColumns = '1fr 1fr';
       wrap.style.gap = '8px';
-      wrap.style.marginTop = '6px';
+      wrap.style.fontSize = '11px';
 
       const topIng = document.createElement('div');
       topIng.innerHTML = '<strong>Top ingresos</strong>';
-      (ing || []).slice(0,3).forEach(r => {
+      (ing || []).sort((a,b) => b.total - a.total).slice(0,3).forEach(r => {
         const p = document.createElement('div');
-        p.textContent = `${r.cuenta}: $ ${Math.round(r.total || 0).toLocaleString('es-AR')}`;
+        p.textContent = `${r.cuenta}: $ ${Math.round(r.total||0).toLocaleString('es-AR')}`;
         topIng.appendChild(p);
       });
 
       const topGas = document.createElement('div');
       topGas.innerHTML = '<strong>Top gastos</strong>';
-      (gas || []).slice(0,3).forEach(r => {
+      (gas || []).sort((a,b) => b.total - a.total).slice(0,3).forEach(r => {
         const p = document.createElement('div');
-        p.textContent = `${r.cuenta}: $ ${Math.round(r.total || 0).toLocaleString('es-AR')}`;
+        p.textContent = `${r.cuenta}: $ ${Math.round(r.total||0).toLocaleString('es-AR')}`;
         topGas.appendChild(p);
       });
 
       wrap.appendChild(topIng);
       wrap.appendChild(topGas);
-      cont.appendChild(wrap);
+      contR.appendChild(wrap);
 
-    }catch(e){
-      console.error('Card ranking:', e);
-    }
-  }
-
-  // ====== CARD 6: INGRESOS Y GASTOS POR CUENTA (MES ACTUAL) ======
-  async function cargarCardCuentas(){
-    try{
-      const hoy = new Date();
-      const mes = hoy.getMonth() + 1;
-      const anio = hoy.getFullYear();
-
-      const [rIng, rGas] = await Promise.all([
-        fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
-        fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
-      ]);
-
-      const ing = await rIng.json();
-      const gas = await rGas.json();
-
+      // Card Cuentas
       const cuentas = new Map();
-
       (ing || []).forEach(r => {
         const cta = r.cuenta || 'Sin cuenta';
-        const row = cuentas.get(cta) || { cuenta: cta, ingresos: 0, gastos: 0 };
-        row.ingresos += Number(r.total || 0);
-        cuentas.set(cta, row);
+        const row = cuentas.get(cta) || { cuenta: cta, ingresos:0, gastos:0 };
+        row.ingresos += Number(r.total||0);
+        cuentas.set(cta,row);
       });
-
       (gas || []).forEach(r => {
         const cta = r.cuenta || 'Sin cuenta';
-        const row = cuentas.get(cta) || { cuenta: cta, ingresos: 0, gastos: 0 };
-        row.gastos += Number(r.total || 0);
-        cuentas.set(cta, row);
+        const row = cuentas.get(cta) || { cuenta: cta, ingresos:0, gastos:0 };
+        row.gastos += Number(r.total||0);
+        cuentas.set(cta,row);
       });
 
       const filas = Array.from(cuentas.values())
-        .sort((a,b) => (b.ingresos + b.gastos) - (a.ingresos + a.gastos));
+        .sort((a,b) => (b.ingresos + b.gastos) - (a.ingresos + a.gastos))
+        .slice(0,6);
 
-      const cont = document.getElementById('card-cuentas');
-      cont.innerHTML = '';
-
-      if (!filas.length){
-        cont.innerHTML = '<p>No hay datos.</p>';
-        return;
-      }
-
-      const t = document.createElement('table');
-      t.innerHTML = '<thead><tr><th>Cuenta</th><th>Ingresos</th><th>Gastos</th></tr></thead>';
+      const tabla = document.getElementById('tabla-cuentas');
+      tabla.innerHTML = '<thead><tr><th>Cuenta</th><th>Ingresos</th><th>Gastos</th></tr></thead>';
       const tb = document.createElement('tbody');
-
-      filas.slice(0,5).forEach(r => {
+      filas.forEach(r => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${r.cuenta}</td>
@@ -697,28 +926,21 @@
         `;
         tb.appendChild(tr);
       });
-
-      t.appendChild(tb);
-      cont.appendChild(t);
+      tabla.appendChild(tb);
 
     }catch(e){
-      console.error('Card cuentas:', e);
+      console.error('Error actualizar ranking/cuentas:', e);
     }
   }
 
-  // ==== DASHBOARD ====
-  async function cargarDashboard(){
-    await Promise.all([
-      cargarCardAlumnasPorModalidad(),
-      cargarCardCuotasImpagas(),
-      cargarCardIngresosVsGastos(),
-      cargarCardSociasNuevas(),
-      cargarCardRanking(),
-      cargarCardCuentas()
-    ]);
+  function actualizarMesRankingYCuentas(){
+    if (!ingVsGas.length) return;
+    const row = ingVsGas[idxMesIngGas];
+    const [anio,mes] = row.mes.split('-').map(Number);
+    actualizarRankingYCuentas(mes,anio);
   }
 
-  // Botonera (queda por compatibilidad, aunque solo hay "dashboard")
+  // ==== BOTONERA (solo dashboard, por compatibilidad) ====
   const REPORTES = ['dashboard'];
   function mostrarReporte(rep){
     document.querySelectorAll('.bloque-reporte').forEach(b => {
@@ -730,11 +952,17 @@
     localStorage.setItem('reporte_activo', rep);
   }
 
-  // Carga inicial
-  window.onload = () => {
-    cargarDashboard();
+  // ==== CARGA INICIAL ====
+  window.onload = async () => {
+    await Promise.all([
+      cargarCardAlumnasPorModalidad(),
+      cargarCardCuotasImpagas(),
+      cargarCardIngresosVsGastos(),
+      cargarCardSociasNuevas()
+    ]);
+    await cargarCardRankingYCuentas();
     const repGuardado = localStorage.getItem('reporte_activo') || 'dashboard';
-    mostrarReporte(REPORTES.includes(repGuardado) ? repGuardado : 'dashboard');
+    mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'dashboard');
   };
 </script>
 
