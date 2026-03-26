@@ -11,551 +11,457 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-   body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background-color: #cce1d6; /* fondo original */
-  color: #333;
-}
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #cce1d6;
+      color: #333;
+    }
 
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100vh;
-  background-color: #91586d;  /* bordó original */
-  padding-top: 60px;
-  box-shadow: 2px 0 6px rgba(0,0,0,.15);
-  z-index: 1000;
-}
-.sidebar a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  transition: background 0.15s ease;
-  font-size: 13px;
-}
-.sidebar a:hover {
-  background-color: rgba(0,0,0,0.12);
-}
-.sidebar a.active {
-  background-color: rgba(0,0,0,0.25);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.06),
-    inset 0 -1px 0 rgba(0,0,0,.18);
-}
-.sidebar button {
-  width: 100%;
-  text-align: left;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-weight: bold;
-  font-size: 13px;
-  cursor: pointer;
-  border-top: 1px solid rgba(255,255,255,.1);
-}
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      height: 100vh;
+      background-color: #91586d;
+      padding-top: 60px;
+      box-shadow: 2px 0 6px rgba(0,0,0,.15);
+      z-index: 1000;
+    }
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      transition: background 0.15s ease;
+      font-size: 13px;
+    }
+    .sidebar a:hover {
+      background-color: rgba(0,0,0,0.12);
+    }
+    .sidebar a.active {
+      background-color: rgba(0,0,0,0.25);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    .sidebar button {
+      width: 100%;
+      text-align: left;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
 
-/* Header */
-.header-wrap {
-  margin-left: 200px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px 10px;
-}
-.header-left {
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.header-title {
-  font-size: 23px;
-  color: #1c4e80;
-  margin: 0;
-}
-.header-subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: #667;
-}
+    /* Header */
+    .header-wrap {
+      margin-left: 200px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px 10px;
+    }
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .header-title {
+      font-size: 23px;
+      color: #1c4e80;
+      margin: 0;
+    }
+    .header-subtitle {
+      margin: 0;
+      font-size: 13px;
+      color: #667;
+    }
 
-/* Botonera */
-.report-switcher {
-  display:flex;
-  justify-content:center;
-  margin: 0 0 10px;
-}
-.report-btn {
-  border:none;
-  border-radius:999px;
-  padding:6px 18px;
-  cursor:pointer;
-  font-weight:600;
-  background:#1c4e80;
-  color:#fff;
-  box-shadow:0 1px 2px rgba(0,0,0,.15);
-  font-size:13px;
-}
+    /* Botonera */
+    .report-switcher {
+      display:flex;
+      justify-content:center;
+      margin: 0 0 10px;
+    }
+    .report-btn {
+      border:none;
+      border-radius:999px;
+      padding:6px 18px;
+      cursor:pointer;
+      font-weight:600;
+      background:#1c4e80;
+      color:#fff;
+      box-shadow:0 1px 2px rgba(0,0,0,.15);
+      font-size:13px;
+    }
 
-/* Layout contenido */
-.contenido {
-  margin-left: 210px;
-  padding: 0 20px 20px;
-}
+    /* Layout contenido */
+    .contenido {
+      margin-left: 210px;
+      padding: 0 20px 20px;
+    }
 
-.bloque-reporte {
-  background:#fff;
-  padding:16px 20px 20px;
-  border-radius:12px;
-  margin-bottom:20px;
-  box-shadow:0 4px 10px rgba(0,0,0,.08);
-}
+    .bloque-reporte {
+      background:#fff;
+      padding:16px 20px 20px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,.08);
+    }
 
-/* Dashboard grid */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 12px;
-  margin-top: 6px;
-}
+    /* Dashboard grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 12px;
+      margin-top: 6px;
+    }
 
-/* Cards */
-.dashboard-card {
-  background:#fbfdff;
-  border-radius:10px;
-  padding:12px 14px 20px 14px; /* más aire abajo */
-  box-shadow:0 1px 3px rgba(0,0,0,.08);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  border:1px solid #dde7f3;
-}
-.card-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-weight:600;
-  color:#1c4e80;
-  font-size:14px;
-}
-.card-header small {
-  font-weight:400;
-  color:#888;
-  font-size:11px;
-}
+    /* Cards */
+    .dashboard-card {
+      background:#fbfdff;
+      border-radius:10px;
+      padding:12px 14px 20px 14px;
+      box-shadow:0 1px 3px rgba(0,0,0,.08);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      border:1px solid #dde7f3;
+    }
+    .card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:600;
+      color:#1c4e80;
+      font-size:14px;
+    }
+    .card-header small {
+      font-weight:400;
+      color:#888;
+      font-size:11px;
+    }
 
-/* Navegación */
-.card-nav {
-  display:flex;
-  align-items:center;
-  gap:4px;
-  font-size:12px;
-  color:#555;
-}
-.card-nav button {
-  border:none;
-  background:#eef3fb;
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  cursor:pointer;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:12px;
-  padding:0;
-  color:#1c4e80;
-}
+    /* Navegación */
+    .card-nav {
+      display:flex;
+      align-items:center;
+      gap:4px;
+      font-size:12px;
+      color:#555;
+    }
+    .card-nav button {
+      border:none;
+      background:#eef3fb;
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      cursor:pointer;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-size:12px;
+      padding:0;
+      color:#1c4e80;
+    }
 
-/* Tablas */
-.card-table-wrapper {
-  max-height:160px;
-  overflow-y:auto;
-  margin-top:4px;
-}
-.card-table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:12px;
-}
-.card-table th,
-.card-table td {
-  padding:3px 4px;
-  border-bottom:1px solid #e3ebf5;
-  text-align:left;
-}
-.card-table th {
-  background:#f6f9ff;
-  font-weight:600;
-  color:#555;
-  position:sticky;
-  top:0;
-  z-index:1;
-}
+    /* Tablas */
+    .card-table-wrapper {
+      max-height:160px;
+      overflow-y:auto;
+      margin-top:4px;
+    }
+    .card-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    .card-table th,
+    .card-table td {
+      padding:3px 4px;
+      border-bottom:1px solid #e3ebf5;
+      text-align:left;
+    }
+    .card-table th {
+      background:#f6f9ff;
+      font-weight:600;
+      color:#555;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
 
-/* Textos */
-.card-subtitle {
-  font-size:11px;
-  color:#777;
-  margin-top:-2px;
-  margin-bottom:2px;
-}
+    /* Textos */
+    .card-subtitle {
+      font-size:11px;
+      color:#777;
+      margin-top:-2px;
+      margin-bottom:2px;
+    }
 
-canvas {
-  max-width:100%;
-}
+    canvas {
+      max-width:100%;
+    }
 
-.clickable {
-  cursor:pointer;
-  text-decoration:underline;
-}
+    .clickable {
+      cursor:pointer;
+      text-decoration:underline;
+    }
 
-/* Resumen ingresos/gastos */
-.card-resumen-mes {
-  display:flex;
-  justify-content:space-between;
-  font-size:11px;
-  margin:4px 0;
-}
-.card-resumen-mes .lbl {
-  color:#666;
-  font-weight:600;
-}
-.card-resumen-mes span:last-child {
-  font-weight:600;
-}
+    /* Resumen ingresos/gastos */
+    .card-resumen-mes {
+      display:flex;
+      justify-content:space-between;
+      font-size:11px;
+      margin:4px 0;
+    }
+    .card-resumen-mes .lbl {
+      color:#666;
+      font-weight:600;
+    }
+    .card-resumen-mes span:last-child {
+      font-weight:600;
+    }
 
-/* RESPONSIVE */
-@media (max-width:1024px){
-  .dashboard-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-}
-@media (max-width:768px){
-  .hamburguesa{
-    display:block;
-  }
-  .sidebar{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    background-color:#91586d;
-    z-index:1500;
-    flex-direction:column;
-    height:auto;
-    padding-top:0
-  }
-  .sidebar.mostrar{display:flex}
-  .sidebar a,.sidebar button{
-    flex:1 0 50%;
-    text-align:center;
-    border-bottom:1px solid rgba(255,255,255,.1)
-  }
-  .header-wrap{margin-left:0}
-  .contenido{margin-left:0;padding:70px 10px 16px}
-  .dashboard-grid{grid-template-columns:1fr}
-}
+    /* RESPONSIVE */
+    @media (max-width:1024px){
+      .dashboard-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+      }
+    }
+    @media (max-width:768px){
+      .hamburguesa{
+        display:block;
+      }
+      .sidebar{
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        background-color:#91586d;
+        z-index:1500;
+        flex-direction:column;
+        height:auto;
+        padding-top:0
+      }
+      .sidebar.mostrar{display:flex}
+      .sidebar a,.sidebar button{
+        flex:1 0 50%;
+        text-align:center;
+        border-bottom:1px solid rgba(255,255,255,.1)
+      }
+      .header-wrap{margin-left:0}
+      .contenido{margin-left:0;padding:70px 10px 16px}
+      .dashboard-grid{grid-template-columns:1fr}
+    }
 
-/* === DONUT — CENTRADO PERFECTO === */
-.donut-wrapper{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  width:100%;
-  padding:20px 0 30px 0; /* baja todo el bloque y lo centra verticalmente */
-  gap:35px;              /* más aire entre donut y leyenda */
-}
+    /* === DONUT — CENTRADO PERFECTO === */
+    .donut-wrapper{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      width:100%;
+      padding:20px 0 30px 0;
+      gap:35px;
+    }
+    .donut-container{
+      position:relative;
+      width:220px;
+      height:220px;
+      flex-shrink:0;
+    }
+    .donut-container canvas{
+      width:100% !important;
+      height:100% !important;
+    }
+    .donut-center{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-size:32px;
+      font-weight:700;
+      color:#444;
+    }
+    .donut-legend{
+      font-size:12px;
+      color:#444;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-left:20px;
+      margin-right:20px;
+    }
+    .donut-legend-item{
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .donut-legend-color{
+      width:12px;
+      height:12px;
+      border-radius:2px;
+    }
 
-.donut-container{
-  position:relative;
-  width:220px;           /* donut más grande */
-  height:220px;
-  flex-shrink:0;
-}
+    /* Cuotas impagas */
+    .mes-selector{
+      min-width: 90px;
+      text-align: center;
+    }
+    .cuotas-main-number{
+      text-align:center;
+      margin-top:4px;
+      margin-bottom:8px;
+      cursor:pointer;
+    }
+    .cuotas-label{
+      font-size:11px;
+      color:#666;
+      margin-bottom:2px;
+    }
+    .cuotas-numero{
+      font-size:34px;
+      color:#d7263d;
+      font-weight:700;
+      line-height:1;
+    }
+    .cuotas-anio{
+      font-size:11px;
+      color:#666;
+      margin-top:2px;
+    }
+    .cuotas-help{
+      font-size:11px;
+      color:#777;
+      margin-top:4px;
+    }
 
-.donut-container canvas{
-  width:100% !important;
-  height:100% !important;
-}
+    /* Ingresos vs gastos — Centrado del gráfico */
+    #chart-ing-gas {
+      margin: 0 auto !important;
+      display: block !important;
+    }
+    .ing-gas-chart-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0 10px 0;
+      box-sizing: border-box;
+    }
 
-.donut-center{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  font-size:32px;
-  font-weight:700;
-  color:#444;
-}
+    /* Alumnas nuevas por mes */
+    .nuevas-main-number{
+      text-align:center;
+      margin-top:6px;
+      margin-bottom:10px;
+      cursor:pointer;
+    }
+    .nuevas-label{
+      font-size:11px;
+      color:#666;
+      margin-bottom:3px;
+    }
+    .nuevas-numero{
+      font-size:34px;
+      color:#1c4e80;
+      font-weight:700;
+      line-height:1;
+    }
+    .nuevas-help{
+      font-size:11px;
+      color:#777;
+      margin-top:4px;
+    }
 
-/* Leyenda reequilibrada */
-.donut-legend{
-  font-size:12px;
-  color:#444;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-left:20px;
-  margin-right:20px;     /* la corre hacia adentro → centro visual */
-}
+    /* Ranking ingresos / gastos */
+    .ranking-wrapper{
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 60px;
+      width: 100%;
+      padding-top: 35px;
+      padding-bottom: 30px;
+      box-sizing: border-box;
+    }
+    .ranking-col{
+      min-width: 240px;
+    }
+    .ranking-title{
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1c4e80;
+      margin-bottom: 10px;
+    }
+    .ranking-item{
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eef3fb;
+      font-size: 13px;
+    }
+    .ranking-item span:first-child{
+      flex: 1;
+    }
+    .ranking-item span:last-child{
+      font-weight: 600;
+      white-space: nowrap;
+    }
 
-.donut-legend-item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.donut-legend-color{
-  width:12px;
-  height:12px;
-  border-radius:2px;
-}
-
-/* Cuotas impagas */
-.mes-selector{
-  min-width: 90px;
-  text-align: center;
-}
-.cuotas-main-number{
-  text-align:center;
-  margin-top:4px;
-  margin-bottom:8px;
-  cursor:pointer;
-}
-.cuotas-label{
-  font-size:11px;
-  color:#666;
-  margin-bottom:2px;
-}
-.cuotas-numero{
-  font-size:34px;
-  color:#d7263d;
-  font-weight:700;
-  line-height:1;
-}
-.cuotas-anio{
-  font-size:11px;
-  color:#666;
-  margin-top:2px;
-}
-.cuotas-help{
-  font-size:11px;
-  color:#777;
-  margin-top:4px;
-}
-
-/* ===== Ingresos vs gastos — Centrado del gráfico ===== */
-#chart-ing-gas {
-  margin: 0 auto !important;       /* centra el canvas */
-  display: block !important;
-}
-
-.ing-gas-chart-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;         /* centra el container */
-  align-items: center;
-  padding: 20px 0 10px 0;          /* baja el gráfico */
-  box-sizing: border-box;
-}
-
-/* === Alumnas nuevas por mes === */
-.nuevas-main-number{
-  text-align:center;
-  margin-top:6px;
-  margin-bottom:10px;
-  cursor:pointer;
-}
-
-.nuevas-label{
-  font-size:11px;
-  color:#666;
-  margin-bottom:3px;
-}
-
-.nuevas-numero{
-  font-size:34px;
-  color:#1c4e80;
-  font-weight:700;
-  line-height:1;
-}
-
-.nuevas-help{
-  font-size:11px;
-  color:#777;
-  margin-top:4px;
-}
-
-/* === RANKING INGRESOS VS GASTOS === */
-.ranking-wrapper{
-  display: grid;
-  grid-template-columns: 1fr 1fr;    /* dos columnas iguales */
-  gap: 20px;
-  width: 100%;
-  padding: 10px 10px 20px 10px;
-  box-sizing: border-box;
-  font-size: 13px;
-}
-
-.ranking-col-title{
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 6px;
-  color: #1c4e80;
-}
-
-.ranking-item{
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  border-bottom: 1px solid #eef3fb;
-}
-
-.ranking-item span:first-child{
-  flex: 1;
-}
-
-.ranking-item span:last-child{
-  font-weight: 600;
-}
-
-/* ==== RANKING — Diseño centrado y prolijo ==== */
-.ranking-wrapper {
-  display: flex;
-  justify-content: center;       /* CENTRADO REAL */
-  align-items: flex-start;
-  gap: 60px;                     /* espacio entre columnas */
-  padding: 15px 0 25px 0;
-  width: 100%;
-}
-
-.ranking-col {
-  min-width: 220px;
-}
-
-.ranking-title {
-  text-align: center;            /* TITULO CENTRADO */
-  font-size: 15px;
-  font-weight: 700;
-  color: #1c4e80;
-  margin-bottom: 8px;
-}
-
-.ranking-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px solid #eef3fb;
-  font-size: 13px;
-}
-
-.ranking-item span:first-child {
-  flex: 1;
-}
-
-.ranking-item span:last-child {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* ==== RANKING — bajar y centrar contenido ==== */
-.ranking-wrapper{
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 60px;
-  width: 100%;
-  padding-top: 35px;       /* 👉 antes 15px — BAJA EL DETALLE */
-  padding-bottom: 30px;    /* más aire abajo */
-  box-sizing: border-box;
-}
-
-.ranking-col{
-  min-width: 240px;        /* un poquito más ancho para balance visual */
-}
-
-.ranking-title{
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1c4e80;
-  margin-bottom: 10px;      /* más aire debajo del título */
-}
-
-.ranking-item{
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid #eef3fb;
-  font-size: 13px;
-}
-
-.ranking-item span:first-child{
-  flex: 1;
-}
-
-.ranking-item span:last-child{
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* ===== Ingresos y gastos por cuenta ===== */
-
-.cuentas-wrapper{
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 60px;
-  padding-top: 30px;
-  padding-bottom: 30px;
-}
-
-.cuentas-col{
-  min-width: 240px;
-}
-
-.cuentas-title{
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1c4e80;
-  margin-bottom: 10px;
-}
-
-.cuentas-item{
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid #eef3fb;
-  font-size: 13px;
-}
-
-.cuentas-item span:first-child{
-  flex: 1;
-}
-
-.cuentas-item span:last-child{
-  font-weight: 600;
-  white-space: nowrap;
-}
+    /* Ingresos y gastos por cuenta */
+    .cuentas-wrapper{
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 60px;
+      padding-top: 30px;
+      padding-bottom: 30px;
+    }
+    .cuentas-col{
+      min-width: 240px;
+    }
+    .cuentas-title{
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1c4e80;
+      margin-bottom: 10px;
+    }
+    .cuentas-item{
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eef3fb;
+      font-size: 13px;
+    }
+    .cuentas-item span:first-child{
+      flex: 1;
+    }
+    .cuentas-item span:last-child{
+      font-weight: 600;
+      white-space: nowrap;
+    }
 
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header-wrap">
   <div class="header">
     <div class="header-left">
@@ -568,7 +474,6 @@ canvas {
     </div>
   </div>
 
-  <!-- BOTÓN (solo Dashboard) -->
   <div class="report-switcher">
     <button class="report-btn active" data-report="dashboard" onclick="mostrarReporte('dashboard')">
       Dashboard
@@ -578,7 +483,6 @@ canvas {
 
 <button id="toggleMenu" class="hamburguesa">☰</button>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
   <a href="index.html">📋 Alumnas/os</a>
   <a href="pagos.html">💳 Pagos</a>
@@ -594,7 +498,6 @@ canvas {
   </button>
 </div>
 
-<!-- CONTENIDO -->
 <div class="contenido">
   <div class="bloque-reporte" data-report="dashboard" style="display:block">
     <h2 style="margin-top:0;color:#1c4e80;font-size:18px;">Dashboard General</h2>
@@ -602,68 +505,65 @@ canvas {
     <div class="dashboard-grid">
 
       <!-- 1. Socias por actividad / modalidad (DONUT + leyenda) -->
-<div class="dashboard-card">
-  <div class="card-header">
-    <span>Socias por actividad / modalidad</span>
-    <small>Distribución de alumnas activas</small>
-  </div>
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span>Socias por actividad / modalidad</span>
+          <small>Distribución de alumnas activas</small>
+        </div>
 
-  <div class="donut-wrapper">
-    <div class="donut-container">
-      <canvas id="chart-modalidades"></canvas>
-      <!-- número total en el centro del donut -->
-      <div id="total-modalidades" class="donut-center">0</div>
-    </div>
+        <div class="donut-wrapper">
+          <div class="donut-container">
+            <canvas id="chart-modalidades"></canvas>
+            <div id="total-modalidades" class="donut-center">0</div>
+          </div>
 
-    <!-- leyenda con colores y nombre de la actividad -->
-    <div id="legend-modalidades" class="donut-legend">
-      <!-- Se rellena por JS -->
-    </div>
-  </div>
-</div>
+          <div id="legend-modalidades" class="donut-legend">
+            <!-- JS -->
+          </div>
+        </div>
+      </div>
 
       <!-- 2. Cuotas impagas -->
-<div class="dashboard-card">
-  <div class="card-header">
-    <span>Cuotas impagas</span>
-    <div class="card-nav">
-      <button onclick="cambiarMesCuotas(1)">◀</button>
-<span id="titulo-mes-cuotas" class="mes-selector"></span>
-<button onclick="cambiarMesCuotas(-1)">▶</button>
-    </div>
-  </div>
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span>Cuotas impagas</span>
+          <div class="card-nav">
+            <button onclick="cambiarMesCuotas('prev')">◀</button>
+            <span id="titulo-mes-cuotas" class="mes-selector"></span>
+            <button onclick="cambiarMesCuotas('next')">▶</button>
+          </div>
+        </div>
 
-  <div class="card-subtitle">
-    Morosidad mensual de socias activas. Considera la fecha de ingreso.
-  </div>
+        <div class="card-subtitle">
+          Morosidad mensual de socias activas. Considera la fecha de ingreso.
+        </div>
 
-  <div class="cuotas-main-number" onclick="abrirDetalleCuotasMes()">
-    <div class="cuotas-label">Socias sin pago</div>
-    <div id="card-cuotas-impagas-numero" class="cuotas-numero">0</div>
-    <div id="cuotas-anio-label" class="cuotas-anio"></div>
-    <div class="cuotas-help">Click en la cantidad para ver el detalle de socias.</div>
-  </div>
+        <div class="cuotas-main-number" onclick="abrirDetalleCuotasMes()">
+          <div class="cuotas-label">Socias sin pago</div>
+          <div id="card-cuotas-impagas-numero" class="cuotas-numero">0</div>
+          <div id="cuotas-anio-label" class="cuotas-anio"></div>
+          <div class="cuotas-help">Click en la cantidad para ver el detalle de socias.</div>
+        </div>
 
-  <div class="card-table-wrapper">
-    <table class="card-table" id="tabla-cuotas-meses"></table>
-  </div>
-</div>
+        <div class="card-table-wrapper">
+          <table class="card-table" id="tabla-cuotas-meses"></table>
+        </div>
+      </div>
 
       <!-- 3. Ingresos vs gastos -->
       <div class="dashboard-card">
         <div class="card-header">
           <span>Ingresos vs gastos</span>
           <div class="card-nav">
-            <button onclick="cambiarMesIngGas(-1)">◀</button>
-            <span id="titulo-mes-ing-gas" style="min-width:90px;text-align:center;"></span>
-            <button onclick="cambiarMesIngGas(1)">▶</button>
+            <button onclick="cambiarMesIngGas('prev')">◀</button>
+            <span id="titulo-mes-ing-gas" class="mes-selector"></span>
+            <button onclick="cambiarMesIngGas('next')">▶</button>
           </div>
         </div>
         <div class="card-subtitle">
           Comparativo mensual y anual.
         </div>
 
-        <!-- Resumen del mes arriba del gráfico -->
         <div class="card-resumen-mes">
           <div>
             <span class="lbl">Ingresos mes</span><br>
@@ -680,10 +580,9 @@ canvas {
         </div>
 
         <div class="ing-gas-chart-wrapper">
-  <canvas id="chart-ing-gas" height="140"></canvas>
-</div>
+          <canvas id="chart-ing-gas" height="140"></canvas>
+        </div>
 
-        <!-- Resumen anual debajo del gráfico -->
         <div class="card-resumen-mes">
           <div>
             <span class="lbl">Ingresos año</span><br>
@@ -700,71 +599,66 @@ canvas {
         </div>
       </div>
 
-     <!-- 4. Alumnas nuevas por mes -->
-<div class="dashboard-card">
-  <div class="card-header">
-    <span>Alumnas nuevas por mes</span>
-    <div class="card-nav">
-      <button onclick="cambiarMesSocias(1)">◀</button>
-      <span id="titulo-mes-socias" class="mes-selector"></span>
-      <button onclick="cambiarMesSocias(-1)">▶</button>
-    </div>
-  </div>
+      <!-- 4. Alumnas nuevas por mes -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span>Alumnas nuevas por mes</span>
+          <div class="card-nav">
+            <button onclick="cambiarMesSocias('prev')">◀</button>
+            <span id="titulo-mes-socias" class="mes-selector"></span>
+            <button onclick="cambiarMesSocias('next')">▶</button>
+          </div>
+        </div>
 
-  <div class="card-subtitle">
-    Altas según fecha de ingreso.
-  </div>
+        <div class="card-subtitle">
+          Altas según fecha de ingreso.
+        </div>
 
-  <!-- Número grande centrado -->
-  <div class="nuevas-main-number" onclick="abrirDetalleSociasMes()">
-    <div class="nuevas-label">Alumnas nuevas</div>
-    <div id="card-socias-nuevas-numero" class="nuevas-numero">0</div>
-    <div class="nuevas-help">Click para ver el detalle</div>
-  </div>
+        <div class="nuevas-main-number" onclick="abrirDetalleSociasMes()">
+          <div class="nuevas-label">Alumnas nuevas</div>
+          <div id="card-socias-nuevas-numero" class="nuevas-numero">0</div>
+          <div class="nuevas-help">Click para ver el detalle</div>
+        </div>
 
-  <!-- Tabla -->
-  <div class="card-table-wrapper" id="tabla-socias-mes">
-    <!-- Se rellena por JS -->
-  </div>
-</div>
-
+        <div class="card-table-wrapper" id="tabla-socias-mes">
+          <!-- JS -->
+        </div>
+      </div>
 
       <!-- 5. Ranking ingresos / gastos -->
-<div class="dashboard-card">
-  <div class="card-header">
-    <span>Ranking ingresos / gastos</span>
-    <div class="card-nav">
-       <button onclick="cambiarMesSocias(1)">◀</button>
-      <span id="titulo-mes-socias" class="mes-selector"></span>
-      <button onclick="cambiarMesSocias(-1)">▶</button>
-    </div>
-  </div>
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span>Ranking ingresos / gastos</span>
+          <div class="card-nav">
+            <button onclick="cambiarMesRanking('prev')">◀</button>
+            <span id="titulo-mes-ranking" class="mes-selector"></span>
+            <button onclick="cambiarMesRanking('next')">▶</button>
+          </div>
+        </div>
 
-  <div class="card-subtitle">
-    Top ingresos (incluye cuotas) y top gastos del mes.
-  </div>
+        <div class="card-subtitle">
+          Top ingresos (incluye cuotas) y top gastos del mes.
+        </div>
 
-  <div id="card-ranking" class="ranking-wrapper"></div>
-</div>
-
+        <div id="card-ranking" class="ranking-wrapper"></div>
+      </div>
 
       <!-- 6. Ingresos y gastos por cuenta -->
-<div class="dashboard-card">
-  <div class="card-header">
-    <span>Ingresos y gastos por cuenta</span>
-    <div class="card-nav">
-       <button onclick="cambiarMesSocias(1)">◀</button>
-      <span id="titulo-mes-socias" class="mes-selector"></span>
-      <button onclick="cambiarMesSocias(-1)">▶</button>
-    </div>
-  </div>
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span>Ingresos y gastos por cuenta</span>
+          <div class="card-nav">
+            <button onclick="cambiarMesCuentas('prev')">◀</button>
+            <span id="titulo-mes-cuentas" class="mes-selector"></span>
+            <button onclick="cambiarMesCuentas('next')">▶</button>
+          </div>
+        </div>
 
-  <div class="card-subtitle">
-    Totales del mes agrupados por cuenta de ingreso o pago.
-  </div>
+        <div class="card-subtitle">
+          Totales del mes agrupados por cuenta de ingreso o pago.
+        </div>
 
-  <div id="wrapper-cuentas" class="cuentas-wrapper"></div>
-</div>
+        <div id="wrapper-cuentas" class="cuentas-wrapper"></div>
       </div>
 
     </div>
@@ -781,7 +675,7 @@ canvas {
 </div>
 
 <script>
-  // === LOGIN / ROL / SIDEBAR ===
+  // LOGIN / ROL / SIDEBAR
   window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('etnya_login') !== 'ok') {
       location = 'login.html';
@@ -816,14 +710,14 @@ canvas {
     document.querySelector('.sidebar').classList.toggle('mostrar');
   });
 
-  // === Helper fetch con token ===
+  // Helper fetch con token
   function fetchConToken(url, opts = {}) {
     const token = localStorage.getItem('etnya_token') || '';
     const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
     return fetch(url, { ...opts, headers });
   }
 
-  // === Utilidades de formato ===
+  // Utilidades
   const mesesTxt = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
   function formatearMesYYYYMM(yyyyMM){
@@ -873,184 +767,181 @@ canvas {
     cont.appendChild(t);
   }
 
-  // === ESTADO GLOBAL DASHBOARD ===
+  // ESTADO GLOBAL
   let resumenCuotas = [];
   let idxMesCuotas = 0;
-  let chartCuotas = null;
-
   let ingVsGas = [];
   let idxMesIngGas = 0;
   let chartIngGas = null;
-
   let ingresosPorMes = [];
   let idxMesSocias = 0;
-
   let chartModalidades = null;
+  let mesesRanking = [];
+  let idxMesRanking = 0;
+  let mesesCuentas = [];
+  let idxMesCuentas = 0;
 
- // ===== CARD 1: SOCIAS POR ACTIVIDAD / MODALIDAD =====
-async function cargarCardAlumnasPorModalidad(){
-  try{
-    const r = await fetchConToken('/reportes/alumnos-por-modalidad');
-    const data = await r.json();
+  // 1. Socias por actividad / modalidad
+  async function cargarCardAlumnasPorModalidad(){
+    try{
+      const r = await fetchConToken('/reportes/alumnos-por-modalidad');
+      const data = await r.json();
 
-    const ctx      = document.getElementById('chart-modalidades').getContext('2d');
-    const lblTotal = document.getElementById('total-modalidades');
-    const legend   = document.getElementById('legend-modalidades');
+      const ctx      = document.getElementById('chart-modalidades').getContext('2d');
+      const lblTotal = document.getElementById('total-modalidades');
+      const legend   = document.getElementById('legend-modalidades');
 
-    legend.innerHTML = '';
-    lblTotal.textContent = '0';
+      legend.innerHTML = '';
+      lblTotal.textContent = '0';
 
-    if (!data.length){
-      legend.innerHTML = '<p>No hay alumnas activas.</p>';
-      return;
-    }
-
-    const labels  = data.map(x => x.modalidad);
-    const valores = data.map(x => Number(x.cantidad||0));
-    const total   = valores.reduce((s,n) => s+n, 0);
-    lblTotal.textContent = total;
-
-    const colores = [
-      '#1c4e80','#4ecdc4','#ffa600','#ff6b6b',
-      '#9b5de5','#00bbf9','#f15bb5','#2ec4b6'
-    ];
-
-    // Leyenda a la derecha con color + texto
-    data.forEach((row, i) => {
-      const item  = document.createElement('div');
-      item.className = 'donut-legend-item';
-
-      const colorBox = document.createElement('div');
-      colorBox.className = 'donut-legend-color';
-      colorBox.style.backgroundColor = colores[i % colores.length];
-
-      const pct = total > 0 ? Math.round(100 * row.cantidad / total) : 0;
-      const txt = document.createElement('span');
-      txt.textContent = `${row.modalidad} (${pct}%)`;
-
-      item.appendChild(colorBox);
-      item.appendChild(txt);
-      legend.appendChild(item);
-    });
-
-    if (chartModalidades) chartModalidades.destroy();
-    chartModalidades = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data: valores,
-          backgroundColor: colores
-        }]
-      },
-      options: {
-        plugins:{ legend:{ display:false } },
-        cutout:'60%'
+      if (!data.length){
+        legend.innerHTML = '<p>No hay alumnas activas.</p>';
+        return;
       }
-    });
 
-  }catch(e){
-    console.error('Error card modalidades:', e);
-  }
-}
+      const labels  = data.map(x => x.modalidad);
+      const valores = data.map(x => Number(x.cantidad||0));
+      const total   = valores.reduce((s,n) => s+n, 0);
+      lblTotal.textContent = total;
 
-  // ===== CARD 2: CUOTAS IMPAGAS =====
-async function cargarCardCuotasImpagas(){
-  try{
-    const r = await fetchConToken('/reportes/cuotas-impagas-resumen');
-    resumenCuotas = await r.json();
+      const colores = [
+        '#1c4e80','#4ecdc4','#ffa600','#ff6b6b',
+        '#9b5de5','#00bbf9','#f15bb5','#2ec4b6'
+      ];
 
-    const tabla = document.getElementById('tabla-cuotas-meses');
-    tabla.innerHTML = '';
+      data.forEach((row, i) => {
+        const item  = document.createElement('div');
+        item.className = 'donut-legend-item';
 
-    if (!resumenCuotas.length){
-      document.getElementById('titulo-mes-cuotas').textContent = '-';
-      document.getElementById('card-cuotas-impagas-numero').textContent = '0';
-      document.getElementById('cuotas-anio-label').textContent = '';
-      tabla.innerHTML = '<tbody><tr><td colspan="2">No hay datos.</td></tr></tbody>';
-      return;
-    }
+        const colorBox = document.createElement('div');
+        colorBox.className = 'donut-legend-color';
+        colorBox.style.backgroundColor = colores[i % colores.length];
 
-    // ordenamos de más nuevo a más viejo
-    resumenCuotas.sort((a,b) => b.mes.localeCompare(a.mes));
-    idxMesCuotas = 0; // el primer elemento es el último mes
+        const pct = total > 0 ? Math.round(100 * row.cantidad / total) : 0;
+        const txt = document.createElement('span');
+        txt.textContent = `${row.modalidad} (${pct}%)`;
 
-    // refrescamos número grande + selector
-    refrescarCardCuotas();
-
-    // armamos tabla de meses (ya está de más nuevo a más viejo)
-    const theadHtml = '<thead><tr><th>Mes</th><th>Socias sin pago</th></tr></thead>';
-    const tbody = document.createElement('tbody');
-
-    resumenCuotas.forEach(row => {
-      const tr = document.createElement('tr');
-      const mesFmt = formatearMesYYYYMM(row.mes);
-      tr.innerHTML = `
-        <td>${mesFmt}</td>
-        <td class="clickable" data-mes="${row.mes}">${row.sin_pago}</td>
-      `;
-      tr.querySelector('td.clickable').addEventListener('click', () => {
-        abrirDetalleCuotasMes(row.mes);
+        item.appendChild(colorBox);
+        item.appendChild(txt);
+        legend.appendChild(item);
       });
-      tbody.appendChild(tr);
-    });
 
-    tabla.innerHTML = theadHtml;
-    tabla.appendChild(tbody);
+      if (chartModalidades) chartModalidades.destroy();
+      chartModalidades = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: valores,
+            backgroundColor: colores
+          }]
+        },
+        options: {
+          plugins:{ legend:{ display:false } },
+          cutout:'60%'
+        }
+      });
 
-  }catch(e){
-    console.error('Error card cuotas:', e);
+    }catch(e){
+      console.error('Error card modalidades:', e);
+    }
   }
-}
 
+  // 2. Cuotas impagas
+  async function cargarCardCuotasImpagas(){
+    try{
+      const r = await fetchConToken('/reportes/cuotas-impagas-resumen');
+      resumenCuotas = await r.json();
+
+      const tabla = document.getElementById('tabla-cuotas-meses');
+      tabla.innerHTML = '';
+
+      if (!resumenCuotas.length){
+        document.getElementById('titulo-mes-cuotas').textContent = '-';
+        document.getElementById('card-cuotas-impagas-numero').textContent = '0';
+        document.getElementById('cuotas-anio-label').textContent = '';
+        tabla.innerHTML = '<tbody><tr><td colspan="2">No hay datos.</td></tr></tbody>';
+        return;
+      }
+
+      resumenCuotas.sort((a,b) => b.mes.localeCompare(a.mes));
+      idxMesCuotas = 0;
+
+      refrescarCardCuotas();
+
+      const theadHtml = '<thead><tr><th>Mes</th><th>Socias sin pago</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      resumenCuotas.forEach(row => {
+        const tr = document.createElement('tr');
+        const mesFmt = formatearMesYYYYMM(row.mes);
+        tr.innerHTML = `
+          <td>${mesFmt}</td>
+          <td class="clickable" data-mes="${row.mes}">${row.sin_pago}</td>
+        `;
+        tr.querySelector('td.clickable').addEventListener('click', () => {
+          abrirDetalleCuotasMes(row.mes);
+        });
+        tbody.appendChild(tr);
+      });
+
+      tabla.innerHTML = theadHtml;
+      tabla.appendChild(tbody);
+
+    }catch(e){
+      console.error('Error card cuotas:', e);
+    }
+  }
 
   function refrescarCardCuotas(){
-  if (!resumenCuotas.length) return;
-  const row  = resumenCuotas[idxMesCuotas];
-  const anio = row.mes.slice(0,4);
-
-  document.getElementById('titulo-mes-cuotas').textContent =
-    formatearMesYYYYMM(row.mes);
-
-  document.getElementById('card-cuotas-impagas-numero').textContent =
-    row.sin_pago;
-
-  document.getElementById('cuotas-anio-label').textContent =
-    `Año ${anio}`;
-}
-
-  function cambiarMesCuotas(delta){
     if (!resumenCuotas.length) return;
-    idxMesCuotas += delta;
-    if (idxMesCuotas < 0) idxMesCuotas = resumenCuotas.length-1;
-    if (idxMesCuotas >= resumenCuotas.length) idxMesCuotas = 0;
+    const row  = resumenCuotas[idxMesCuotas];
+    const anio = row.mes.slice(0,4);
+
+    document.getElementById('titulo-mes-cuotas').textContent =
+      formatearMesYYYYMM(row.mes);
+
+    document.getElementById('card-cuotas-impagas-numero').textContent =
+      row.sin_pago;
+
+    document.getElementById('cuotas-anio-label').textContent =
+      `Año ${anio}`;
+  }
+
+  function cambiarMesCuotas(dir){
+    if (!resumenCuotas.length) return;
+    const len = resumenCuotas.length;
+    if (dir === 'prev') {
+      idxMesCuotas = (idxMesCuotas + 1) % len;     // mes anterior
+    } else {
+      idxMesCuotas = (idxMesCuotas - 1 + len) % len; // mes siguiente
+    }
     refrescarCardCuotas();
   }
 
   async function abrirDetalleCuotasMes(mesOverride){
-  const mes = mesOverride || (resumenCuotas[idxMesCuotas]?.mes);
-  if (!mes) return;
+    const mes = mesOverride || (resumenCuotas[idxMesCuotas]?.mes);
+    if (!mes) return;
 
-  document.getElementById('modalDetalleIngresos').style.display = 'flex';
-  document.getElementById('tituloDetalleIngreso').textContent =
-    `Cuotas impagas — ${formatearMesYYYYMM(mes)}`;
+    document.getElementById('modalDetalleIngresos').style.display = 'flex';
+    document.getElementById('tituloDetalleIngreso').textContent =
+      `Cuotas impagas — ${formatearMesYYYYMM(mes)}`;
 
-  try{
-    const r = await fetchConToken(`/reportes/cuotas-impagas-detalle?mes=${encodeURIComponent(mes)}`);
-    const d = await r.json();
-    renderTabla('contenidoDetalleIngreso',
-      ['Número','Nombre','Apellido','Fecha ingreso'],
-      d
-    );
-  }catch(e){
-    console.error('Error detalle cuotas:', e);
-    document.getElementById('contenidoDetalleIngreso').innerHTML =
-      '<p>Error al cargar datos.</p>';
+    try{
+      const r = await fetchConToken(`/reportes/cuotas-impagas-detalle?mes=${encodeURIComponent(mes)}`);
+      const d = await r.json();
+      renderTabla('contenidoDetalleIngreso',
+        ['Número','Nombre','Apellido','Fecha ingreso'],
+        d
+      );
+    }catch(e){
+      console.error('Error detalle cuotas:', e);
+      document.getElementById('contenidoDetalleIngreso').innerHTML =
+        '<p>Error al cargar datos.</p>';
+    }
   }
-}
 
-
-  // ===== CARD 3: INGRESOS VS GASTOS =====
+  // 3. Ingresos vs gastos
   async function cargarCardIngresosVsGastos(){
     try{
       const r = await fetchConToken('/reportes/ingresos-vs-gastos');
@@ -1058,7 +949,7 @@ async function cargarCardCuotasImpagas(){
       if (!ingVsGas.length) return;
 
       ingVsGas.sort((a,b) => a.mes.localeCompare(b.mes));
-      idxMesIngGas = ingVsGas.length - 1;  // último mes por defecto
+      idxMesIngGas = ingVsGas.length - 1;
 
       redibujarChartIngGas();
       refrescarCardIngGas();
@@ -1067,7 +958,6 @@ async function cargarCardCuotasImpagas(){
     }
   }
 
-  // construye la ventana de 3 meses antes y 2 después, centrando cuando se pueda
   function obtenerVentanaMeses(baseIndex){
     const total = ingVsGas.length;
     let start = baseIndex - 3;
@@ -1135,7 +1025,6 @@ async function cargarCardCuotasImpagas(){
     document.getElementById('lbl-resultado-mes').textContent =
       `$ ${Math.round(resMes).toLocaleString('es-AR')}`;
 
-    // totales anuales
     const anio = row.mes.slice(0,4);
     let ingAnio = 0, gasAnio = 0;
     ingVsGas
@@ -1154,132 +1043,102 @@ async function cargarCardCuotasImpagas(){
       `$ ${Math.round(resAnio).toLocaleString('es-AR')}`;
   }
 
-  function cambiarMesIngGas(delta){
+  function cambiarMesIngGas(dir){
     if (!ingVsGas.length) return;
-    idxMesIngGas += delta;
-    if (idxMesIngGas < 0) idxMesIngGas = ingVsGas.length-1;
-    if (idxMesIngGas >= ingVsGas.length) idxMesIngGas = 0;
-
+    const len = ingVsGas.length;
+    if (dir === 'prev') {
+      idxMesIngGas = (idxMesIngGas + 1) % len;   // mes anterior
+    } else {
+      idxMesIngGas = (idxMesIngGas - 1 + len) % len; // mes siguiente
+    }
     redibujarChartIngGas();
     refrescarCardIngGas();
-    
   }
 
-  // ===== CARD 4: ALUMNAS NUEVAS POR MES =====
-async function cargarCardSociasNuevas(){
-  try{
-    const r = await fetchConToken('/reportes/ingresos-por-mes');
-    ingresosPorMes = await r.json();
-    const contTabla = document.getElementById('tabla-socias-mes');
-    contTabla.innerHTML = '';
+  // 4. Alumnas nuevas por mes
+  async function cargarCardSociasNuevas(){
+    try{
+      const r = await fetchConToken('/reportes/ingresos-por-mes');
+      ingresosPorMes = await r.json();
+      const contTabla = document.getElementById('tabla-socias-mes');
+      contTabla.innerHTML = '';
 
-    if (!ingresosPorMes.length){
-      document.getElementById('titulo-mes-socias').textContent = '-';
-      document.getElementById('card-socias-nuevas-numero').textContent = '0';
-      contTabla.innerHTML = '<p>No hay datos.</p>';
-      return;
+      if (!ingresosPorMes.length){
+        document.getElementById('titulo-mes-socias').textContent = '-';
+        document.getElementById('card-socias-nuevas-numero').textContent = '0';
+        contTabla.innerHTML = '<p>No hay datos.</p>';
+        return;
+      }
+
+      ingresosPorMes.sort((a,b) => b.mes.localeCompare(a.mes));
+      idxMesSocias = 0;
+      refrescarCardSocias();
+
+      const t = document.createElement('table');
+      t.className = 'card-table';
+      t.innerHTML = '<thead><tr><th>Mes</th><th>Nuevas</th></tr></thead>';
+      const tb = document.createElement('tbody');
+
+      ingresosPorMes.forEach(rw => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatearMesYYYYMM(rw.mes)}</td>
+          <td class="clickable" onclick="abrirDetalleSociasMesCustom('${rw.mes}')">${rw.cantidad}</td>
+        `;
+        tb.appendChild(tr);
+      });
+
+      t.appendChild(tb);
+      contTabla.appendChild(t);
+
+    }catch(e){
+      console.error('Error card socias nuevas:', e);
     }
-
-    // ordenar de más nuevo a más viejo
-    ingresosPorMes.sort((a,b) => b.mes.localeCompare(a.mes));
-
-    // mes actual → índice 0
-    idxMesSocias = 0;
-    refrescarCardSocias();
-
-    // tabla últimos meses
-    const t = document.createElement('table');
-    t.className = 'card-table';
-    t.innerHTML = '<thead><tr><th>Mes</th><th>Nuevas</th></tr></thead>';
-    const tb = document.createElement('tbody');
-
-    ingresosPorMes.forEach(rw => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${formatearMesYYYYMM(rw.mes)}</td>
-        <td class="clickable" onclick="abrirDetalleSociasMesCustom('${rw.mes}')">${rw.cantidad}</td>
-      `;
-      tb.appendChild(tr);
-    });
-
-    t.appendChild(tb);
-    contTabla.appendChild(t);
-
-  }catch(e){
-    console.error('Error card socias nuevas:', e);
   }
-}
-
-function refrescarCardSocias(){
-  const row = ingresosPorMes[idxMesSocias];
-  document.getElementById('titulo-mes-socias').textContent =
-      formatearMesYYYYMM(row.mes);
-  document.getElementById('card-socias-nuevas-numero').textContent =
-      row.cantidad;
-}
-
-function cambiarMesSocias(delta){
-  if (!ingresosPorMes.length) return;
-  idxMesSocias += delta;
-  if (idxMesSocias < 0) idxMesSocias = ingresosPorMes.length - 1;
-  if (idxMesSocias >= ingresosPorMes.length) idxMesSocias = 0;
-  refrescarCardSocias();
-}
-
-// permite abrir detalle desde la tabla directamente
-function abrirDetalleSociasMesCustom(mes){
-  document.getElementById('modalDetalleIngresos').style.display='flex';
-  document.getElementById('tituloDetalleIngreso').textContent =
-    `Alumnas nuevas — ${formatearMesYYYYMM(mes)}`;
-
-  fetchConToken(`/reportes/detalle-ingresos?mes=${mes}`)
-    .then(r => r.json())
-    .then(data => {
-      renderTabla('contenidoDetalleIngreso',
-        ['Número','Nombre','Apellido','Fecha ingreso'],
-        data
-      );
-    })
-    .catch(() => {
-      document.getElementById('contenidoDetalleIngreso').innerHTML =
-        '<p>Error al cargar datos.</p>';
-    });
-}
-
 
   function refrescarCardSocias(){
     if (!ingresosPorMes.length) return;
     const row = ingresosPorMes[idxMesSocias];
-    document.getElementById('titulo-mes-socias').textContent = formatearMesYYYYMM(row.mes);
-    document.getElementById('card-socias-nuevas-numero').textContent = row.cantidad;
+    document.getElementById('titulo-mes-socias').textContent =
+      formatearMesYYYYMM(row.mes);
+    document.getElementById('card-socias-nuevas-numero').textContent =
+      row.cantidad;
   }
 
-  function cambiarMesSocias(delta){
+  function cambiarMesSocias(dir){
     if (!ingresosPorMes.length) return;
-    idxMesSocias += delta;
-    if (idxMesSocias < 0) idxMesSocias = ingresosPorMes.length-1;
-    if (idxMesSocias >= ingresosPorMes.length) idxMesSocias = 0;
+    const len = ingresosPorMes.length;
+    if (dir === 'prev') {
+      idxMesSocias = (idxMesSocias + 1) % len;
+    } else {
+      idxMesSocias = (idxMesSocias - 1 + len) % len;
+    }
     refrescarCardSocias();
+  }
+
+  function abrirDetalleSociasMesCustom(mes){
+    document.getElementById('modalDetalleIngresos').style.display='flex';
+    document.getElementById('tituloDetalleIngreso').textContent =
+      `Alumnas nuevas — ${formatearMesYYYYMM(mes)}`;
+
+    fetchConToken(`/reportes/detalle-ingresos?mes=${mes}`)
+      .then(r => r.json())
+      .then(data => {
+        renderTabla('contenidoDetalleIngreso',
+          ['Número','Nombre','Apellido','Fecha ingreso'],
+          data
+        );
+      })
+      .catch(() => {
+        document.getElementById('contenidoDetalleIngreso').innerHTML =
+          '<p>Error al cargar datos.</p>';
+      });
   }
 
   async function abrirDetalleSociasMes(){
     if (!ingresosPorMes.length) return;
     const mes = ingresosPorMes[idxMesSocias].mes;
-    document.getElementById('modalDetalleIngresos').style.display='flex';
-    document.getElementById('tituloDetalleIngreso').textContent =
-      `Socias nuevas — ${formatearMesYYYYMM(mes)}`;
-    try{
-      const r = await fetchConToken(`/reportes/detalle-ingresos?mes=${encodeURIComponent(mes)}`);
-      const d = await r.json();
-      renderTabla('contenidoDetalleIngreso',
-        ['Número','Nombre','Apellido','Fecha ingreso'],
-        d
-      );
-    }catch(e){
-      console.error('Error detalle socias:', e);
-      document.getElementById('contenidoDetalleIngreso').innerHTML =
-        '<p>Error al cargar datos.</p>';
-    }
+    abrirDetalleSociasMesCustom(mes);
   }
 
   function cerrarDetalleIngresos(){
@@ -1287,209 +1146,188 @@ function abrirDetalleSociasMesCustom(mes){
     document.getElementById('contenidoDetalleIngreso').innerHTML='';
   }
 
-  /* =======================
-   RANKING INGRESOS / GASTOS
-   ======================= */
+  // 5. Ranking ingresos / gastos
+  async function cargarCardRankingYCuentas(){
+    try{
+      const hoy = new Date();
+      const mesActual = hoy.getMonth() + 1;
+      const anioActual = hoy.getFullYear();
 
-let idxMesRanking = 0;
-let mesesRanking = [];
+      await actualizarRankingYCuentas(mesActual, anioActual);
 
-async function cargarCardRankingYCuentas(){
-  try{
-    const hoy = new Date();
-    const mesActual = hoy.getMonth() + 1;
-    const anioActual = hoy.getFullYear();
+      if (!ingVsGas.length){
+        const r = await fetchConToken('/reportes/ingresos-vs-gastos');
+        ingVsGas = await r.json();
+      }
+      mesesRanking = ingVsGas.map(x => x.mes).sort().reverse();
+      idxMesRanking = 0;
+      document.getElementById('titulo-mes-ranking').textContent =
+        formatearMesYYYYMM(mesesRanking[0]);
 
-    await actualizarRankingYCuentas(mesActual, anioActual);
-
-    mesesRanking = ingVsGas.map(x => x.mes); // ya tenés listado de meses del backend
-    mesesRanking.sort().reverse();           // más nuevo -> más viejo
-
-    idxMesRanking = 0;
-    document.getElementById('titulo-mes-ranking').textContent =
-      formatearMesYYYYMM(mesesRanking[0]);
-
-  }catch(e){
-    console.error('Error inicial ranking/cuentas:', e);
-  }
-}
-
-function cambiarMesRanking(delta){
-  if (!mesesRanking.length) return;
-  idxMesRanking += delta;
-
-  if (idxMesRanking < 0) idxMesRanking = mesesRanking.length - 1;
-  if (idxMesRanking >= mesesRanking.length) idxMesRanking = 0;
-
-  const m = mesesRanking[idxMesRanking];
-  const [anio, mes] = m.split('-').map(Number);
-
-  document.getElementById('titulo-mes-ranking').textContent = formatearMesYYYYMM(m);
-
-  actualizarRankingYCuentas(mes, anio);
-}
-
-/* --- NUEVA LÓGICA: AGRUPAR POR TIPO --- */
-async function actualizarRankingYCuentas(mes, anio){
-  try{
-    const [rIng, rGas] = await Promise.all([
-      fetchConToken(`/reportes/ingresos-por-tipo?mes=${mes}&anio=${anio}`),
-      fetchConToken(`/reportes/gastos-por-tipo?mes=${mes}&anio=${anio}`)
-    ]);
-
-    const ingresos = await rIng.json();
-    const gastos   = await rGas.json();
-
-    const cont = document.getElementById('card-ranking');
-    cont.innerHTML = '';
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'ranking-wrapper';
-
-    const colIng = document.createElement('div');
-    colIng.className = 'ranking-col';
-    colIng.innerHTML = '<div class="ranking-title">Top ingresos</div>';
-
-    const colGas = document.createElement('div');
-    colGas.className = 'ranking-col';
-    colGas.innerHTML = '<div class="ranking-title">Top gastos</div>';
-
-    (Array.isArray(ingresos) ? ingresos : []).forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'ranking-item';
-      row.innerHTML = `
-        <span>${item.tipo}</span>
-        <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
-      `;
-      colIng.appendChild(row);
-    });
-
-    (Array.isArray(gastos) ? gastos : []).forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'ranking-item';
-      row.innerHTML = `
-        <span>${item.tipo}</span>
-        <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
-      `;
-      colGas.appendChild(row);
-    });
-
-    wrapper.appendChild(colIng);
-    wrapper.appendChild(colGas);
-    cont.appendChild(wrapper);
-
-  }catch(e){
-    console.error('Error ranking/cuentas:', e);
-  }
-}
-
-
-/* ============================
-   INGRESOS Y GASTOS POR CUENTA
-   ============================ */
-
-let mesesCuentas = [];
-let idxMesCuentas = 0;
-
-async function cargarCardCuentas(){
-  try{
-    // Usamos ingVsGas para obtener los meses disponibles
-    if (!ingVsGas.length){
-      const r = await fetchConToken('/reportes/ingresos-vs-gastos');
-      ingVsGas = await r.json();
+    }catch(e){
+      console.error('Error inicial ranking/cuentas:', e);
     }
+  }
 
-    mesesCuentas = ingVsGas.map(x => x.mes).sort().reverse();
-    idxMesCuentas = 0;
+  function cambiarMesRanking(dir){
+    if (!mesesRanking.length) return;
+    const len = mesesRanking.length;
+    if (dir === 'prev') {
+      idxMesRanking = (idxMesRanking + 1) % len;
+    } else {
+      idxMesRanking = (idxMesRanking - 1 + len) % len;
+    }
+    const mStr = mesesRanking[idxMesRanking];
+    const [anio, mes] = mStr.split('-').map(Number);
+    document.getElementById('titulo-mes-ranking').textContent =
+      formatearMesYYYYMM(mStr);
+    actualizarRankingYCuentas(mes, anio);
+  }
 
-    const [anio, mes] = mesesCuentas[0].split('-').map(Number);
+  async function actualizarRankingYCuentas(mes, anio){
+    try{
+      const [rIng, rGas] = await Promise.all([
+        fetchConToken(`/reportes/ingresos-por-tipo?mes=${mes}&anio=${anio}`),
+        fetchConToken(`/reportes/gastos-por-tipo?mes=${mes}&anio=${anio}`)
+      ]);
+
+      const ingresos = await rIng.json();
+      const gastos   = await rGas.json();
+
+      const cont = document.getElementById('card-ranking');
+      cont.innerHTML = '';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'ranking-wrapper';
+
+      const colIng = document.createElement('div');
+      colIng.className = 'ranking-col';
+      colIng.innerHTML = '<div class="ranking-title">Top ingresos</div>';
+
+      const colGas = document.createElement('div');
+      colGas.className = 'ranking-col';
+      colGas.innerHTML = '<div class="ranking-title">Top gastos</div>';
+
+      (Array.isArray(ingresos) ? ingresos : []).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'ranking-item';
+        row.innerHTML = `
+          <span>${item.tipo}</span>
+          <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
+        `;
+        colIng.appendChild(row);
+      });
+
+      (Array.isArray(gastos) ? gastos : []).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'ranking-item';
+        row.innerHTML = `
+          <span>${item.tipo}</span>
+          <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
+        `;
+        colGas.appendChild(row);
+      });
+
+      wrapper.appendChild(colIng);
+      wrapper.appendChild(colGas);
+      cont.appendChild(wrapper);
+
+    }catch(e){
+      console.error('Error ranking/cuentas:', e);
+    }
+  }
+
+  // 6. Ingresos y gastos por cuenta
+  async function cargarCardCuentas(){
+    try{
+      if (!ingVsGas.length){
+        const r = await fetchConToken('/reportes/ingresos-vs-gastos');
+        ingVsGas = await r.json();
+      }
+
+      mesesCuentas = ingVsGas.map(x => x.mes).sort().reverse();
+      idxMesCuentas = 0;
+
+      const [anio, mes] = mesesCuentas[0].split('-').map(Number);
+      document.getElementById('titulo-mes-cuentas').textContent =
+        formatearMesYYYYMM(mesesCuentas[0]);
+
+      await actualizarCuentas(mes, anio);
+
+    }catch(e){
+      console.error('Error inicial cuentas:', e);
+    }
+  }
+
+  function cambiarMesCuentas(dir){
+    if (!mesesCuentas.length) return;
+    const len = mesesCuentas.length;
+    if (dir === 'prev') {
+      idxMesCuentas = (idxMesCuentas + 1) % len;
+    } else {
+      idxMesCuentas = (idxMesCuentas - 1 + len) % len;
+    }
+    const mStr = mesesCuentas[idxMesCuentas];
+    const [anio, mes] = mStr.split('-').map(Number);
     document.getElementById('titulo-mes-cuentas').textContent =
-      formatearMesYYYYMM(mesesCuentas[0]);
-
-    await actualizarCuentas(mes, anio);
-
-  }catch(e){
-    console.error('Error inicial cuentas:', e);
-  }
-}
-
-function cambiarMesCuentas(delta){
-  if (!mesesCuentas.length) return;
-  idxMesCuentas += delta;
-
-  if (idxMesCuentas < 0) idxMesCuentas = mesesCuentas.length - 1;
-  if (idxMesCuentas >= mesesCuentas.length) idxMesCuentas = 0;
-
-  const mStr = mesesCuentas[idxMesCuentas];
-  const [anio, mes] = mStr.split('-').map(Number);
-
-  document.getElementById('titulo-mes-cuentas').textContent =
-    formatearMesYYYYMM(mStr);
-
-  actualizarCuentas(mes, anio);
-}
-
-async function actualizarCuentas(mes, anio){
-  try{
-    const [rIng, rGas] = await Promise.all([
-      fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
-      fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
-    ]);
-
-    const ingresos = await rIng.json();
-    const gastos   = await rGas.json();
-
-    const cont = document.getElementById('wrapper-cuentas');
-    cont.innerHTML = '';
-
-    const colIng = document.createElement('div');
-    colIng.className = 'cuentas-col';
-    colIng.innerHTML = `<div class="cuentas-title">Ingresos por cuenta</div>`;
-
-    const colGas = document.createElement('div');
-    colGas.className = 'cuentas-col';
-    colGas.innerHTML = `<div class="cuentas-title">Gastos por cuenta</div>`;
-
-    ingresos.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'cuentas-item';
-      row.innerHTML = `
-        <span>${r.cuenta}</span>
-        <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
-      `;
-      colIng.appendChild(row);
-    });
-
-    gastos.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'cuentas-item';
-      row.innerHTML = `
-        <span>${r.cuenta}</span>
-        <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
-      `;
-      colGas.appendChild(row);
-    });
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'cuentas-wrapper';
-    wrapper.appendChild(colIng);
-    wrapper.appendChild(colGas);
-
-    cont.appendChild(wrapper);
-
-  }catch(e){
-    console.error('Error cuentas:', e);
-  }
-}
-
-  function actualizarMesRankingYCuentas(){
-    if (!ingVsGas.length) return;
-    const row = ingVsGas[idxMesIngGas];
-    const [anio,mes] = row.mes.split('-').map(Number);
-    actualizarRankingYCuentas(mes,anio);
+      formatearMesYYYYMM(mStr);
+    actualizarCuentas(mes, anio);
   }
 
-  // ==== BOTONERA (solo dashboard, por compatibilidad) ====
+  async function actualizarCuentas(mes, anio){
+    try{
+      const [rIng, rGas] = await Promise.all([
+        fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
+        fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
+      ]);
+
+      const ingresos = await rIng.json();
+      const gastos   = await rGas.json();
+
+      const cont = document.getElementById('wrapper-cuentas');
+      cont.innerHTML = '';
+
+      const colIng = document.createElement('div');
+      colIng.className = 'cuentas-col';
+      colIng.innerHTML = '<div class="cuentas-title">Ingresos por cuenta</div>';
+
+      const colGas = document.createElement('div');
+      colGas.className = 'cuentas-col';
+      colGas.innerHTML = '<div class="cuentas-title">Gastos por cuenta</div>';
+
+      (Array.isArray(ingresos) ? ingresos : []).forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'cuentas-item';
+        row.innerHTML = `
+          <span>${r.cuenta}</span>
+          <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
+        `;
+        colIng.appendChild(row);
+      });
+
+      (Array.isArray(gastos) ? gastos : []).forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'cuentas-item';
+        row.innerHTML = `
+          <span>${r.cuenta}</span>
+          <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
+        `;
+        colGas.appendChild(row);
+      });
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'cuentas-wrapper';
+      wrapper.appendChild(colIng);
+      wrapper.appendChild(colGas);
+
+      cont.appendChild(wrapper);
+
+    }catch(e){
+      console.error('Error cuentas:', e);
+    }
+  }
+
+  // BOTONERA
   const REPORTES = ['dashboard'];
   function mostrarReporte(rep){
     document.querySelectorAll('.bloque-reporte').forEach(b => {
@@ -1501,17 +1339,15 @@ async function actualizarCuentas(mes, anio){
     localStorage.setItem('reporte_activo', rep);
   }
 
-  // ==== CARGA INICIAL ====
+  // CARGA INICIAL
   window.onload = async () => {
-    await Promise.all([
-  cargarCardAlumnasPorModalidad(),
-  cargarCardCuotasImpagas(),
-  cargarCardIngresosVsGastos(),
-  cargarCardSociasNuevas(),
-  cargarCardCuentas()
-]);
-
+    await cargarCardAlumnasPorModalidad();
+    await cargarCardCuotasImpagas();
+    await cargarCardIngresosVsGastos();
+    await cargarCardSociasNuevas();
     await cargarCardRankingYCuentas();
+    await cargarCardCuentas();
+
     const repGuardado = localStorage.getItem('reporte_activo') || 'dashboard';
     mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'dashboard');
   };
