@@ -644,6 +644,8 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       ORDER BY mes;
     `;
 
+    console.log('DEBUG cuotas-impagas-resumen:', resultado);
+
     const { rows } = await pool.query(q);
     res.json(rows);
   } catch (err) {
