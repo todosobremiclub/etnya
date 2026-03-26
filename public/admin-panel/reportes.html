@@ -286,16 +286,17 @@
 
 .donut-wrapper{
   display:flex;
-  gap:10px;
+  gap:6px;              /* leyenda más cercana al gráfico */
   align-items:center;
 }
 
 .donut-container{
   position:relative;
-  width:140px;
-  height:140px;
+  width:190px;          /* antes 140 */
+  height:190px;         /* antes 140 */
   flex:0 0 auto;
 }
+
 
 .donut-container canvas{
   width:100% !important;
@@ -307,7 +308,7 @@
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  font-size:20px;
+  font-size:24px;       /* un poco más grande */
   font-weight:700;
   color:#555;
 }
@@ -316,6 +317,7 @@
   flex:1 1 auto;
   font-size:11px;
   color:#444;
+  padding-left:4px;   /* leve desplazamiento hacia la izquierda */
 }
 
 .donut-legend-item{
@@ -330,6 +332,8 @@
   height:10px;
   border-radius:2px;
 }
+
+
   </style>
 </head>
 <body>
