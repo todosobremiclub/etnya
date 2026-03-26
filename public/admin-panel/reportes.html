@@ -470,6 +470,48 @@ canvas {
   white-space: nowrap;
 }
 
+/* ==== RANKING — bajar y centrar contenido ==== */
+.ranking-wrapper{
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 60px;
+  width: 100%;
+  padding-top: 35px;       /* 👉 antes 15px — BAJA EL DETALLE */
+  padding-bottom: 30px;    /* más aire abajo */
+  box-sizing: border-box;
+}
+
+.ranking-col{
+  min-width: 240px;        /* un poquito más ancho para balance visual */
+}
+
+.ranking-title{
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c4e80;
+  margin-bottom: 10px;      /* más aire debajo del título */
+}
+
+.ranking-item{
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef3fb;
+  font-size: 13px;
+}
+
+.ranking-item span:first-child{
+  flex: 1;
+}
+
+.ranking-item span:last-child{
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
 
   </style>
 </head>
