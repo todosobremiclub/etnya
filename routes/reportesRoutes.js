@@ -581,14 +581,14 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
   try {
 
     const q = `
-      WITH alumnos_activos AS (
-        SELECT 
-          id, 
-          fecha_inicio::date
-        FROM alumnos
-        WHERE activo = true
-          AND fecha_inicio IS NOT NULL
-          AND fecha_inicio > '2000-01-01'        -- Protege contra fechas 0026, 0027
+     WITH alumnos_activos AS (
+  SELECT a.id, a.fecha_inicio::date
+  FROM alumnos a
+  LEFT JOIN becados b ON b.alumno_id = a.id
+  WHERE a.activo = true
+    AND a.fecha_inicio IS NOT NULL
+    AND b.alumno_id IS NULL        -- ← EXCLUYE BECADOS
+    AND fecha_inicio > '2000-01-01'        -- Protege contra fechas 0026, 0027
       ),
 
       meses AS (
@@ -657,7 +657,7 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       FROM cuotas_con_pagos
       GROUP BY mes
       HAVING COUNT(*) FILTER (WHERE NOT pagado) > 0
-      ORDER BY mes;
+      ORDER BY mes DESC;
     `;
 
     const { rows } = await pool.query(q);
