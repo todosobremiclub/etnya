@@ -388,41 +388,92 @@
       margin-top:4px;
     }
 
-    /* Ranking ingresos / gastos */
-    .ranking-wrapper{
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 60px;
-      width: 100%;
-      padding-top: 35px;
-      padding-bottom: 30px;
-      box-sizing: border-box;
-    }
-    .ranking-col{
-      min-width: 240px;
-    }
-    .ranking-title{
-      text-align: center;
-      font-size: 15px;
-      font-weight: 700;
-      color: #1c4e80;
-      margin-bottom: 10px;
-    }
-    .ranking-item{
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #eef3fb;
-      font-size: 13px;
-    }
-    .ranking-item span:first-child{
-      flex: 1;
-    }
-    .ranking-item span:last-child{
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    /* ============================
+   RANKING — centrado perfecto
+   ============================ */
+
+.ranking-wrapper{
+  width: 100%;
+  display: flex;
+  justify-content: center;      /* CENTRADO REAL */
+  align-items: flex-start;
+  gap: 80px;                    /* espacio entre columnas */
+  padding: 35px 0 30px 0;       /* baja el bloque */
+  box-sizing: border-box;
+}
+
+.ranking-col{
+  width: 260px;                 /* columnas más anchas y simétricas */
+}
+
+.ranking-title{
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c4e80;
+  margin-bottom: 12px;
+}
+
+.ranking-item{
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef3fb;
+  font-size: 13px;
+}
+
+.ranking-item span:first-child{
+  flex: 1;
+}
+
+.ranking-item span:last-child{
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* ============================
+   CUENTAS — centrado perfecto
+   ============================ */
+
+.cuentas-wrapper{
+  width: 100%;
+  display: flex;
+  justify-content: center;      /* igual que ranking */
+  align-items: flex-start;
+  gap: 80px;
+  padding: 35px 0 30px 0;
+}
+
+.cuentas-col{
+  width: 260px;                 /* igual a ranking */
+}
+
+.cuentas-title{
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c4e80;
+  margin-bottom: 12px;
+}
+
+.cuentas-item{
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef3fb;
+  font-size: 13px;
+}
+
+.cuentas-item span:first-child{
+  flex: 1;
+}
+
+.cuentas-item span:last-child{
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 
     /* Ingresos y gastos por cuenta */
     .cuentas-wrapper{
