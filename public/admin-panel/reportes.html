@@ -283,6 +283,53 @@
       .contenido{margin-left:0;padding:70px 10px 16px}
       .dashboard-grid{grid-template-columns:1fr}
     }
+
+.donut-wrapper{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.donut-container{
+  position:relative;
+  width:140px;
+  height:140px;
+  flex:0 0 auto;
+}
+
+.donut-container canvas{
+  width:100% !important;
+  height:100% !important;
+}
+
+.donut-center{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:20px;
+  font-weight:700;
+  color:#555;
+}
+
+.donut-legend{
+  flex:1 1 auto;
+  font-size:11px;
+  color:#444;
+}
+
+.donut-legend-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:4px;
+}
+
+.donut-legend-color{
+  width:10px;
+  height:10px;
+  border-radius:2px;
+}
   </style>
 </head>
 <body>
@@ -333,21 +380,26 @@
 
     <div class="dashboard-grid">
 
-      <!-- 1. Socias por actividad / modalidad (DONUT + detalle abajo) -->
-      <div class="dashboard-card">
-        <div class="card-header">
-          <span>Socias por actividad / modalidad</span>
-          <small>Distribución de alumnas activas</small>
-        </div>
+      <!-- 1. Socias por actividad / modalidad (DONUT + leyenda) -->
+<div class="dashboard-card">
+  <div class="card-header">
+    <span>Socias por actividad / modalidad</span>
+    <small>Distribución de alumnas activas</small>
+  </div>
 
-        <div style="height:170px;">
-          <canvas id="chart-modalidades"></canvas>
-        </div>
+  <div class="donut-wrapper">
+    <div class="donut-container">
+      <canvas id="chart-modalidades"></canvas>
+      <!-- número total en el centro del donut -->
+      <div id="total-modalidades" class="donut-center">0</div>
+    </div>
 
-        <div id="lista-modalidades" class="lista-modalidades">
-          <!-- Se rellena por JS -->
-        </div>
-      </div>
+    <!-- leyenda con colores y nombre de la actividad -->
+    <div id="legend-modalidades" class="donut-legend">
+      <!-- Se rellena por JS -->
+    </div>
+  </div>
+</div>
 
       <!-- 2. Cuotas impagas -->
       <div class="dashboard-card">
@@ -593,61 +645,72 @@
 
   let chartModalidades = null;
 
-  // ===== CARD 1: ALUMNAS POR MODALIDAD =====
-  async function cargarCardAlumnasPorModalidad(){
-    try{
-      const r = await fetchConToken('/reportes/alumnos-por-modalidad');
-      const data = await r.json();
-      const ctx = document.getElementById('chart-modalidades').getContext('2d');
-      const lista = document.getElementById('lista-modalidades');
-      lista.innerHTML = '';
+ // ===== CARD 1: SOCIAS POR ACTIVIDAD / MODALIDAD =====
+async function cargarCardAlumnasPorModalidad(){
+  try{
+    const r = await fetchConToken('/reportes/alumnos-por-modalidad');
+    const data = await r.json();
 
-      if (!data.length){
-        lista.innerHTML = '<p>No hay alumnas activas.</p>';
-        return;
-      }
+    const ctx      = document.getElementById('chart-modalidades').getContext('2d');
+    const lblTotal = document.getElementById('total-modalidades');
+    const legend   = document.getElementById('legend-modalidades');
 
-      const labels = data.map(x => x.modalidad);
-      const valores = data.map(x => Number(x.cantidad||0));
-      const total = valores.reduce((s,n) => s+n, 0);
+    legend.innerHTML = '';
+    lblTotal.textContent = '0';
 
-      const ul = document.createElement('ul');
-      ul.style.listStyle = 'none';
-      ul.style.padding = '0';
-      ul.style.margin = '0';
-      ul.style.fontSize = '11px';
-
-      data.forEach(row => {
-        const pct = total>0 ? Math.round(100*row.cantidad/total) : 0;
-        const li = document.createElement('li');
-        li.textContent = `${row.modalidad}: ${row.cantidad} (${pct}%)`;
-        ul.appendChild(li);
-      });
-      lista.appendChild(ul);
-
-      if (chartModalidades) chartModalidades.destroy();
-      chartModalidades = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data: valores,
-            backgroundColor: [
-              '#1c4e80','#ff6b6b','#4ecdc4','#ffa600',
-              '#9b5de5','#00bbf9','#f15bb5','#2ec4b6'
-            ]
-          }]
-        },
-        options: {
-          plugins:{ legend:{display:false} },
-          cutout:'55%'
-        }
-      });
-
-    }catch(e){
-      console.error('Error card modalidades:', e);
+    if (!data.length){
+      legend.innerHTML = '<p>No hay alumnas activas.</p>';
+      return;
     }
+
+    const labels  = data.map(x => x.modalidad);
+    const valores = data.map(x => Number(x.cantidad||0));
+    const total   = valores.reduce((s,n) => s+n, 0);
+    lblTotal.textContent = total;
+
+    const colores = [
+      '#1c4e80','#4ecdc4','#ffa600','#ff6b6b',
+      '#9b5de5','#00bbf9','#f15bb5','#2ec4b6'
+    ];
+
+    // Leyenda a la derecha con color + texto
+    data.forEach((row, i) => {
+      const item  = document.createElement('div');
+      item.className = 'donut-legend-item';
+
+      const colorBox = document.createElement('div');
+      colorBox.className = 'donut-legend-color';
+      colorBox.style.backgroundColor = colores[i % colores.length];
+
+      const pct = total > 0 ? Math.round(100 * row.cantidad / total) : 0;
+      const txt = document.createElement('span');
+      txt.textContent = `${row.modalidad} (${pct}%)`;
+
+      item.appendChild(colorBox);
+      item.appendChild(txt);
+      legend.appendChild(item);
+    });
+
+    if (chartModalidades) chartModalidades.destroy();
+    chartModalidades = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: valores,
+          backgroundColor: colores
+        }]
+      },
+      options: {
+        plugins:{ legend:{ display:false } },
+        cutout:'60%'
+      }
+    });
+
+  }catch(e){
+    console.error('Error card modalidades:', e);
   }
+}
 
   // ===== CARD 2: CUOTAS IMPAGAS =====
   async function cargarCardCuotasImpagas(){
