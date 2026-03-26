@@ -587,7 +587,7 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       ),
       meses AS (
         SELECT date_trunc('month', MIN(fecha_inicio))::date AS min_mes,
-               date_trunc('month', NOW())::date             AS max_mes
+               date_trunc('month', NOW())::date          AS max_mes
         FROM alumnos_activos
       ),
       serie_meses AS (
@@ -599,8 +599,8 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       ),
       cuotas AS (
         SELECT
-          a.id   AS alumno_id,
-          s.mes  AS mes
+          a.id  AS alumno_id,
+          s.mes AS mes
         FROM alumnos_activos a
         JOIN serie_meses s
           ON s.mes >= date_trunc('month', a.fecha_inicio)
@@ -644,15 +644,18 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       ORDER BY mes;
     `;
 
-    console.log('DEBUG cuotas-impagas-resumen:', resultado);
-
     const { rows } = await pool.query(q);
+
+    // Si querés dejar un log de debugging:
+    console.log('DEBUG cuotas-impagas-resumen, filas:', rows.length);
+
     res.json(rows);
   } catch (err) {
     console.error('Error en /cuotas-impagas-resumen:', err);
     res.status(500).json({ error: 'Error al calcular cuotas impagas' });
   }
 });
+
 
 // 16. Detalle de cuotas impagas por mes
 router.get('/cuotas-impagas-detalle', async (req, res) => {
