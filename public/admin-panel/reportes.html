@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body {
+   body {
   margin: 0;
   font-family: 'Inter', sans-serif;
   background-color: #cce1d6; /* fondo original */
@@ -126,16 +126,15 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
-  grid-template-rows: auto auto;
   gap: 12px;
   margin-top: 6px;
 }
 
-/* Cada tarjeta */
+/* Cards */
 .dashboard-card {
   background:#fbfdff;
   border-radius:10px;
-  padding:12px 14px;
+  padding:12px 14px 20px 14px; /* más aire abajo */
   box-shadow:0 1px 3px rgba(0,0,0,.08);
   display:flex;
   flex-direction:column;
@@ -155,6 +154,8 @@
   color:#888;
   font-size:11px;
 }
+
+/* Navegación */
 .card-nav {
   display:flex;
   align-items:center;
@@ -203,6 +204,7 @@
   z-index:1;
 }
 
+/* Textos */
 .card-subtitle {
   font-size:11px;
   color:#777;
@@ -219,7 +221,7 @@ canvas {
   text-decoration:underline;
 }
 
-/* Resumen de mes / año */
+/* Resumen ingresos/gastos */
 .card-resumen-mes {
   display:flex;
   justify-content:space-between;
@@ -234,7 +236,7 @@ canvas {
   font-weight:600;
 }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width:1024px){
   .dashboard-grid {
     grid-template-columns: repeat(2,minmax(0,1fr));
@@ -267,50 +269,57 @@ canvas {
   .dashboard-grid{grid-template-columns:1fr}
 }
 
-/* --- DONUT --- */
+/* === DONUT — CENTRADO PERFECTO === */
 .donut-wrapper{
   display:flex;
-  justify-content:center;      /* CENTRADO REAL */
+  justify-content:center;
   align-items:center;
-  gap:20px !important;
   width:100%;
+  padding:20px 0 30px 0; /* baja todo el bloque y lo centra verticalmente */
+  gap:35px;              /* más aire entre donut y leyenda */
 }
 
 .donut-container{
   position:relative;
-  width:190px;
-  height:190px;
-  flex:0 0 auto;
+  width:220px;           /* donut más grande */
+  height:220px;
+  flex-shrink:0;
 }
+
 .donut-container canvas{
   width:100% !important;
   height:100% !important;
 }
+
 .donut-center{
   position:absolute;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  font-size:24px;
+  font-size:32px;
   font-weight:700;
-  color:#555;
+  color:#444;
 }
 
+/* Leyenda reequilibrada */
 .donut-legend{
-  flex:1 1 auto;
-  font-size:11px;
+  font-size:12px;
   color:#444;
-  margin-left:10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-left:20px;
+  margin-right:20px;     /* la corre hacia adentro → centro visual */
 }
+
 .donut-legend-item{
   display:flex;
   align-items:center;
   gap:6px;
-  margin-bottom:4px;
 }
 .donut-legend-color{
-  width:10px;
-  height:10px;
+  width:12px;
+  height:12px;
   border-radius:2px;
 }
 
