@@ -775,14 +775,14 @@ async function cargarCardCuotasImpagas(){
       return;
     }
 
-    // ordenamos por mes
-    resumenCuotas.sort((a,b) => a.mes.localeCompare(b.mes));
-    idxMesCuotas = resumenCuotas.length - 1; // último mes por defecto
+    // ordenamos de más nuevo a más viejo
+    resumenCuotas.sort((a,b) => b.mes.localeCompare(a.mes));
+    idxMesCuotas = 0; // el primer elemento es el último mes
 
     // refrescamos número grande + selector
     refrescarCardCuotas();
 
-    // armamos tabla de meses
+    // armamos tabla de meses (ya está de más nuevo a más viejo)
     const theadHtml = '<thead><tr><th>Mes</th><th>Socias sin pago</th></tr></thead>';
     const tbody = document.createElement('tbody');
 
@@ -793,7 +793,6 @@ async function cargarCardCuotasImpagas(){
         <td>${mesFmt}</td>
         <td class="clickable" data-mes="${row.mes}">${row.sin_pago}</td>
       `;
-      // click en el número de la tabla -> detalle para ese mes
       tr.querySelector('td.clickable').addEventListener('click', () => {
         abrirDetalleCuotasMes(row.mes);
       });
@@ -807,6 +806,7 @@ async function cargarCardCuotasImpagas(){
     console.error('Error card cuotas:', e);
   }
 }
+
 
   function refrescarCardCuotas(){
   if (!resumenCuotas.length) return;

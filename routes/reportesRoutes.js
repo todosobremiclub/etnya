@@ -576,24 +576,22 @@ router.get('/pagos-parciales-detalle', async (req, res) => {
 
 // 15. Cuotas impagas por mes (resumen)
 // Tiene en cuenta la fecha de ingreso: meses anteriores a fecha_inicio NO se cuentan.
-// Optimizado para evitar generar miles de meses y mejorar performance.
+// EXCLUYE BECADOS del cálculo.
 router.get('/cuotas-impagas-resumen', async (_req, res) => {
   try {
-
     const q = `
-     WITH alumnos_activos AS (
-  SELECT a.id, a.fecha_inicio::date
-  FROM alumnos a
-  LEFT JOIN becados b ON b.alumno_id = a.id
-  WHERE a.activo = true
-    AND a.fecha_inicio IS NOT NULL
-    AND b.alumno_id IS NULL        -- ← EXCLUYE BECADOS
-    AND fecha_inicio > '2000-01-01'        -- Protege contra fechas 0026, 0027
+      WITH alumnos_activos AS (
+        SELECT a.id, a.fecha_inicio::date
+        FROM alumnos a
+        LEFT JOIN becados b ON b.alumno_id = a.id
+        WHERE a.activo = true
+          AND a.fecha_inicio IS NOT NULL
+          AND a.fecha_inicio > '2000-01-01'          -- protege contra años 0026/0027
+          AND b.alumno_id IS NULL                    -- EXCLUYE becados
       ),
 
       meses AS (
         SELECT  
-          -- Tomamos la mínima fecha real, pero con tope a 24 meses atrás
           GREATEST(
             date_trunc('month', MIN(fecha_inicio))::date,
             date_trunc('month', NOW()) - interval '24 months'
@@ -657,13 +655,11 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
       FROM cuotas_con_pagos
       GROUP BY mes
       HAVING COUNT(*) FILTER (WHERE NOT pagado) > 0
-      ORDER BY mes DESC;
+      ORDER BY mes DESC;               -- último mes primero
     `;
 
     const { rows } = await pool.query(q);
-
     console.log('cuotas-impagas-resumen OK – filas:', rows.length);
-
     res.json(rows);
 
   } catch (err) {
@@ -671,7 +667,6 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
     res.status(500).json({ error: 'Error al calcular cuotas impagas' });
   }
 });
-
 
 // 16. Detalle de cuotas impagas por mes
 router.get('/cuotas-impagas-detalle', async (req, res) => {
@@ -683,14 +678,24 @@ router.get('/cuotas-impagas-detalle', async (req, res) => {
   try {
     const q = `
       WITH alumnos_activos AS (
-        SELECT id, numero_alumno, nombre, apellido, fecha_inicio::date
-        FROM alumnos
-        WHERE activo = true
-          AND fecha_inicio IS NOT NULL
+        SELECT 
+          a.id, 
+          a.numero_alumno, 
+          a.nombre, 
+          a.apellido, 
+          a.fecha_inicio::date
+        FROM alumnos a
+        LEFT JOIN becados b ON b.alumno_id = a.id
+        WHERE a.activo = true
+          AND a.fecha_inicio IS NOT NULL
+          AND a.fecha_inicio > '2000-01-01'
+          AND b.alumno_id IS NULL            -- EXCLUYE becados
       ),
+
       mes_obj AS (
         SELECT to_date($1 || '-01', 'YYYY-MM-DD')::date AS mes
       ),
+
       cuotas AS (
         SELECT
           a.id,
@@ -704,6 +709,7 @@ router.get('/cuotas-impagas-detalle', async (req, res) => {
         WHERE date_trunc('month', (SELECT mes FROM mes_obj))
               >= date_trunc('month', a.fecha_inicio)
       ),
+
       pagos_norm AS (
         SELECT
           p.alumno_id,
@@ -722,6 +728,7 @@ router.get('/cuotas-impagas-detalle', async (req, res) => {
         FROM pagos p
         WHERE p.mes_pagado IS NOT NULL
       )
+
       SELECT
         c.numero_alumno AS "Número",
         c.nombre        AS "Nombre",
@@ -737,6 +744,7 @@ router.get('/cuotas-impagas-detalle', async (req, res) => {
 
     const { rows } = await pool.query(q, [mes]);
     res.json(rows);
+
   } catch (err) {
     console.error('Error en /cuotas-impagas-detalle:', err);
     res.status(500).json({ error: 'Error al obtener detalle de cuotas impagas' });
