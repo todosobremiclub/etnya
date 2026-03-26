@@ -356,6 +356,21 @@ canvas {
   margin-top:4px;
 }
 
+/* ===== Ingresos vs gastos — Centrado del gráfico ===== */
+#chart-ing-gas {
+  margin: 0 auto !important;       /* centra el canvas */
+  display: block !important;
+}
+
+.ing-gas-chart-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;         /* centra el container */
+  align-items: center;
+  padding: 20px 0 10px 0;          /* baja el gráfico */
+  box-sizing: border-box;
+}
+
 
 
   </style>
@@ -486,9 +501,9 @@ canvas {
           </div>
         </div>
 
-        <div style="height:140px;">
-          <canvas id="chart-ing-gas"></canvas>
-        </div>
+        <div class="ing-gas-chart-wrapper">
+  <canvas id="chart-ing-gas" height="140"></canvas>
+</div>
 
         <!-- Resumen anual debajo del gráfico -->
         <div class="card-resumen-mes">
@@ -953,7 +968,7 @@ async function cargarCardCuotasImpagas(){
 
     redibujarChartIngGas();
     refrescarCardIngGas();
-    actualizarMesRankingYCuentas(); // para sincronizar ranking y cuentas con el mes elegido
+    
   }
 
   // ===== CARD 4: SOCIAS NUEVAS =====
