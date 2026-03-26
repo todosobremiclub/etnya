@@ -431,6 +431,44 @@ canvas {
   font-weight: 600;
 }
 
+/* ==== RANKING — Diseño centrado y prolijo ==== */
+.ranking-wrapper {
+  display: flex;
+  justify-content: center;       /* CENTRADO REAL */
+  align-items: flex-start;
+  gap: 60px;                     /* espacio entre columnas */
+  padding: 15px 0 25px 0;
+  width: 100%;
+}
+
+.ranking-col {
+  min-width: 220px;
+}
+
+.ranking-title {
+  text-align: center;            /* TITULO CENTRADO */
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c4e80;
+  margin-bottom: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #eef3fb;
+  font-size: 13px;
+}
+
+.ranking-item span:first-child {
+  flex: 1;
+}
+
+.ranking-item span:last-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 
   </style>
@@ -616,14 +654,19 @@ canvas {
   <div class="card-header">
     <span>Ranking ingresos / gastos</span>
     <div class="card-nav">
+      <button onclick="cambiarMesRanking(-1)">◀</button>
       <span id="titulo-mes-ranking" class="mes-selector"></span>
+      <button onclick="cambiarMesRanking(1)">▶</button>
     </div>
   </div>
 
-  <div class="card-subtitle">Top ingresos (incluye cuotas) y top gastos del mes.</div>
+  <div class="card-subtitle">
+    Top ingresos (incluye cuotas) y top gastos del mes.
+  </div>
 
   <div id="card-ranking" class="ranking-wrapper"></div>
 </div>
+
 
       <!-- 6. Ingresos y gastos por cuenta -->
       <div class="dashboard-card">
@@ -1160,105 +1203,99 @@ function abrirDetalleSociasMesCustom(mes){
     document.getElementById('contenidoDetalleIngreso').innerHTML='';
   }
 
-  // ===== CARD 5 y 6: RANKING + CUENTAS (comparten mes) =====
-  async function cargarCardRankingYCuentas(){
-    try{
-      const hoy = new Date();
-      const mesActual = hoy.getMonth() + 1;
-      const anioActual = hoy.getFullYear();
+  /* =======================
+   RANKING INGRESOS / GASTOS
+   ======================= */
 
-      await actualizarRankingYCuentas(mesActual, anioActual);
-    }catch(e){
-      console.error('Error inicial ranking/cuentas:', e);
-    }
-  }
+let idxMesRanking = 0;
+let mesesRanking = [];
 
- async function actualizarRankingYCuentas(mes, anio){
+async function cargarCardRankingYCuentas(){
   try{
+    const hoy = new Date();
+    const mesActual = hoy.getMonth() + 1;
+    const anioActual = hoy.getFullYear();
+
+    await actualizarRankingYCuentas(mesActual, anioActual);
+
+    mesesRanking = ingVsGas.map(x => x.mes); // ya tenés listado de meses del backend
+    mesesRanking.sort().reverse();           // más nuevo -> más viejo
+
+    idxMesRanking = 0;
+    document.getElementById('titulo-mes-ranking').textContent =
+      formatearMesYYYYMM(mesesRanking[0]);
+
+  }catch(e){
+    console.error('Error inicial ranking/cuentas:', e);
+  }
+}
+
+function cambiarMesRanking(delta){
+  if (!mesesRanking.length) return;
+  idxMesRanking += delta;
+
+  if (idxMesRanking < 0) idxMesRanking = mesesRanking.length - 1;
+  if (idxMesRanking >= mesesRanking.length) idxMesRanking = 0;
+
+  const m = mesesRanking[idxMesRanking];
+  const [anio, mes] = m.split('-').map(Number);
+
+  document.getElementById('titulo-mes-ranking').textContent = formatearMesYYYYMM(m);
+
+  actualizarRankingYCuentas(mes, anio);
+}
+
+/* --- NUEVA LÓGICA: AGRUPAR POR TIPO --- */
+async function actualizarRankingYCuentas(mes, anio){
+  try{
+
     const [rIng, rGas] = await Promise.all([
-      fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
-      fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
+      fetchConToken(`/reportes/ingresos-por-tipo?mes=${mes}&anio=${anio}`),
+      fetchConToken(`/reportes/gastos-por-tipo?mes=${mes}&anio=${anio}`)
     ]);
 
-    const ing = await rIng.json();
-    const gas = await rGas.json();
-
-    document.getElementById('titulo-mes-ranking').textContent =
-      `${mesesTxt[mes]} ${anio}`;
+    const ingresos = await rIng.json();
+    const gastos   = await rGas.json();
 
     const cont = document.getElementById('card-ranking');
     cont.innerHTML = '';
 
-    /* === PROCESO PARA INGRESOS === */
-    const totalIngresos = ing.reduce((s,r)=>s + Number(r.total||0),0);
-
-    // AGRUPAR ingresos = “Cuotas” + otros
-    const listadoIng = [];
-
-    // Cuotas
-    const cuotasTotal = ing
-      .filter(r => r.cuenta.toLowerCase().includes('cuota'))
-      .reduce((s,r)=>s + Number(r.total||0),0);
-
-    if (cuotasTotal > 0){
-      listadoIng.push({
-        nombre: 'Cuotas',
-        total: cuotasTotal,
-        pct: ((cuotasTotal / totalIngresos) * 100).toFixed(1)
-      });
-    }
-
-    // Otros ingresos (cancha, salón, etc.)
-    ing.filter(r => !r.cuenta.toLowerCase().includes('cuota'))
-       .forEach(r => {
-         listadoIng.push({
-           nombre: r.cuenta,
-           total: Number(r.total||0),
-           pct: ((Number(r.total||0) / totalIngresos) * 100).toFixed(1)
-         });
-       });
-
-    // Ordenar
-    listadoIng.sort((a,b)=> b.total - a.total);
-
-    /* === PROCESO PARA GASTOS === */
-    const totalGastos = gas.reduce((s,r)=>s + Number(r.total||0),0);
-
-    const listadoGas = gas.map(r => ({
-      nombre: r.cuenta,
-      total: Number(r.total||0),
-      pct: ((Number(r.total||0)/totalGastos)*100).toFixed(1)
-    })).sort((a,b)=>b.total - a.total);
-
-    /* === ARMAR HTML === */
+    /* === ARMAR COLUMNAS === */
     const colIng = document.createElement('div');
+    colIng.className = 'ranking-col';
+
     const colGas = document.createElement('div');
+    colGas.className = 'ranking-col';
 
-    colIng.innerHTML = '<div class="ranking-col-title">Top ingresos</div>';
-    colGas.innerHTML = '<div class="ranking-col-title">Top gastos</div>';
+    colIng.innerHTML = `<div class="ranking-title">Top ingresos</div>`;
+    colGas.innerHTML = `<div class="ranking-title">Top gastos</div>`;
 
-    listadoIng.slice(0,5).forEach(r=>{
+    ingresos.forEach(item => {
       const row = document.createElement('div');
       row.className = 'ranking-item';
       row.innerHTML = `
-        <span>${r.nombre}</span>
-        <span>$ ${r.total.toLocaleString('es-AR')} (${r.pct}%)</span>
+        <span>${item.tipo}</span>
+        <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
       `;
       colIng.appendChild(row);
     });
 
-    listadoGas.slice(0,5).forEach(r=>{
+    gastos.forEach(item => {
       const row = document.createElement('div');
       row.className = 'ranking-item';
       row.innerHTML = `
-        <span>${r.nombre}</span>
-        <span>$ ${r.total.toLocaleString('es-AR')} (${r.pct}%)</span>
+        <span>${item.tipo}</span>
+        <span>$ ${Number(item.total).toLocaleString('es-AR')} (${item.pct}%)</span>
       `;
       colGas.appendChild(row);
     });
 
-    cont.appendChild(colIng);
-    cont.appendChild(colGas);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ranking-wrapper';
+    wrapper.appendChild(colIng);
+    wrapper.appendChild(colGas);
+
+    cont.appendChild(wrapper);
 
   }catch(e){
     console.error('Error ranking/cuentas:', e);

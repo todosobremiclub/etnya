@@ -473,6 +473,82 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
   }
 });
 
+// 12.1 Ingresos por tipo (para ranking ingresos)
+// Agrupa por campo "tipo" de la tabla pagos (por ejemplo: Cuota, Cancha, Salón, etc.)
+router.get('/ingresos-por-tipo', async (req, res) => {
+  const { mes, anio } = req.query; // mes: 1..12 | anio: 2026, etc.
+
+  if (!mes || !anio) {
+    return res.status(400).json({ error: 'Faltan mes y anio' });
+  }
+
+  try {
+    const q = `
+      SELECT 
+        COALESCE(tipo, 'Sin tipo') AS tipo,
+        SUM(monto)                 AS total
+      FROM pagos
+      WHERE EXTRACT(MONTH FROM fecha_pago) = $1
+        AND EXTRACT(YEAR  FROM fecha_pago) = $2
+      GROUP BY tipo
+      ORDER BY total DESC
+    `;
+
+    const { rows } = await pool.query(q, [mes, anio]);
+    const suma = rows.reduce((s,r) => s + Number(r.total || 0), 0);
+
+    const out = rows.map(r => ({
+      tipo : r.tipo,
+      total: Number(r.total || 0),
+      pct  : suma > 0 ? ((Number(r.total || 0) / suma) * 100).toFixed(1) : '0.0'
+    }));
+
+    res.json(out);
+
+  } catch (err) {
+    console.error('Error en /ingresos-por-tipo:', err);
+    res.status(500).json({ error: 'Error al obtener ingresos por tipo' });
+  }
+});
+
+// 12.2 Gastos por tipo (para ranking gastos)
+// Agrupa por campo "tipo" de la tabla gastos (definido en Configuración -> Tipos de Gastos)
+router.get('/gastos-por-tipo', async (req, res) => {
+  const { mes, anio } = req.query; // mes: 1..12 | anio: 2026, etc.
+
+  if (!mes || !anio) {
+    return res.status(400).json({ error: 'Faltan mes y anio' });
+  }
+
+  try {
+    const q = `
+      SELECT 
+        COALESCE(tipo, 'Sin tipo') AS tipo,
+        SUM(monto)                 AS total
+      FROM gastos
+      WHERE EXTRACT(MONTH FROM fecha) = $1
+        AND EXTRACT(YEAR  FROM fecha) = $2
+      GROUP BY tipo
+      ORDER BY total DESC
+    `;
+
+    const { rows } = await pool.query(q, [mes, anio]);
+    const suma = rows.reduce((s,r) => s + Number(r.total || 0), 0);
+
+    const out = rows.map(r => ({
+      tipo : r.tipo,
+      total: Number(r.total || 0),
+      pct  : suma > 0 ? ((Number(r.total || 0) / suma) * 100).toFixed(1) : '0.0'
+    }));
+
+    res.json(out);
+
+  } catch (err) {
+    console.error('Error en /gastos-por-tipo:', err);
+    res.status(500).json({ error: 'Error al obtener gastos por tipo' });
+  }
+});
+
 // 13) Pagos parciales: RESUMEN por mes (YYYY-MM) y sede, con TOTAL en pesos
 router.get('/pagos-parciales-resumen', async (_req, res) => {
   try {
