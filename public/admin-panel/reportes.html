@@ -511,7 +511,45 @@ canvas {
   white-space: nowrap;
 }
 
+/* ===== Ingresos y gastos por cuenta ===== */
 
+.cuentas-wrapper{
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 60px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.cuentas-col{
+  min-width: 240px;
+}
+
+.cuentas-title{
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c4e80;
+  margin-bottom: 10px;
+}
+
+.cuentas-item{
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef3fb;
+  font-size: 13px;
+}
+
+.cuentas-item span:first-child{
+  flex: 1;
+}
+
+.cuentas-item span:last-child{
+  font-weight: 600;
+  white-space: nowrap;
+}
 
   </style>
 </head>
@@ -711,18 +749,22 @@ canvas {
 
 
       <!-- 6. Ingresos y gastos por cuenta -->
-      <div class="dashboard-card">
-        <div class="card-header">
-          <span>Ingresos y gastos por cuenta</span>
-          <div class="card-nav">
-            <span id="titulo-mes-cuentas" style="font-size:11px;"></span>
-          </div>
-        </div>
-        <div class="card-table-wrapper">
-          <table class="card-table" id="tabla-cuentas">
-            <!-- Se rellena por JS -->
-          </table>
-        </div>
+<div class="dashboard-card">
+  <div class="card-header">
+    <span>Ingresos y gastos por cuenta</span>
+    <div class="card-nav">
+      <button onclick="cambiarMesCuentas(-1)">◀</button>
+      <span id="titulo-mes-cuentas" class="mes-selector"></span>
+      <button onclick="cambiarMesCuentas(1)">▶</button>
+    </div>
+  </div>
+
+  <div class="card-subtitle">
+    Totales del mes agrupados por cuenta de ingreso o pago.
+  </div>
+
+  <div id="wrapper-cuentas" class="cuentas-wrapper"></div>
+</div>
       </div>
 
     </div>
@@ -1342,6 +1384,104 @@ async function actualizarRankingYCuentas(mes, anio){
 }
 
 
+/* ============================
+   INGRESOS Y GASTOS POR CUENTA
+   ============================ */
+
+let mesesCuentas = [];
+let idxMesCuentas = 0;
+
+async function cargarCardCuentas(){
+  try{
+    // Usamos ingVsGas para obtener los meses disponibles
+    if (!ingVsGas.length){
+      const r = await fetchConToken('/reportes/ingresos-vs-gastos');
+      ingVsGas = await r.json();
+    }
+
+    mesesCuentas = ingVsGas.map(x => x.mes).sort().reverse();
+    idxMesCuentas = 0;
+
+    const [anio, mes] = mesesCuentas[0].split('-').map(Number);
+    document.getElementById('titulo-mes-cuentas').textContent =
+      formatearMesYYYYMM(mesesCuentas[0]);
+
+    await actualizarCuentas(mes, anio);
+
+  }catch(e){
+    console.error('Error inicial cuentas:', e);
+  }
+}
+
+function cambiarMesCuentas(delta){
+  if (!mesesCuentas.length) return;
+  idxMesCuentas += delta;
+
+  if (idxMesCuentas < 0) idxMesCuentas = mesesCuentas.length - 1;
+  if (idxMesCuentas >= mesesCuentas.length) idxMesCuentas = 0;
+
+  const mStr = mesesCuentas[idxMesCuentas];
+  const [anio, mes] = mStr.split('-').map(Number);
+
+  document.getElementById('titulo-mes-cuentas').textContent =
+    formatearMesYYYYMM(mStr);
+
+  actualizarCuentas(mes, anio);
+}
+
+async function actualizarCuentas(mes, anio){
+  try{
+    const [rIng, rGas] = await Promise.all([
+      fetchConToken(`/reportes/por-cuenta-filtrado?mes=${mes}&anio=${anio}`),
+      fetchConToken(`/reportes/gastos-por-cuenta-filtrado?mes=${mes}&anio=${anio}`)
+    ]);
+
+    const ingresos = await rIng.json();
+    const gastos   = await rGas.json();
+
+    const cont = document.getElementById('wrapper-cuentas');
+    cont.innerHTML = '';
+
+    const colIng = document.createElement('div');
+    colIng.className = 'cuentas-col';
+    colIng.innerHTML = `<div class="cuentas-title">Ingresos por cuenta</div>`;
+
+    const colGas = document.createElement('div');
+    colGas.className = 'cuentas-col';
+    colGas.innerHTML = `<div class="cuentas-title">Gastos por cuenta</div>`;
+
+    ingresos.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'cuentas-item';
+      row.innerHTML = `
+        <span>${r.cuenta}</span>
+        <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
+      `;
+      colIng.appendChild(row);
+    });
+
+    gastos.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'cuentas-item';
+      row.innerHTML = `
+        <span>${r.cuenta}</span>
+        <span>$ ${Number(r.total).toLocaleString('es-AR')}</span>
+      `;
+      colGas.appendChild(row);
+    });
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cuentas-wrapper';
+    wrapper.appendChild(colIng);
+    wrapper.appendChild(colGas);
+
+    cont.appendChild(wrapper);
+
+  }catch(e){
+    console.error('Error cuentas:', e);
+  }
+}
+
   function actualizarMesRankingYCuentas(){
     if (!ingVsGas.length) return;
     const row = ingVsGas[idxMesIngGas];
@@ -1364,11 +1504,13 @@ async function actualizarRankingYCuentas(mes, anio){
   // ==== CARGA INICIAL ====
   window.onload = async () => {
     await Promise.all([
-      cargarCardAlumnasPorModalidad(),
-      cargarCardCuotasImpagas(),
-      cargarCardIngresosVsGastos(),
-      cargarCardSociasNuevas()
-    ]);
+  cargarCardAlumnasPorModalidad(),
+  cargarCardCuotasImpagas(),
+  cargarCardIngresosVsGastos(),
+  cargarCardSociasNuevas(),
+  cargarCardCuentas()
+]);
+
     await cargarCardRankingYCuentas();
     const repGuardado = localStorage.getItem('reporte_activo') || 'dashboard';
     mostrarReporte(REPORTES.includes(repGuardado)?repGuardado:'dashboard');
