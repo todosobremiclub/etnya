@@ -474,7 +474,7 @@ router.get('/gastos-por-cuenta-filtrado', async (req, res) => {
 });
 
 // 12.1 Ingresos por tipo (para ranking ingresos)
-// Agrupa por campo "tipo" de la tabla pagos (por ejemplo: Cuota, Cancha, Salón, etc.)
+// Agrupa los pagos de alumnos como "Cuotas" y los pagos_prueba por cuenta.
 router.get('/ingresos-por-tipo', async (req, res) => {
   const { mes, anio } = req.query; // mes: 1..12 | anio: 2026, etc.
 
@@ -483,15 +483,38 @@ router.get('/ingresos-por-tipo', async (req, res) => {
   }
 
   try {
+    // usamos también pagos_prueba, por si hay otros ingresos (alquiler cancha, etc.)
+    await ensureTablaPagosPrueba();
+
     const q = `
+      WITH cuotas AS (
+        SELECT 
+          'Cuotas'::text AS tipo,
+          SUM(monto)     AS total
+        FROM pagos
+        WHERE EXTRACT(MONTH FROM fecha_pago) = $1
+          AND EXTRACT(YEAR  FROM fecha_pago) = $2
+      ),
+      otros AS (
+        SELECT 
+          COALESCE(cuenta,'Sin tipo')::text AS tipo,
+          SUM(monto)                         AS total
+        FROM pagos_prueba
+        WHERE EXTRACT(MONTH FROM fecha_pago) = $1
+          AND EXTRACT(YEAR  FROM fecha_pago) = $2
+        GROUP BY cuenta
+      ),
+      union_tipos AS (
+        SELECT * FROM cuotas
+        UNION ALL
+        SELECT * FROM otros
+      )
       SELECT 
-        COALESCE(tipo, 'Sin tipo') AS tipo,
-        SUM(monto)                 AS total
-      FROM pagos
-      WHERE EXTRACT(MONTH FROM fecha_pago) = $1
-        AND EXTRACT(YEAR  FROM fecha_pago) = $2
+        tipo,
+        SUM(total) AS total
+      FROM union_tipos
       GROUP BY tipo
-      ORDER BY total DESC
+      ORDER BY total DESC;
     `;
 
     const { rows } = await pool.query(q, [mes, anio]);
@@ -512,7 +535,7 @@ router.get('/ingresos-por-tipo', async (req, res) => {
 });
 
 // 12.2 Gastos por tipo (para ranking gastos)
-// Agrupa por campo "tipo" de la tabla gastos (definido en Configuración -> Tipos de Gastos)
+// Usa la columna "nombre" de la tabla gastos (Tipos de gastos configurados).
 router.get('/gastos-por-tipo', async (req, res) => {
   const { mes, anio } = req.query; // mes: 1..12 | anio: 2026, etc.
 
@@ -523,22 +546,22 @@ router.get('/gastos-por-tipo', async (req, res) => {
   try {
     const q = `
       SELECT 
-        COALESCE(tipo, 'Sin tipo') AS tipo,
-        SUM(monto)                 AS total
+        COALESCE(nombre,'Sin tipo') AS tipo,
+        SUM(monto)                  AS total
       FROM gastos
       WHERE EXTRACT(MONTH FROM fecha) = $1
         AND EXTRACT(YEAR  FROM fecha) = $2
-      GROUP BY tipo
-      ORDER BY total DESC
+      GROUP BY nombre
+      ORDER BY total DESC;
     `;
 
     const { rows } = await pool.query(q, [mes, anio]);
     const suma = rows.reduce((s,r) => s + Number(r.total || 0), 0);
 
     const out = rows.map(r => ({
-      tipo : r.tipo,
+      tipo : r.tipo,                           // ej: "Alquiler Craig"
       total: Number(r.total || 0),
-      pct  : suma > 0 ? ((Number(r.total || 0) / suma) * 100).toFixed(1) : '0.0'
+      pct  : suma > 0 ? ((Number(r.total || 0)/suma)*100).toFixed(1) : '0.0'
     }));
 
     res.json(out);

@@ -1248,7 +1248,6 @@ function cambiarMesRanking(delta){
 /* --- NUEVA LÓGICA: AGRUPAR POR TIPO --- */
 async function actualizarRankingYCuentas(mes, anio){
   try{
-
     const [rIng, rGas] = await Promise.all([
       fetchConToken(`/reportes/ingresos-por-tipo?mes=${mes}&anio=${anio}`),
       fetchConToken(`/reportes/gastos-por-tipo?mes=${mes}&anio=${anio}`)
@@ -1260,17 +1259,18 @@ async function actualizarRankingYCuentas(mes, anio){
     const cont = document.getElementById('card-ranking');
     cont.innerHTML = '';
 
-    /* === ARMAR COLUMNAS === */
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ranking-wrapper';
+
     const colIng = document.createElement('div');
     colIng.className = 'ranking-col';
+    colIng.innerHTML = '<div class="ranking-title">Top ingresos</div>';
 
     const colGas = document.createElement('div');
     colGas.className = 'ranking-col';
+    colGas.innerHTML = '<div class="ranking-title">Top gastos</div>';
 
-    colIng.innerHTML = `<div class="ranking-title">Top ingresos</div>`;
-    colGas.innerHTML = `<div class="ranking-title">Top gastos</div>`;
-
-    ingresos.forEach(item => {
+    (Array.isArray(ingresos) ? ingresos : []).forEach(item => {
       const row = document.createElement('div');
       row.className = 'ranking-item';
       row.innerHTML = `
@@ -1280,7 +1280,7 @@ async function actualizarRankingYCuentas(mes, anio){
       colIng.appendChild(row);
     });
 
-    gastos.forEach(item => {
+    (Array.isArray(gastos) ? gastos : []).forEach(item => {
       const row = document.createElement('div');
       row.className = 'ranking-item';
       row.innerHTML = `
@@ -1290,17 +1290,15 @@ async function actualizarRankingYCuentas(mes, anio){
       colGas.appendChild(row);
     });
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'ranking-wrapper';
     wrapper.appendChild(colIng);
     wrapper.appendChild(colGas);
-
     cont.appendChild(wrapper);
 
   }catch(e){
     console.error('Error ranking/cuentas:', e);
   }
 }
+
 
   function actualizarMesRankingYCuentas(){
     if (!ingVsGas.length) return;
