@@ -371,6 +371,33 @@ canvas {
   box-sizing: border-box;
 }
 
+/* === Alumnas nuevas por mes === */
+.nuevas-main-number{
+  text-align:center;
+  margin-top:6px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+
+.nuevas-label{
+  font-size:11px;
+  color:#666;
+  margin-bottom:3px;
+}
+
+.nuevas-numero{
+  font-size:34px;
+  color:#1c4e80;
+  font-weight:700;
+  line-height:1;
+}
+
+.nuevas-help{
+  font-size:11px;
+  color:#777;
+  margin-top:4px;
+}
+
 
 
   </style>
@@ -522,27 +549,34 @@ canvas {
         </div>
       </div>
 
-      <!-- 4. Socias nuevas por mes -->
-      <div class="dashboard-card">
-        <div class="card-header">
-          <span>Socias nuevas por mes</span>
-          <div class="card-nav">
-            <button onclick="cambiarMesSocias(-1)">◀</button>
-            <span id="titulo-mes-socias" style="min-width:90px;text-align:center;"></span>
-            <button onclick="cambiarMesSocias(1)">▶</button>
-          </div>
-        </div>
-        <div class="card-subtitle">
-          Altas según fecha de ingreso.
-        </div>
-        <div class="card-main-number">
-          <span id="card-socias-nuevas-numero" class="clickable" onclick="abrirDetalleSociasMes()">0</span>
-          <small>socias nuevas en el mes seleccionado</small>
-        </div>
-        <div class="card-table-wrapper" id="tabla-socias-mes">
-          <!-- JS arma tabla Mes / Nuevas -->
-        </div>
-      </div>
+     <!-- 4. Alumnas nuevas por mes -->
+<div class="dashboard-card">
+  <div class="card-header">
+    <span>Alumnas nuevas por mes</span>
+    <div class="card-nav">
+      <button onclick="cambiarMesSocias(1)">◀</button>
+      <span id="titulo-mes-socias" class="mes-selector"></span>
+      <button onclick="cambiarMesSocias(-1)">▶</button>
+    </div>
+  </div>
+
+  <div class="card-subtitle">
+    Altas según fecha de ingreso.
+  </div>
+
+  <!-- Número grande centrado -->
+  <div class="nuevas-main-number" onclick="abrirDetalleSociasMes()">
+    <div class="nuevas-label">Alumnas nuevas</div>
+    <div id="card-socias-nuevas-numero" class="nuevas-numero">0</div>
+    <div class="nuevas-help">Click para ver el detalle</div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card-table-wrapper" id="tabla-socias-mes">
+    <!-- Se rellena por JS -->
+  </div>
+</div>
+
 
       <!-- 5. Ranking ingresos / gastos -->
       <div class="dashboard-card">
@@ -971,43 +1005,87 @@ async function cargarCardCuotasImpagas(){
     
   }
 
-  // ===== CARD 4: SOCIAS NUEVAS =====
-  async function cargarCardSociasNuevas(){
-    try{
-      const r = await fetchConToken('/reportes/ingresos-por-mes');
-      ingresosPorMes = await r.json();
-      const contTabla = document.getElementById('tabla-socias-mes');
-      contTabla.innerHTML = '';
+  // ===== CARD 4: ALUMNAS NUEVAS POR MES =====
+async function cargarCardSociasNuevas(){
+  try{
+    const r = await fetchConToken('/reportes/ingresos-por-mes');
+    ingresosPorMes = await r.json();
+    const contTabla = document.getElementById('tabla-socias-mes');
+    contTabla.innerHTML = '';
 
-      if (!ingresosPorMes.length){
-        document.getElementById('titulo-mes-socias').textContent = '-';
-        document.getElementById('card-socias-nuevas-numero').textContent = '0';
-        contTabla.innerHTML = '<p>No hay datos.</p>';
-        return;
-      }
-
-      ingresosPorMes.sort((a,b) => a.mes.localeCompare(b.mes));
-      idxMesSocias = ingresosPorMes.length - 1;
-      refrescarCardSocias();
-
-      // Tabla resumen últimos meses
-      const ultimos = ingresosPorMes.slice(-6).reverse(); // últimos primero
-      const t = document.createElement('table');
-      t.className = 'card-table';
-      t.innerHTML = '<thead><tr><th>Mes</th><th>Nuevas</th></tr></thead>';
-      const tb = document.createElement('tbody');
-      ultimos.forEach(rw => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${formatearMesYYYYMM(rw.mes)}</td><td>${rw.cantidad}</td>`;
-        tb.appendChild(tr);
-      });
-      t.appendChild(tb);
-      contTabla.appendChild(t);
-
-    }catch(e){
-      console.error('Error card socias nuevas:', e);
+    if (!ingresosPorMes.length){
+      document.getElementById('titulo-mes-socias').textContent = '-';
+      document.getElementById('card-socias-nuevas-numero').textContent = '0';
+      contTabla.innerHTML = '<p>No hay datos.</p>';
+      return;
     }
+
+    // ordenar de más nuevo a más viejo
+    ingresosPorMes.sort((a,b) => b.mes.localeCompare(a.mes));
+
+    // mes actual → índice 0
+    idxMesSocias = 0;
+    refrescarCardSocias();
+
+    // tabla últimos meses
+    const t = document.createElement('table');
+    t.className = 'card-table';
+    t.innerHTML = '<thead><tr><th>Mes</th><th>Nuevas</th></tr></thead>';
+    const tb = document.createElement('tbody');
+
+    ingresosPorMes.forEach(rw => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatearMesYYYYMM(rw.mes)}</td>
+        <td class="clickable" onclick="abrirDetalleSociasMesCustom('${rw.mes}')">${rw.cantidad}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    t.appendChild(tb);
+    contTabla.appendChild(t);
+
+  }catch(e){
+    console.error('Error card socias nuevas:', e);
   }
+}
+
+function refrescarCardSocias(){
+  const row = ingresosPorMes[idxMesSocias];
+  document.getElementById('titulo-mes-socias').textContent =
+      formatearMesYYYYMM(row.mes);
+  document.getElementById('card-socias-nuevas-numero').textContent =
+      row.cantidad;
+}
+
+function cambiarMesSocias(delta){
+  if (!ingresosPorMes.length) return;
+  idxMesSocias += delta;
+  if (idxMesSocias < 0) idxMesSocias = ingresosPorMes.length - 1;
+  if (idxMesSocias >= ingresosPorMes.length) idxMesSocias = 0;
+  refrescarCardSocias();
+}
+
+// permite abrir detalle desde la tabla directamente
+function abrirDetalleSociasMesCustom(mes){
+  document.getElementById('modalDetalleIngresos').style.display='flex';
+  document.getElementById('tituloDetalleIngreso').textContent =
+    `Alumnas nuevas — ${formatearMesYYYYMM(mes)}`;
+
+  fetchConToken(`/reportes/detalle-ingresos?mes=${mes}`)
+    .then(r => r.json())
+    .then(data => {
+      renderTabla('contenidoDetalleIngreso',
+        ['Número','Nombre','Apellido','Fecha ingreso'],
+        data
+      );
+    })
+    .catch(() => {
+      document.getElementById('contenidoDetalleIngreso').innerHTML =
+        '<p>Error al cargar datos.</p>';
+    });
+}
+
 
   function refrescarCardSocias(){
     if (!ingresosPorMes.length) return;
