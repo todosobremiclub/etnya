@@ -576,20 +576,32 @@ router.get('/pagos-parciales-detalle', async (req, res) => {
 
 // 15. Cuotas impagas por mes (resumen)
 // Tiene en cuenta la fecha de ingreso: meses anteriores a fecha_inicio NO se cuentan.
+// Optimizado para evitar generar miles de meses y mejorar performance.
 router.get('/cuotas-impagas-resumen', async (_req, res) => {
   try {
+
     const q = `
       WITH alumnos_activos AS (
-        SELECT id, fecha_inicio::date
+        SELECT 
+          id, 
+          fecha_inicio::date
         FROM alumnos
         WHERE activo = true
           AND fecha_inicio IS NOT NULL
+          AND fecha_inicio > '2000-01-01'        -- Protege contra fechas 0026, 0027
       ),
+
       meses AS (
-        SELECT date_trunc('month', MIN(fecha_inicio))::date AS min_mes,
-               date_trunc('month', NOW())::date          AS max_mes
+        SELECT  
+          -- Tomamos la mínima fecha real, pero con tope a 24 meses atrás
+          GREATEST(
+            date_trunc('month', MIN(fecha_inicio))::date,
+            date_trunc('month', NOW()) - interval '24 months'
+          ) AS min_mes,
+          date_trunc('month', NOW())::date AS max_mes
         FROM alumnos_activos
       ),
+
       serie_meses AS (
         SELECT generate_series(
           (SELECT min_mes FROM meses),
@@ -597,14 +609,16 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
           interval '1 month'
         )::date AS mes
       ),
+
       cuotas AS (
         SELECT
-          a.id  AS alumno_id,
+          a.id AS alumno_id,
           s.mes AS mes
         FROM alumnos_activos a
         JOIN serie_meses s
           ON s.mes >= date_trunc('month', a.fecha_inicio)
       ),
+
       pagos_norm AS (
         SELECT
           p.alumno_id,
@@ -623,6 +637,7 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
         FROM pagos p
         WHERE p.mes_pagado IS NOT NULL
       ),
+
       cuotas_con_pagos AS (
         SELECT
           c.mes,
@@ -635,8 +650,9 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
           ) AS pagado
         FROM cuotas c
       )
+
       SELECT
-        to_char(mes, 'YYYY-MM') AS mes,
+        to_char(mes,'YYYY-MM') AS mes,
         COUNT(*) FILTER (WHERE NOT pagado) AS sin_pago
       FROM cuotas_con_pagos
       GROUP BY mes
@@ -646,10 +662,10 @@ router.get('/cuotas-impagas-resumen', async (_req, res) => {
 
     const { rows } = await pool.query(q);
 
-    // Si querés dejar un log de debugging:
-    console.log('DEBUG cuotas-impagas-resumen, filas:', rows.length);
+    console.log('cuotas-impagas-resumen OK – filas:', rows.length);
 
     res.json(rows);
+
   } catch (err) {
     console.error('Error en /cuotas-impagas-resumen:', err);
     res.status(500).json({ error: 'Error al calcular cuotas impagas' });
