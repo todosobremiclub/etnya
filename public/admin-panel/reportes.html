@@ -271,23 +271,30 @@
 
     /* === DONUT — CENTRADO PERFECTO === */
     .donut-wrapper{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      width:100%;
-      padding:20px 0 30px 0;
-      gap:35px;
-    }
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  padding:20px 0 30px 0;
+  gap:20px;
+  flex-wrap:wrap; /* ✅ clave */
+}
     .donut-container{
-      position:relative;
-      width:220px;
-      height:220px;
-      flex-shrink:0;
-    }
+  position:relative;
+  width:180px;  /* ✅ antes 220 */
+  height:180px;
+  flex-shrink:0;
+}
+
     .donut-container canvas{
       width:100% !important;
       height:100% !important;
     }
+
+canvas{
+  max-width:100%;
+  height:auto !important; /* ✅ FIX SCALING */
+}
     .donut-center{
       position:absolute;
       top:50%;
@@ -298,14 +305,14 @@
       color:#444;
     }
     .donut-legend{
-      font-size:12px;
-      color:#444;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      margin-left:20px;
-      margin-right:20px;
-    }
+  font-size:12px;
+  color:#444;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-width:160px; /* ✅ evita desborde */
+}
+
     .donut-legend-item{
       display:flex;
       align-items:center;
@@ -356,13 +363,12 @@
       display: block !important;
     }
     .ing-gas-chart-wrapper {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px 0 10px 0;
-      box-sizing: border-box;
-    }
+  width: 100%;
+  max-width: 320px; /* ✅ límite */
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
 
     /* Alumnas nuevas por mes */
     .nuevas-main-number{
@@ -439,14 +445,16 @@
 .cuentas-wrapper{
   width: 100%;
   display: flex;
-  justify-content: center;      /* igual que ranking */
+  justify-content: center;
   align-items: flex-start;
-  gap: 80px;
-  padding: 35px 0 30px 0;
+  gap: 40px;
+  padding: 25px 0;
+  flex-wrap: wrap; /* ✅ clave */
 }
 
 .cuentas-col{
-  width: 260px;                 /* igual a ranking */
+  width: 100%;
+  max-width: 260px; /* ✅ */
 }
 
 .cuentas-title{
@@ -475,40 +483,7 @@
 }
 
 
-    /* Ingresos y gastos por cuenta */
-    .cuentas-wrapper{
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 60px;
-      padding-top: 30px;
-      padding-bottom: 30px;
-    }
-    .cuentas-col{
-      min-width: 240px;
-    }
-    .cuentas-title{
-      text-align: center;
-      font-size: 15px;
-      font-weight: 700;
-      color: #1c4e80;
-      margin-bottom: 10px;
-    }
-    .cuentas-item{
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #eef3fb;
-      font-size: 13px;
-    }
-    .cuentas-item span:first-child{
-      flex: 1;
-    }
-    .cuentas-item span:last-child{
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
+    
   </style>
 </head>
 <body>
@@ -1049,12 +1024,15 @@
         ]
       },
       options:{
-        plugins:{ legend:{ position:'bottom' } },
-        scales:{
-          x:{ ticks:{ font:{size:10} } },
-          y:{ ticks:{ font:{size:9} } }
-        }
-      }
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins:{ legend:{ position:'bottom' } },
+  scales:{
+    x:{ ticks:{ font:{size:10} } },
+    y:{ ticks:{ font:{size:9} } }
+  }
+}
+
     });
   }
 
