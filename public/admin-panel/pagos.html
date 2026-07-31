@@ -9,10 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <style>
-    body {
+body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background-color: #cce1d6;
+      background: linear-gradient(135deg, #d9eee2 0%, #cce1d6 45%, #bcd8c9 100%);
+      background-attachment: fixed;
       color: #6d6d6d;
     }
     #menuToggle {
@@ -56,8 +57,8 @@
     .formulario label {
       font-weight: bold;
     }
-    .formulario .boton-guardar {
-      background-color: #91586d;
+.formulario .boton-guardar {
+      background: linear-gradient(135deg, #c39aa8, #91586d);
       color: white;
       border: none;
       padding: 8px 14px;
@@ -67,7 +68,7 @@
       margin-top: 10px;
     }
     .formulario .boton-guardar:hover {
-      background-color: #6d3e4e;
+      background: linear-gradient(135deg, #b4657f, #6d3e4e);
     }
     .formulario .cerrar {
       position: absolute;
@@ -95,32 +96,36 @@
       border-bottom: 1px solid #eee;
       text-align: left;
     }
-    th {
-      background-color: #b48a99;
+th {
+      background: linear-gradient(90deg, #c39aa8, #91586d);
       color: white;
     }
-    .sidebar {
+.sidebar {
       position: fixed;
       top: 0;
       left: 0;
       width: 200px;
       height: 100vh;
-      background-color: #91586d;
+      background: linear-gradient(180deg, #a5647a 0%, #6d3e4e 100%);
       padding-top: 60px;
+      padding-bottom: 20px;
       box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      border-radius: 0 22px 22px 0;
       z-index: 1000;
     }
-    .sidebar a {
+.sidebar a {
       display: block;
       padding: 10px 16px;
+      margin: 2px 10px;
       color: white;
       text-decoration: none;
       font-weight: bold;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
       font-size: 13px;
+      transition: background-color 0.15s ease;
     }
     .sidebar a:hover {
-      background-color: #6d3e4e;
+      background-color: rgba(255,255,255,0.16);
     }
     @media (max-width: 768px) {
       #menuToggle {
@@ -222,6 +227,113 @@ input[type="month"].fake-placeholder:invalid:before {
     color: white;
 }
 
+.search-filter {
+  max-width: 700px;
+  margin: 6px auto 24px;
+  background: #fff;
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.search-filter input[type="text"] {
+  padding: 9px 12px;
+  border: 1px solid #d8c7cc;
+  border-radius: 8px;
+  font-size: 13px;
+  background-color: #faf8f8;
+}
+
+#toggleFormularioPago {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #c39aa8, #91586d);
+  color: #fff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#toggleFormularioPago:hover {
+  background: linear-gradient(135deg, #b4657f, #6d3e4e);
+}
+
+.btn-ver-detalle {
+  background: linear-gradient(135deg, #c39aa8, #91586d);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-ver-detalle:hover {
+  background: linear-gradient(135deg, #b4657f, #6d3e4e);
+}
+
+.detalle-modal {
+  background: #fff;
+  padding: 22px;
+  border-radius: 14px;
+  width: 92%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+
+.detalle-cerrar {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #91586d;
+  cursor: pointer;
+}
+
+.detalle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0e1e6;
+}
+
+.detalle-mes {
+  font-weight: 600;
+  font-size: 13px;
+  color: #444;
+}
+
+.detalle-sub {
+  font-size: 12px;
+  color: #999;
+}
+
+.detalle-monto {
+  font-weight: 600;
+  color: #6d3e4e;
+  white-space: nowrap;
+}
+
+.detalle-borrar {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px;
+  margin: 0;
+}
 
   </style>
 </head>
@@ -234,11 +346,10 @@ input[type="month"].fake-placeholder:invalid:before {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px 0;
-    transform: translateX(-10px);
+    padding: 8px 0 4px;
   ">
-    <img src="logo.jpeg" alt="Logo" style="height: 60px; margin-right: 16px;">
-    <h2 style="margin: 0; font-size: 28px; color: #91586d;">Pagos Etnya</h2>
+    <img src="logo.jpeg" alt="Logo" style="height: 32px; margin-right: 10px;">
+    <h2 style="margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.3px; color: #91586d;">Pagos Etnya</h2>
   </div>
 </div>
 
@@ -260,25 +371,18 @@ input[type="month"].fake-placeholder:invalid:before {
   <a href="notificaciones.html">📢 Notificaciones</a>
   <a href="configuracion.html">⚙️ Configuración</a>
   <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
-  <button onclick="cerrarSesion()" style="width:100%; text-align:left; padding:10px 16px; background-color:transparent; border:none; color:white; font-weight:bold; font-size:13px; cursor:pointer; border-top:1px solid rgba(255,255,255,0.1);">
+<button onclick="cerrarSesion()" style="width:calc(100% - 20px); margin:10px 10px 0; text-align:left; padding:10px 16px; background-color:transparent; border:none; border-radius:10px; color:white; font-weight:bold; font-size:13px; cursor:pointer;">
     🚪 Cerrar sesión
   </button>
 </div>
 
 
 
+<main>
 
-  <main>
-<div style="text-align: center; margin-bottom: 20px;">
-  <button onclick="mostrarFormularioPago()" style="
-    padding: 10px 20px;
-    background-color: #91586d;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-  ">➕ Registrar Pago</button>
+<div class="search-filter">
+  <button id="toggleFormularioPago" onclick="mostrarFormularioPago()">➕ Registrar pago</button>
+  <input type="text" id="buscadorPagos" placeholder="Buscar socio por nombre o apellido" style="flex:1;">
 </div>
 
   <!-- FORMULARIO BLANCO -->
@@ -357,7 +461,7 @@ input[type="month"].fake-placeholder:invalid:before {
 <!-- Botón Guardar ahora dentro del formulario -->
 <div style="text-align: center; margin-top: 20px;">
   <button onclick="guardarPago()" style="
-    background-color: #91586d;
+    background: linear-gradient(135deg, #c39aa8, #91586d);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -373,29 +477,30 @@ input[type="month"].fake-placeholder:invalid:before {
   
   </div>
 
-  <!-- MÓDULO PAGOS REGISTRADOS -->
-  <h2 style="margin-top: 40px;">Pagos Registrados</h2>
-
-  <div style="max-width: 400px; margin: 0 auto 10px auto;">
-    <input type="text" id="buscadorPagos" placeholder="Buscar por número, apellido o nombre"
-      style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
-  </div>
+<!-- MÓDULO SOCIOS Y PAGOS -->
+  <h2 style="margin-top: 40px;">Socios y pagos</h2>
 
   <table>
     <thead>
       <tr>
-        <th>N° Alumno</th>
+        <th>N°</th>
+        <th>Apellido</th>
         <th>Nombre</th>
-        <th>Modalidad</th>
-        <th>Mes Pagado</th>
-        <th>Monto</th>
-        <th>Fecha de Pago</th>
-<th>Cuenta</th>
-
+        <th>Sede</th>
+        <th>Acción</th>
       </tr>
     </thead>
-    <tbody id="tbodyPagos"></tbody>
+    <tbody id="tbodySocios"></tbody>
   </table>
+
+  <!-- Modal detalle de pagos de un socio -->
+  <div id="modalDetallePagos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; justify-content:center; align-items:center;">
+    <div class="detalle-modal">
+      <button class="detalle-cerrar" onclick="cerrarDetallePagos()">✖</button>
+      <h3 id="detalleTitulo" style="color:#91586d; margin-top:0; margin-bottom:14px;"></h3>
+      <div id="detalleLista"></div>
+    </div>
+  </div>
 
 </main>
 
@@ -646,7 +751,7 @@ window.onload = async () => {
 
 // 4) Buscador
   document.getElementById('buscadorPagos').addEventListener('input', (e) => {
-    renderPagos(e.target.value);
+    renderSocios(e.target.value);
   });
 
   // 4.1) Si venimos desde la tabla de alumnos con ?alumno=ID, preseleccionarlo y abrir el formulario
@@ -794,174 +899,122 @@ async function cargarPagos() {
   // 👇 corregido
   pagosGlobal = [...pagos, ...mappedPrueba];
 
-  const q = document.getElementById('buscadorPagos')?.value || '';
-  renderPagos(q);
+const q = document.getElementById('buscadorPagos')?.value || '';
+  renderSocios(q);
 }
 
-function renderPagos(query = '') {
-  const tbody = document.getElementById("tbodyPagos");
+function renderSocios(query = '') {
+  const tbody = document.getElementById('tbodySocios');
   tbody.innerHTML = '';
 
   const term = normalizarTexto(query);
 
-  // Filtrar por búsqueda y ordenar por número de alumno (los de prueba = 0)
- const pagosFiltrados = (pagosGlobal || [])
-  .filter(p => {
-    if (p.alumno_id === OPT_PRUEBA_VALUE) {
-      // Permitir filtrar por la etiqueta "000 pagos de clases de prueba"
-      if (!term) return true;
-      const label = normalizarTexto('000 pagos de clases de prueba');
-      return label.includes(term);
-    }
+  // Fila especial de pagos de clases de prueba, siempre primero
+  const labelPrueba = normalizarTexto('000 pagos de clases de prueba');
+  if (!term || labelPrueba.includes(term)) {
+    const trPrueba = document.createElement('tr');
+    trPrueba.innerHTML = `
+      <td>000</td>
+      <td colspan="2">Pagos de clases de prueba</td>
+      <td>General</td>
+      <td><button class="btn-ver-detalle" onclick="abrirDetallePagos('${OPT_PRUEBA_VALUE}')">Ver detalle</button></td>
+    `;
+    tbody.appendChild(trPrueba);
+  }
 
-    const a = alumnos.find(x => x.id === p.alumno_id);
-
-    // Si NO existe el alumno, usamos el snapshot
-    if (!a) {
+  const listaFiltrada = (alumnos || [])
+    .filter(a => {
       if (!term) return true;
-      const nro = String(p.alumno_numero || '');
-      const ape = normalizarTexto(p.alumno_apellido || '');
-      const nom = normalizarTexto(p.alumno_nombre || '');
+      const nro = String(a.numero_alumno || '');
+      const ape = normalizarTexto(a.apellido || '');
+      const nom = normalizarTexto(a.nombre || '');
       return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
              normalizarTexto(`${ape} ${nom}`).includes(term);
-    }
+    })
+    .sort((a, b) => (a.numero_alumno || 0) - (b.numero_alumno || 0));
 
-    // Si SÍ existe el alumno, filtramos por sus datos actuales
-    if (!term) return true;
-    const nro = String(a.numero_alumno || '');
-    const ape = normalizarTexto(a.apellido || '');
-    const nom = normalizarTexto(a.nombre || '');
-    return nro.includes(term) || ape.includes(term) || nom.includes(term) ||
-           normalizarTexto(`${ape} ${nom}`).includes(term);
-  })
-  .sort((p1, p2) => {
-    const n1 = (p1.alumno_id === OPT_PRUEBA_VALUE)
-      ? 0
-      : (alumnos.find(x => x.id === p1.alumno_id)?.numero_alumno || 0);
-    const n2 = (p2.alumno_id === OPT_PRUEBA_VALUE)
-      ? 0
-      : (alumnos.find(x => x.id === p2.alumno_id)?.numero_alumno || 0);
-    return n1 - n2;
+  listaFiltrada.forEach(a => {
+    const numero = (a.numero_alumno < 100)
+      ? String(a.numero_alumno).padStart(2, '0')
+      : a.numero_alumno;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${numero}</td>
+      <td>${a.apellido || ''}</td>
+      <td>${a.nombre || ''}</td>
+      <td>${a.sede || ''}</td>
+      <td><button class="btn-ver-detalle" onclick="abrirDetallePagos(${a.id})">Ver detalle</button></td>
+    `;
+    tbody.appendChild(tr);
   });
+}
 
+/* ====== Modal de detalle de pagos de un socio ====== */
+function abrirDetallePagos(alumnoId) {
+  const esPrueba = (String(alumnoId) === OPT_PRUEBA_VALUE);
+  const modal   = document.getElementById('modalDetallePagos');
+  const titulo  = document.getElementById('detalleTitulo');
+  const lista   = document.getElementById('detalleLista');
 
-  // Agrupar por Sede -> Mes
-const mapa = {};
-pagosFiltrados.forEach(p => {
-  let sede = 'General';
+  let pagosDelSocio;
 
-  if (p.alumno_id === OPT_PRUEBA_VALUE) {
-    sede = normalizarSede(p.__sede);
+  if (esPrueba) {
+    titulo.textContent = 'Pagos de clases de prueba';
+    pagosDelSocio = (pagosGlobal || []).filter(p => p.alumno_id === OPT_PRUEBA_VALUE);
   } else {
-    const a = alumnos.find(al => al.id === p.alumno_id);
-    sede = a ? normalizarSede(a.sede)
-             : normalizarSede(p.alumno_sede || 'General'); // usar snapshot si no existe el alumno
+    const alumno = alumnos.find(a => String(a.id) === String(alumnoId));
+    titulo.textContent = alumno ? `${alumno.apellido}, ${alumno.nombre}` : 'Pagos del socio';
+    pagosDelSocio = (pagosGlobal || []).filter(p => String(p.alumno_id) === String(alumnoId));
   }
 
-  const mes = getMesKey(p);
+  pagosDelSocio = pagosDelSocio.slice().sort((a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago));
 
-  if (!mapa[sede]) mapa[sede] = {};
-  if (!mapa[sede][mes]) mapa[sede][mes] = [];
-  mapa[sede][mes].push(p);
-});
-
-
-  // Pintar: Fila Sede (colapsable) -> Fila Mes (colapsable) -> Detalle de pagos
-  let sedeIdx = 0;
-  for (const sede in mapa) {
-    const sedeId = `sede-${sedeIdx++}`;
-    const trSede = document.createElement('tr');
-    trSede.style.cursor = 'pointer';
-    trSede.style.backgroundColor = '#d1bfc5';
-    trSede.style.fontWeight = 'bold';
-    trSede.innerHTML = `<td colspan="7" onclick="toggleSede('${sedeId}')">🧘‍♀️ ${sede}</td>`;
-    tbody.appendChild(trSede);
-
-    // Ordenar meses descendente (más nuevo primero)
-    const meses = Object.keys(mapa[sede]).sort((a, b) => b.localeCompare(a));
-
-    let mesIdx = 0;
-    for (const mes of meses) {
-      const mesId = `${sedeId}-mes-${mesIdx++}`;
-      const trMes = document.createElement('tr');
-      trMes.classList.add(sedeId);
-      trMes.style.display = 'none';
-      trMes.style.cursor = 'pointer';
-      trMes.style.backgroundColor = '#f3d6dd';
-      trMes.style.fontWeight = 'bold';
-      trMes.innerHTML = `<td colspan="7" onclick="toggleGrupo('${mesId}')">📅 ${mes}</td>`;
-      tbody.appendChild(trMes);
-
-      // Dentro del mes ya vienen ordenados por número
-      mapa[sede][mes].forEach(p => {
-        const tr = document.createElement('tr');
-        tr.classList.add(mesId, sedeId);
-        tr.style.display = 'none';
-
-        if (p.alumno_id === OPT_PRUEBA_VALUE) {
-          tr.innerHTML = `
-            <td>000</td>
-            <td>Pagos de prueba</td>
-            <td>Prueba ${p.__comentario ? `- ${p.__comentario}` : ''}</td>
-            <td>${mes.split('-')[1]}/${mes.split('-')[0]}</td>
-            <td>$${parseFloat(p.monto).toFixed(2)}</td>
-            <td>
-              ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-              <button onclick="eliminarPagoPrueba(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
-            </td>
-            <td>${p.cuenta || '-'}</td>
-          `;
-        } else {
-          const a = alumnos.find(x => x.id === p.alumno_id);
-const mostrarNumero   = a?.numero_alumno ?? p.alumno_numero ?? '-';
-const mostrarNombre   = a ? `${a.nombre ?? ''} ${a.apellido ?? ''}`.trim()
-                          : `${p.alumno_nombre ?? ''} ${p.alumno_apellido ?? ''}`.trim();
-const mostrarModalidad= (()=>{
-  if (a) {
-    const tipo = tiposClase.find(t =>
-      normalizarTexto(t.modalidad) === normalizarTexto(a?.tipo_clase)
-    );
-    return tipo?.modalidad || a?.tipo_clase || '-';
+  if (!pagosDelSocio.length) {
+    lista.innerHTML = '<p style="text-align:center;color:#999;">Todavía no tiene pagos registrados.</p>';
+  } else if (esPrueba) {
+    lista.innerHTML = pagosDelSocio.map(p => `
+      <div class="detalle-item">
+        <div>
+          <div class="detalle-mes">Prueba${p.__comentario ? ` — ${p.__comentario}` : ''}</div>
+          <div class="detalle-sub">${p.__sede || 'General'} · ${p.cuenta || '-'} · ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>
+        </div>
+        <div class="detalle-monto">$${parseFloat(p.monto).toFixed(2)}</div>
+        <button class="detalle-borrar" title="Eliminar" onclick="eliminarPagoPruebaDesdeDetalle(${p.id})">🗑️</button>
+      </div>
+    `).join('');
+  } else {
+    lista.innerHTML = pagosDelSocio.map(p => {
+      const [y, m] = String(p.mes_pagado || '').split('-');
+      const mesFmt = (y && m) ? `${m}/${y}` : '-';
+      return `
+        <div class="detalle-item">
+          <div>
+            <div class="detalle-mes">Mes ${mesFmt}</div>
+            <div class="detalle-sub">${p.cuenta || '-'} · ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>
+          </div>
+          <div class="detalle-monto">$${parseFloat(p.monto).toFixed(2)}</div>
+          <button class="detalle-borrar" title="Eliminar" onclick="eliminarPagoDesdeDetalle(${p.id}, ${alumnoId})">🗑️</button>
+        </div>
+      `;
+    }).join('');
   }
-  return p.alumno_modalidad || '-';
-})();
-const [y, m] = String(p.mes_pagado || '').split('-');
-const mesFmt = (y && m) ? `${m}/${y}` : '-';
 
-tr.innerHTML = `
-  <td>${mostrarNumero}</td>
-  <td>${mostrarNombre || '-'}</td>
-  <td>${mostrarModalidad}</td>
-  <td>${mesFmt}</td>
-  <td>$${parseFloat(p.monto).toFixed(2)}</td>
-  <td>
-    ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}
-    <button onclick="eliminarPago(${p.id})" style="margin-left:10px;background:transparent;border:none;cursor:pointer;">🗑️</button>
-  </td>
-  <td>${p.cuenta || '-'}</td>
-`;
-
-        }
-
-        tbody.appendChild(tr);
-      });
-    }
-  }
+  modal.style.display = 'flex';
 }
 
-/* ====== Helpers de UI ====== */
-function toggleGrupo(grupoId) {
-  const filas = document.querySelectorAll(`.${grupoId}`);
-  filas.forEach(f => {
-    f.style.display = (f.style.display === 'none') ? '' : 'none';
-  });
+function cerrarDetallePagos() {
+  document.getElementById('modalDetallePagos').style.display = 'none';
 }
 
-function toggleSede(sedeId) {
-  const filas = document.querySelectorAll(`.${sedeId}`);
-  filas.forEach(f => {
-    f.style.display = (f.style.display === 'none') ? '' : 'none';
-  });
+async function eliminarPagoDesdeDetalle(id, alumnoId) {
+  await eliminarPago(id);
+  abrirDetallePagos(alumnoId);
+}
+
+async function eliminarPagoPruebaDesdeDetalle(id) {
+  await eliminarPagoPrueba(id);
+  abrirDetallePagos(OPT_PRUEBA_VALUE);
 }
 
 function mostrarFormularioPago() {
