@@ -97,22 +97,26 @@ tr.faltante td {
 }
 
 
-  /* Encabezado con logo */
+/* Encabezado con logo */
   .header {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
+    padding-top: 6px;
   }
 
   .header img {
-    height: 50px;
+    height: 46px;
   }
 
   h1 {
     color: #91586d;
     margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
   }
 
   /* Formulario */
@@ -214,15 +218,33 @@ table {
     background-color: #91586d;
   }
 
-  /* Filtros arriba */
+/* Filtros arriba */
   .search-filter {
     max-width: 1200px;
-    margin: auto;
-    margin-bottom: 20px;
+    margin: 0 auto 26px;
+    background: #fff;
+    padding: 14px 18px;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     justify-content: space-between;
+  }
+
+  .search-filter input[type="text"],
+  .search-filter select {
+    padding: 9px 12px;
+    border: 1px solid #d8c7cc;
+    border-radius: 8px;
+    font-size: 13px;
+    background-color: #faf8f8;
+  }
+
+  .search-filter label {
+    font-size: 13px;
+    color: #6d6d6d;
   }
 
   #toggleFormulario {
@@ -320,13 +342,23 @@ table {
 #sedeSelector button {
   background-color: #e1c6cd;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 22px;
   margin: 0 6px;
   border-radius: 20px;
   font-weight: bold;
   color: #6d3e4e;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.12s ease;
+}
+
+#sedeSelector button:hover {
+  transform: translateY(-1px);
+}
+
+#sedeSelector .tile-seleccionada {
+  background-color: #91586d;
+  color: white;
 }
 
 #sedeSelector .tile-seleccionada {
@@ -542,6 +574,13 @@ button:hover {
 
 
 
+<!-- 🔽 Tiles para seleccionar sede -->
+<div id="sedeSelector" style="text-align: center; margin: 24px 0 20px;">
+  <button onclick="seleccionarSede('Todas')" class="tile-seleccionada">Todas</button>
+  <button onclick="seleccionarSede('Craig')">Craig</button>
+  <button onclick="seleccionarSede('Goyena')">Goyena</button>
+</div>
+
   <div class="search-filter">
   <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
   <select id="filtroClase" onchange="cargarAlumnos()"></select>
@@ -551,13 +590,6 @@ button:hover {
   Mostrar con deuda
 </label>
 
-</div>
-
-<!-- 🔽 Tiles para seleccionar sede -->
-<div id="sedeSelector" style="text-align: center; margin: 20px 0;">
-  <button onclick="seleccionarSede('Todas')" class="tile-seleccionada">Todas</button>
-  <button onclick="seleccionarSede('Craig')">Craig</button>
-  <button onclick="seleccionarSede('Goyena')">Goyena</button>
 </div>
 
 <button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar alumna/o</button>
