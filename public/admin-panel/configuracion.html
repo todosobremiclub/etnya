@@ -6,37 +6,42 @@
   <title>Configuración</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
  <style>
-  body {
+body {
     margin: 0;
     font-family: 'Inter', sans-serif;
-    background-color: #cce1d6;
+    background: linear-gradient(135deg, #d9eee2 0%, #cce1d6 45%, #bcd8c9 100%);
+    background-attachment: fixed;
     color: #6d6d6d;
   }
 
-  .sidebar {
+.sidebar {
     position: fixed;
     top: 0;
     left: 0;
     width: 200px;
     height: 100vh;
-    background-color: #91586d;
+    background: linear-gradient(180deg, #a5647a 0%, #6d3e4e 100%);
     padding-top: 60px;
+    padding-bottom: 20px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    border-radius: 0 22px 22px 0;
     z-index: 1000;
   }
 
-  .sidebar a {
+.sidebar a {
     display: block;
     padding: 10px 16px;
+    margin: 2px 10px;
     color: white;
     text-decoration: none;
     font-weight: bold;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
     font-size: 13px;
+    transition: background-color 0.15s ease;
   }
 
   .sidebar a:hover {
-    background-color: #6d3e4e;
+    background-color: rgba(255,255,255,0.16);
   }
 
   main {
@@ -44,16 +49,23 @@
     padding: 16px;
   }
 
-  .header {
+.header {
     display: flex;
     align-items: center;
     gap: 10px;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
   }
 
   .header img {
-    height: 40px;
+    height: 32px;
+  }
+
+  .header h1 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin: 0;
   }
 
   h1, h2 {
@@ -84,8 +96,8 @@
     height: 30px;
   }
 
-  button {
-    background-color: #b48a99;
+button {
+    background: linear-gradient(135deg, #c39aa8, #91586d);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -93,10 +105,12 @@
     cursor: pointer;
     font-size: 13px;
     height: 30px;
+    transition: filter 0.15s ease;
   }
 
   button:hover {
-    background-color: #91586d;
+    background: linear-gradient(135deg, #b4657f, #6d3e4e);
+    filter: brightness(1.03);
   }
 
   table {
@@ -118,8 +132,8 @@
     vertical-align: top;
   }
 
-  th {
-    background-color: #b48a99;
+th {
+    background: linear-gradient(90deg, #c39aa8, #91586d);
     color: white;
     font-size: 13px;
   }
@@ -247,7 +261,7 @@ td.slot.feriado { background: #d9d9d9 !important; }
   <a href="notificaciones.html">📢 Notificaciones</a>
   <a href="configuracion.html">⚙️ Configuración</a>
   <a href="reportes.html" class="menu-reportes">📈 Reportes</a>
-  <button onclick="cerrarSesion()" style="width:100%; text-align:left; padding:10px 16px; background-color:transparent; border:none; color:white; font-weight:bold; font-size:13px; cursor:pointer; border-top:1px solid rgba(255,255,255,0.1);">
+<button onclick="cerrarSesion()" style="width:calc(100% - 20px); margin:10px 10px 0; text-align:left; padding:10px 16px; background-color:transparent; border:none; border-radius:10px; color:white; font-weight:bold; font-size:13px; cursor:pointer;">
     🚪 Cerrar sesión
   </button>
 </div>
@@ -260,7 +274,8 @@ td.slot.feriado { background: #d9d9d9 !important; }
       <h1>Configuración Etnya</h1>
     </div>
 
-    <!-- Modalidades -->
+<!-- Modalidades -->
+    <h2 class="titulo-feriados" style="margin-top:0;">Modalidades y precios</h2>
     <form id="formTipoClase">
       <input type="text" name="modalidad" placeholder="Modalidad" required>
       <input type="number" name="precio" placeholder="Precio ($)" required>
@@ -346,15 +361,15 @@ td.slot.feriado { background: #d9d9d9 !important; }
       </div>
     </form>
 
-   <table id="tablaNoClases" style="width:100%; border-collapse:collapse;">
+<table id="tablaNoClases">
   <thead>
-    <tr style="background:#b48a99; color:#fff;">
-      <th style="padding:6px; text-align:left;">
+    <tr>
+      <th>
         <span id="flechaNoClases" class="toggle-icon" onclick="toggleNoClases()">▶</span> Sede
       </th>
-      <th style="padding:6px; text-align:left;">Día</th>
-      <th style="padding:6px; text-align:left;">Hora</th>
-      <th style="padding:6px;">Acciones</th>
+      <th>Día</th>
+      <th>Hora</th>
+      <th>Acciones</th>
     </tr>
   </thead>
   <tbody></tbody>
