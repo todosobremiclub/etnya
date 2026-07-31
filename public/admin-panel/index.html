@@ -40,10 +40,10 @@ tr.faltante td {
   }
 
   /* Sidebar lateral */
-  .sidebar {
+.sidebar {
   width: 200px;
   height: 100vh;
-  background-color: #91586d;
+  background: linear-gradient(180deg, #a5647a 0%, #6d3e4e 100%);
   padding-top: 60px;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   z-index: 1000;
@@ -52,12 +52,13 @@ tr.faltante td {
   left: 0;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
+.sidebar {
     display: none;
     width: 100%;
     height: auto;
     position: absolute;
+    background: linear-gradient(180deg, #a5647a 0%, #6d3e4e 100%);
+    z-index: 1000;
     top: 50px;
     left: 0;
   }
@@ -153,12 +154,12 @@ tr.faltante td {
     color: #555;
   }
 
-  form button[type="submit"] {
+form button[type="submit"] {
     grid-column: span 2;
     justify-self: start;
     padding: 8px 16px;
     font-size: 14px;
-    background-color: #b48a99;
+    background: linear-gradient(135deg, #c39aa8, #91586d);
     color: white;
     border: none;
     border-radius: 6px;
@@ -167,7 +168,7 @@ tr.faltante td {
   }
 
   form button[type="submit"]:hover {
-    background-color: #91586d;
+    background: linear-gradient(135deg, #b4657f, #6d3e4e);
   }
 
   /* Tabla */
@@ -197,8 +198,8 @@ table {
 
 
 
-  th {
-    background-color: #b48a99;
+th {
+    background: linear-gradient(90deg, #c39aa8, #91586d);
     color: white;
     cursor: pointer;
   }
@@ -357,8 +358,9 @@ table {
 }
 
 #sedeSelector .tile-seleccionada {
-  background-color: #91586d;
+  background: linear-gradient(135deg, #a5647a, #6d3e4e);
   color: white;
+  box-shadow: 0 3px 8px rgba(109,62,78,.3);
 }
 
 #sedeSelector .tile-seleccionada {
@@ -396,17 +398,19 @@ textarea#nuevaObservacion {
 }
 
 button {
-  background-color: #b48a99;
+  background: linear-gradient(135deg, #c39aa8, #91586d);
   color: white;
   border: none;
   border-radius: 6px;
   padding: 6px 14px;
   cursor: pointer;
   margin-top: 8px;
+  transition: filter 0.15s ease;
 }
 
 button:hover {
-  background-color: #91586d;
+  background: linear-gradient(135deg, #b4657f, #6d3e4e);
+  filter: brightness(1.03);
 }
 
 @media (max-width: 768px) {
