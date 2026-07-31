@@ -1070,7 +1070,7 @@ if (!mostrarConDeuda && !hayBusqueda) {
       </td>
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
-      <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:${color};"></span></td>
+      <td><span ondblclick="event.stopPropagation(); irARegistrarPago(${alumno.id});" title="Doble clic para registrar el pago" style="display:inline-block;width:14px;height:14px;border-radius:50%;background-color:${color};cursor:pointer;"></span></td>
       <td>${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}</td>
       <td class="acciones">
         <button onclick="editarAlumno(${alumno.id})">🖉</button>
@@ -1339,6 +1339,9 @@ function descargarExcel() {
   window.open('/alumnos/exportar-xls', '_blank');
 }
 
+function irARegistrarPago(alumnoId) {
+  window.location.href = `pagos.html?alumno=${alumnoId}`;
+}
 
 </script>
 <!-- 🔍 Modal de ficha de alumno -->

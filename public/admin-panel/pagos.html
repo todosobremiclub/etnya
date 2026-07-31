@@ -644,15 +644,27 @@ window.onload = async () => {
         });
 });
 
-  // 4) Buscador
+// 4) Buscador
   document.getElementById('buscadorPagos').addEventListener('input', (e) => {
     renderPagos(e.target.value);
   });
+
+  // 4.1) Si venimos desde la tabla de alumnos con ?alumno=ID, preseleccionarlo y abrir el formulario
+  const paramsURL = new URLSearchParams(window.location.search);
+  const alumnoIdURL = paramsURL.get('alumno');
+  if (alumnoIdURL && alumnos.some(a => String(a.id) === String(alumnoIdURL))) {
+    alumnoSelect.value = alumnoIdURL;
+    document.getElementById('formularioPago').style.display = 'block';
+  }
 
   // 5) Disparar cambio y cargar pagos
   alumnoSelect.dispatchEvent(new Event('change'));
   $('#alumno-select').trigger('change.select2');
   await cargarPagos();
+
+  if (alumnoIdURL) {
+    document.getElementById('formularioPago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 };
 
 /* ====== Guardar pago ====== */
