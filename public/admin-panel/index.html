@@ -252,11 +252,15 @@ th {
     color: #6d6d6d;
   }
 
-  #toggleFormulario {
-    display: block;
-    margin: 10px auto 20px;
-    padding: 12px 20px;
-    font-size: 14px;
+#toggleFormulario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 9px 14px;
+    font-size: 13px;
+    white-space: nowrap;
     background-color: #b48a99;
     color: white;
     border: none;
@@ -581,7 +585,8 @@ button:hover {
   <button onclick="seleccionarSede('Goyena')">Goyena</button>
 </div>
 
-  <div class="search-filter">
+<div class="search-filter">
+  <button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar alumna/o</button>
   <input type="text" id="buscar" placeholder="Buscar por Nombre o Apellido" style="flex:1;">
   <select id="filtroClase" onchange="cargarAlumnos()"></select>
 
@@ -597,8 +602,6 @@ button:hover {
   </div>
 
 </div>
-
-<button id="toggleFormulario" onclick="toggleFormulario()">➕ Cargar alumna/o</button>
 
 <div id="contenedorFormulario" style="display: none;">
   <form id="formAlumno">
