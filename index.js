@@ -27,7 +27,14 @@ const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'cambia-esto';
     // clases
     await pool.query(`ALTER TABLE clases ADD COLUMN IF NOT EXISTS estado TEXT`);
     await pool.query(`ALTER TABLE clases ADD COLUMN IF NOT EXISTS nota   TEXT`);
+    await pool.query(`ALTER TABLE clases ADD COLUMN IF NOT EXISTS recordatorio_enviado BOOLEAN DEFAULT FALSE`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_clases_fecha_sede ON clases(fecha, sede)`);
+
+    // alumnos: token de notificaciones push (FCM) del dispositivo de la app
+    await pool.query(`ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS fcm_token TEXT`);
+
+    // alumnos: registro de aceptación de términos y condiciones desde la app
+    await pool.query(`ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS terminos_aceptados_en TIMESTAMP`);
 
     // no_clases (bloques sin clase por sede/día/hora)
     await pool.query(`
@@ -45,6 +52,12 @@ const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'cambia-esto';
     console.error('Error en migración automática:', err);
   }
 })();
+
+// ===== Recordatorio push 1 hora antes de cada clase =====
+require('./scripts/recordatorios').iniciarRecordatorios();
+
+// ===== Aviso push a las socias en mora (día 11) =====
+require('./scripts/avisosPago').iniciarAvisosPago();
 
 // ===== Middlewares =====
 app.use(cors());

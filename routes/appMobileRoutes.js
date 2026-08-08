@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const jwtMobile = require('../middleware/jwtMobile');
+const PDFDocument = require('pdfkit');
 
 // ====== CONFIG (ajustable por .env) ======
 const TBL           = process.env.MOBILE_TABLE || 'alumnos';
@@ -25,6 +26,14 @@ const CLASES_SEDE       = process.env.MOBILE_CLASES_SEDE_FIELD || 'sede';
 const CLASES_TIPO       = process.env.MOBILE_CLASES_TIPO_FIELD || 'tipo';
 const CLASES_ESTADO     = process.env.MOBILE_CLASES_ESTADO_FIELD || 'estado';
 
+// Día del mes en que vence la cuota (mismo criterio que ya usa el panel
+// admin en calcularEstadoPago() de public/admin-panel/index.html).
+const DIA_VENCIMIENTO = 10;
+
+// Duración estimada de una clase para "Mi recorrido". La tabla "clases" no
+// tiene columna de duración, así que usamos un valor fijo configurable.
+const DURACION_CLASE_MINUTOS = parseInt(process.env.MOBILE_DURACION_CLASE_MIN || '50', 10);
+
 // =========================================
 
 router.use(jwtMobile);
@@ -40,7 +49,9 @@ router.get('/perfil', async (req, res) => {
   try {
     const alumnoId = req.user.uid; // usamos el ID real del token
 
-    // 1) Intento completo: asume que existen 'becado' y/o 'estado_pago'
+    // 1) Intento completo: asume que existe 'estado_pago'.
+    // (OJO: "becado" NO es columna de alumnos, es la tabla aparte
+    // "becados" con alumno_id — se consulta más abajo por separado)
     const qConFlags = `
       SELECT id,
              ${NUM_FIELD} AS numero,
@@ -49,7 +60,6 @@ router.get('/perfil', async (req, res) => {
              ${START_FIELD} AS inicio_clases,
              ${TYPE_FIELD}  AS tipo_clase,
              ${SEDE_FIELD}  AS sede,
-             becado,
              estado_pago
       FROM ${TBL}
       WHERE id = $1
@@ -102,12 +112,31 @@ router.get('/perfil', async (req, res) => {
     const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const mesActual = ymKey(new Date());
 
-    // normalizo flags si están presentes
-    const esBecado = s.hasOwnProperty('becado') &&
-                     (s.becado === true || s.becado === 1 || String(s.becado).toLowerCase() === 'true');
+    // Beca: vive en la tabla "becados" (alumno_id), no como columna de alumnos.
+    let esBecado = false;
+    try {
+      const { rows: becRows } = await db.query(
+        'SELECT 1 FROM becados WHERE alumno_id = $1 LIMIT 1',
+        [alumnoId]
+      );
+      esBecado = becRows.length > 0;
+    } catch (_) {
+      // si la tabla no existiera, seguimos sin romper
+    }
 
     const estadoPagoPositivo = s.hasOwnProperty('estado_pago') &&
       ['al_dia','ok','pago','true','1'].includes(String(s.estado_pago).toLowerCase());
+
+    // Términos y condiciones: se guarda por separado (misma lógica defensiva
+    // que "becado") para no depender de que la columna ya exista.
+    let terminosAceptados = false;
+    try {
+      const { rows: trows } = await db.query(
+        `SELECT terminos_aceptados_en FROM ${TBL} WHERE id = $1 LIMIT 1`,
+        [alumnoId]
+      );
+      terminosAceptados = !!(trows[0] && trows[0].terminos_aceptados_en);
+    } catch (_) {}
 
     let estado = 'en_mora';
     if (esBecado || estadoPagoPositivo) {
@@ -116,14 +145,31 @@ router.get('/perfil', async (req, res) => {
       estado = 'al_dia';
     }
 
+    // Próximo vencimiento (día 10). Si ya está al día con el mes actual,
+    // el próximo vencimiento es el 10 del mes que viene; si no, es el 10
+    // de este mes (que puede estar ya vencido).
+    let proximoVencimiento = null;
+    if (!esBecado) {
+      const hoy = new Date();
+      let vencAnio = hoy.getFullYear();
+      let vencMes = hoy.getMonth() + 1; // 1..12
+      if (estado === 'al_dia') {
+        vencMes += 1;
+        if (vencMes > 12) { vencMes = 1; vencAnio += 1; }
+      }
+      proximoVencimiento = `${vencAnio}-${String(vencMes).padStart(2, '0')}-${String(DIA_VENCIMIENTO).padStart(2, '0')}`;
+    }
+
     res.json({
       numero: s.numero,
       nombre: s.nombre,
       apellido: s.apellido,
       inicio_clases: s.inicio_clases ? new Date(s.inicio_clases).toISOString() : null,
-      estado_pago: estado,           // 'al_dia' | 'en_mora'
+      estado_pago: estado,                     // 'al_dia' | 'en_mora'
+      proximo_vencimiento: proximoVencimiento, // 'YYYY-MM-DD' o null (becada)
       tipo_clase: s.tipo_clase || '',
-      sede: s.sede || ''
+      sede: s.sede || '',
+      terminos_aceptados: terminosAceptados
     });
   } catch (e) {
     console.error('/app/perfil', e);
@@ -195,6 +241,243 @@ router.get('/clases', async (req, res) => {
     res.json({ resumen: { tomadas, suspendidas }, items });
   } catch (e) {
     console.error('/app/clases', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/**
+ * POST /app/clases/:id/no-asistira
+ * La socia avisa desde la app que no va a asistir a una clase futura.
+ * Marca la clase como estado='con_aviso' (mismo estado que ya usa el panel
+ * admin para "no asistió, avisó con anticipación").
+ */
+router.post('/clases/:id/no-asistira', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    const { id } = req.params;
+    const comentario = (req.body?.comentario || '').toString().trim().slice(0, 500);
+
+    const { rows } = await db.query(
+      `SELECT id, ${CLASES_FECHA} AS fecha, hora, ${CLASES_ESTADO} AS estado
+       FROM ${CLASES_TABLE}
+       WHERE id = $1 AND ${CLASES_ALUMNO_FK} = $2
+       LIMIT 1`,
+      [id, alumnoId]
+    );
+    const clase = rows[0];
+    if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+
+    // Armamos fecha+hora de la clase para validar que sea futura
+    const fechaHora = new Date(clase.fecha);
+    if (clase.hora) {
+      const partes = String(clase.hora).split(':');
+      const h = parseInt(partes[0] || '0', 10);
+      const m = parseInt(partes[1] || '0', 10);
+      fechaHora.setUTCHours(h, m, 0, 0);
+    }
+    if (fechaHora.getTime() < Date.now()) {
+      return res.status(400).json({ error: 'La clase ya pasó' });
+    }
+    if (clase.estado === 'con_aviso' || clase.estado === 'sin_aviso' || clase.estado === 'asistio') {
+      return res.status(400).json({ error: 'Esta clase ya tiene un estado registrado' });
+    }
+
+    const observacion = comentario
+      ? `Avisó desde la app que no asistirá: ${comentario}`
+      : 'Avisó desde la app que no asistirá';
+
+    await db.query(
+      `UPDATE ${CLASES_TABLE}
+       SET ${CLASES_ESTADO} = 'con_aviso', observacion = $2
+       WHERE id = $1`,
+      [id, observacion]
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('/app/clases/:id/no-asistira', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/**
+ * POST /app/fcm-token  { token: string }
+ * Guarda/actualiza el token de notificaciones push del dispositivo de la
+ * socia logueada, para poder enviarle el recordatorio 1 hora antes de clase.
+ */
+router.post('/fcm-token', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    const { token } = req.body || {};
+    if (!token) return res.status(400).json({ error: 'token requerido' });
+
+    await db.query(`UPDATE ${TBL} SET fcm_token = $1 WHERE id = $2`, [token, alumnoId]);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('/app/fcm-token', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/**
+ * POST /app/terminos/aceptar
+ * La socia acepta los términos y condiciones desde la app. Se guarda la
+ * fecha/hora en el backend (no solo en el dispositivo) para que quede
+ * registrado incluso si cambia de teléfono o reinstala la app.
+ */
+router.post('/terminos/aceptar', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    await db.query(
+      `UPDATE ${TBL} SET terminos_aceptados_en = NOW() WHERE id = $1`,
+      [alumnoId]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('/app/terminos/aceptar', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/**
+ * GET /app/recorrido -> estadísticas de "Mi recorrido": clases tomadas
+ * (mes actual y acumulado histórico), minutos practicados (mes y
+ * acumulado) y días desde que empezó a practicar.
+ */
+router.get('/recorrido', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    const mesActual = ymKey(new Date());
+
+    const { rows: rMes } = await db.query(
+      `SELECT COUNT(*) AS n
+       FROM ${CLASES_TABLE}
+       WHERE ${CLASES_ALUMNO_FK} = $1
+         AND ${CLASES_ESTADO} = 'asistio'
+         AND to_char(${CLASES_FECHA}, 'YYYY-MM') = $2`,
+      [alumnoId, mesActual]
+    );
+    const clasesMes = parseInt(rMes[0]?.n || '0', 10);
+
+    const { rows: rTot } = await db.query(
+      `SELECT COUNT(*) AS n
+       FROM ${CLASES_TABLE}
+       WHERE ${CLASES_ALUMNO_FK} = $1
+         AND ${CLASES_ESTADO} = 'asistio'`,
+      [alumnoId]
+    );
+    const clasesTotales = parseInt(rTot[0]?.n || '0', 10);
+
+    let diasPracticando = null;
+    try {
+      const { rows: rInicio } = await db.query(
+        `SELECT ${START_FIELD} AS inicio FROM ${TBL} WHERE id = $1 LIMIT 1`,
+        [alumnoId]
+      );
+      const inicio = rInicio[0]?.inicio ? new Date(rInicio[0].inicio) : null;
+      if (inicio) {
+        diasPracticando = Math.max(0, Math.floor((Date.now() - inicio.getTime()) / 86400000));
+      }
+    } catch (_) {}
+
+    res.json({
+      clases_mes: clasesMes,
+      clases_totales: clasesTotales,
+      minutos_mes: clasesMes * DURACION_CLASE_MINUTOS,
+      minutos_totales: clasesTotales * DURACION_CLASE_MINUTOS,
+      dias_practicando: diasPracticando
+    });
+  } catch (e) {
+    console.error('/app/recorrido', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/** GET /app/pagos -> pagos propios de la socia logueada, más recientes primero */
+router.get('/pagos', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    const { rows } = await db.query(
+      `SELECT id, fecha_pago, mes_pagado, monto, alumno_modalidad
+       FROM ${PAGOS_TABLE}
+       WHERE ${PAGOS_ALUMNO_FK} = $1
+       ORDER BY fecha_pago DESC`,
+      [alumnoId]
+    );
+
+    res.json(rows.map(p => ({
+      id: p.id,
+      fecha_pago: p.fecha_pago ? new Date(p.fecha_pago).toISOString() : null,
+      mes_pagado: p.mes_pagado || '',
+      monto: p.monto,
+      // el snapshot guarda algo como "Pilates Reformer - 2 x semana": solo
+      // mostramos la actividad, sin la aclaración de frecuencia.
+      actividad: (p.alumno_modalidad || '').split('-')[0].trim(),
+    })));
+  } catch (e) {
+    console.error('/app/pagos', e);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/**
+ * GET /app/pagos/:id/recibo.pdf -> comprobante de pago en PDF.
+ * Se abre como link normal (no fetch con headers), por eso jwtMobile
+ * también acepta el token por query string (?token=...) para esta ruta.
+ */
+router.get('/pagos/:id/recibo.pdf', async (req, res) => {
+  try {
+    const alumnoId = req.user.uid;
+    const { id } = req.params;
+
+    const { rows } = await db.query(
+      `SELECT id, fecha_pago, mes_pagado, monto, alumno_nombre, alumno_apellido,
+              alumno_numero, alumno_modalidad
+       FROM ${PAGOS_TABLE}
+       WHERE id = $1 AND ${PAGOS_ALUMNO_FK} = $2
+       LIMIT 1`,
+      [id, alumnoId]
+    );
+    const pago = rows[0];
+    if (!pago) return res.status(404).json({ error: 'Recibo no encontrado' });
+
+    const fecha = pago.fecha_pago ? new Date(pago.fecha_pago) : null;
+    const fechaStr = fecha ? fecha.toLocaleDateString('es-AR') : '-';
+    const actividad = (pago.alumno_modalidad || '').split('-')[0].trim() || '-';
+    const monto = pago.monto != null
+      ? `$ ${Number(pago.monto).toLocaleString('es-AR')}`
+      : '-';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="recibo-${pago.mes_pagado || pago.id}.pdf"`
+    );
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    doc.pipe(res);
+
+    doc.fontSize(20).text('Etnya Pilates', { align: 'center' });
+    doc.fontSize(12).fillColor('#555').text('Comprobante de pago', { align: 'center' });
+    doc.moveDown(2);
+
+    doc.fillColor('#000').fontSize(11);
+    doc.text(`Socia: ${pago.alumno_nombre || ''} ${pago.alumno_apellido || ''} (N° ${pago.alumno_numero || '-'})`);
+    doc.moveDown(0.5);
+    doc.text(`Fecha de pago: ${fechaStr}`);
+    doc.text(`Mes abonado: ${pago.mes_pagado || '-'}`);
+    doc.text(`Actividad: ${actividad}`);
+    doc.text(`Monto: ${monto}`);
+    doc.moveDown(2);
+
+    doc.fontSize(9).fillColor('#888').text(
+      'Comprobante generado automáticamente por la app de Etnya Pilates.',
+      { align: 'center' }
+    );
+
+    doc.end();
+  } catch (e) {
+    console.error('/app/pagos/:id/recibo.pdf', e);
     res.status(500).json({ error: 'Error interno' });
   }
 });
