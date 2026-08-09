@@ -7,6 +7,13 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ===== Página pública: Política de Privacidad (requerida por Google Play) =====
+// Sirve public/privacy.html tanto en /privacy como en /privacy.html
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
 const rateLimit = require('express-rate-limit');          // NUEVO
 const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
 const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
