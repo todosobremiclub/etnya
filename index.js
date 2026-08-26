@@ -14,6 +14,12 @@ app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
 
+// ===== Página pública: Soporte (requerida por App Store Connect) =====
+// Sirve public/soporte.html tanto en /soporte como en /soporte.html
+app.get('/soporte', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'soporte.html'));
+});
+
 const rateLimit = require('express-rate-limit');          // NUEVO
 const authMobileRoutes = require('./routes/authMobileRoutes'); // NUEVO
 const appMobileRoutes  = require('./routes/appMobileRoutes');  // NUEVO
