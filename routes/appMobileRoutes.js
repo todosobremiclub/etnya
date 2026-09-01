@@ -34,6 +34,13 @@ const DIA_VENCIMIENTO = 10;
 // tiene columna de duración, así que usamos un valor fijo configurable.
 const DURACION_CLASE_MINUTOS = parseInt(process.env.MOBILE_DURACION_CLASE_MIN || '50', 10);
 
+// clases.fecha/hora son hora de pared de Buenos Aires (sin zona horaria
+// explícita en la base). Para comparar contra "ahora" de forma correcta
+// (ej. el corte de "hasta 1 hora antes" de /clases/:id/no-asistira) hay
+// que decirle a Postgres explícitamente en qué zona horaria están esos
+// valores con "AT TIME ZONE", en vez de armar la fecha a mano en JS.
+const ZONA_HORARIA_ETNYA = 'America/Argentina/Buenos_Aires';
+
 // =========================================
 
 router.use(jwtMobile);
@@ -268,23 +275,22 @@ router.post('/clases/:id/no-asistira', async (req, res) => {
     const comentario = (req.body?.comentario || '').toString().trim().slice(0, 500);
 
     const { rows } = await db.query(
-      `SELECT id, ${CLASES_FECHA} AS fecha, hora, ${CLASES_ESTADO} AS estado
+      `SELECT id, ${CLASES_FECHA} AS fecha, hora, ${CLASES_ESTADO} AS estado,
+              ((${CLASES_FECHA} + hora) AT TIME ZONE $3) AS fecha_hora_real
        FROM ${CLASES_TABLE}
        WHERE id = $1 AND ${CLASES_ALUMNO_FK} = $2
        LIMIT 1`,
-      [id, alumnoId]
+      [id, alumnoId, ZONA_HORARIA_ETNYA]
     );
     const clase = rows[0];
     if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
 
-    // Armamos fecha+hora de la clase para validar que sea futura
-    const fechaHora = new Date(clase.fecha);
-    if (clase.hora) {
-      const partes = String(clase.hora).split(':');
-      const h = parseInt(partes[0] || '0', 10);
-      const m = parseInt(partes[1] || '0', 10);
-      fechaHora.setUTCHours(h, m, 0, 0);
-    }
+    // fecha_hora_real ya viene de Postgres como el instante real de la
+    // clase (hora de Buenos Aires convertida correctamente), así que se
+    // puede comparar directamente contra Date.now() sin armar la fecha a
+    // mano en JS (eso era lo que causaba el desfasaje de horas).
+    const fechaHora = new Date(clase.fecha_hora_real);
+
     // Solo se puede avisar hasta 1 hora antes de la clase; pasado ese
     // límite (o si ya pasó), el botón "No voy" tampoco se muestra en la
     // app, pero igual validamos acá por si el pedido llega igual.

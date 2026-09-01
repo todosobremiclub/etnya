@@ -9,19 +9,25 @@
 // el intervalo del cron para no dejar pasar ninguna clase por un
 // desajuste de segundos entre corridas).
 //
-// OJO TIMEZONE: las columnas clases.fecha/hora no tienen zona horaria
-// explícita en la base. Si al probarlo el recordatorio llega con un
-// desfasaje de horas (ej. 3 horas antes/después de lo esperado), ajustá
-// OFFSET_HORAS más abajo (Argentina es UTC-3, así que probablemente sea
-// -3 o +3 según cómo esté configurado el reloj del servidor/Postgres).
+// TIMEZONE: las columnas clases.fecha/hora no tienen zona horaria
+// explícita en la base — son la hora de pared de Buenos Aires tal cual
+// se cargó la clase (ej. "16:00" significa 16:00 en Argentina, no UTC).
+// NOW() en Postgres, en cambio, es un instante absoluto (normalmente
+// devuelto en UTC). Antes esto se comparaba directamente sin convertir,
+// por lo que el recordatorio llegaba desfasado según la diferencia entre
+// el reloj del servidor y Argentina (se vio un caso de una clase a las
+// 16:00 avisada como "en 1 hora" a las 12:00, 3 horas antes de lo que
+// correspondía). El "AT TIME ZONE" de abajo le dice explícitamente a
+// Postgres "esta fecha+hora naive es hora de Buenos Aires", y la convierte
+// a un instante real y comparable contra NOW() sin depender de en qué
+// zona horaria esté configurado el servidor.
+const VENTANA_DESDE_MIN = 55;
+const VENTANA_HASTA_MIN = 70;
+const ZONA_HORARIA_ETNYA = 'America/Argentina/Buenos_Aires';
 
 const cron = require('node-cron');
 const pool = require('../db');
 const admin = require('../firebase');
-
-const OFFSET_HORAS = 0; // <-- ajustar si el recordatorio llega desfasado
-const VENTANA_DESDE_MIN = 55;
-const VENTANA_HASTA_MIN = 70;
 
 async function enviarRecordatorios() {
   try {
@@ -31,9 +37,10 @@ async function enviarRecordatorios() {
        JOIN alumnos a ON a.id = c.alumno_id
        WHERE c.recordatorio_enviado IS NOT TRUE
          AND a.fcm_token IS NOT NULL
-         AND (c.fecha + c.hora) BETWEEN
-             (NOW() + INTERVAL '${OFFSET_HORAS} hours' + INTERVAL '${VENTANA_DESDE_MIN} minutes')
-         AND (NOW() + INTERVAL '${OFFSET_HORAS} hours' + INTERVAL '${VENTANA_HASTA_MIN} minutes')`
+         AND ((c.fecha + c.hora) AT TIME ZONE $1) BETWEEN
+             (NOW() + INTERVAL '${VENTANA_DESDE_MIN} minutes')
+         AND (NOW() + INTERVAL '${VENTANA_HASTA_MIN} minutes')`,
+      [ZONA_HORARIA_ETNYA]
     );
 
     for (const clase of rows) {
