@@ -127,31 +127,22 @@ router.get('/perfil', async (req, res) => {
     const estadoPagoPositivo = s.hasOwnProperty('estado_pago') &&
       ['al_dia','ok','pago','true','1'].includes(String(s.estado_pago).toLowerCase());
 
-    // Términos y condiciones: se guarda por separado (misma lógica defensiva
-    // que "becado") para no depender de que la columna ya exista.
+    // Términos, condiciones y riesgos médicos: un único formulario que la
+    // socia acepta una vez desde la app (misma lógica defensiva que
+    // "becado", para no depender de que la columna ya exista) y que vence
+    // al año de aceptado: pasado ese plazo hay que volver a mostrarlo.
     let terminosAceptados = false;
+    let terminosAceptadosEn = null;
     try {
       const { rows: trows } = await db.query(
-        `SELECT terminos_aceptados_en FROM ${TBL} WHERE id = $1 LIMIT 1`,
-        [alumnoId]
-      );
-      terminosAceptados = !!(trows[0] && trows[0].terminos_aceptados_en);
-    } catch (_) {}
-
-    // Riesgos médicos (Pilates): igual lógica defensiva que "términos",
-    // pero además vence al año de aceptado (se vuelve a pedir cada 12 meses).
-    let riesgosMedicosAceptadosEn = null;
-    let riesgosMedicosVigentes = false;
-    try {
-      const { rows: rrows } = await db.query(
-        `SELECT riesgos_medicos_aceptados_en,
-                (riesgos_medicos_aceptados_en IS NOT NULL
-                  AND riesgos_medicos_aceptados_en > NOW() - INTERVAL '1 year') AS vigente
+        `SELECT terminos_aceptados_en,
+                (terminos_aceptados_en IS NOT NULL
+                  AND terminos_aceptados_en > NOW() - INTERVAL '1 year') AS vigente
          FROM ${TBL} WHERE id = $1 LIMIT 1`,
         [alumnoId]
       );
-      riesgosMedicosAceptadosEn = rrows[0]?.riesgos_medicos_aceptados_en || null;
-      riesgosMedicosVigentes = !!(rrows[0] && rrows[0].vigente);
+      terminosAceptadosEn = trows[0]?.terminos_aceptados_en || null;
+      terminosAceptados = !!(trows[0] && trows[0].vigente);
     } catch (_) {}
 
     let estado = 'en_mora';
@@ -186,10 +177,9 @@ router.get('/perfil', async (req, res) => {
       tipo_clase: s.tipo_clase || '',
       sede: s.sede || '',
       terminos_aceptados: terminosAceptados,
-      riesgos_medicos_aceptados_en: riesgosMedicosAceptadosEn
-        ? new Date(riesgosMedicosAceptadosEn).toISOString()
-        : null,
-      riesgos_medicos_vigentes: riesgosMedicosVigentes
+      terminos_aceptados_en: terminosAceptadosEn
+        ? new Date(terminosAceptadosEn).toISOString()
+        : null
     });
   } catch (e) {
     console.error('/app/perfil', e);
@@ -341,9 +331,13 @@ router.post('/fcm-token', async (req, res) => {
 
 /**
  * POST /app/terminos/aceptar
- * La socia acepta los términos y condiciones desde la app. Se guarda la
+ * La socia acepta, en un único formulario, los términos y condiciones y
+ * los riesgos médicos asociados a la práctica de Pilates. Se guarda la
  * fecha/hora en el backend (no solo en el dispositivo) para que quede
- * registrado incluso si cambia de teléfono o reinstala la app.
+ * registrado incluso si cambia de teléfono o reinstala la app. Esta
+ * aceptación vence al año: pasado ese plazo, GET /app/perfil vuelve a
+ * devolver terminos_aceptados:false y la app le vuelve a mostrar el
+ * formulario (este mismo endpoint la renueva por otro año).
  */
 router.post('/terminos/aceptar', async (req, res) => {
   try {
@@ -355,28 +349,6 @@ router.post('/terminos/aceptar', async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     console.error('/app/terminos/aceptar', e);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
-
-/**
- * POST /app/riesgos-medicos/aceptar
- * La socia acepta el formulario de riesgos médicos asociados al Pilates
- * desde la app. Se guarda la fecha/hora en el backend (misma lógica que
- * términos y condiciones). Esta aceptación vence al año: pasado ese
- * plazo, GET /app/perfil vuelve a devolver riesgos_medicos_vigentes:false
- * y la app le vuelve a mostrar el formulario.
- */
-router.post('/riesgos-medicos/aceptar', async (req, res) => {
-  try {
-    const alumnoId = req.user.uid;
-    await db.query(
-      `UPDATE ${TBL} SET riesgos_medicos_aceptados_en = NOW() WHERE id = $1`,
-      [alumnoId]
-    );
-    res.json({ ok: true });
-  } catch (e) {
-    console.error('/app/riesgos-medicos/aceptar', e);
     res.status(500).json({ error: 'Error interno' });
   }
 });

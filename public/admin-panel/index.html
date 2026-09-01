@@ -660,6 +660,7 @@ button:hover {
     <th>Edad</th>
     <th>Inicio</th>
     <th>Pago</th>
+    <th title="Términos, condiciones y riesgos médicos aceptados desde la app">T&amp;C</th>
     <th>Info</th>
     <th>Opciones</th>
   </tr>
@@ -680,6 +681,7 @@ button:hover {
     <th>Edad</th>
     <th>Inicio</th>
     <th>Pago</th>
+    <th title="Términos, condiciones y riesgos médicos aceptados desde la app">T&amp;C</th>
     <th>Info</th>
     <th>Opciones</th>
   </tr>
@@ -974,6 +976,25 @@ async function cargarAlumnos() {
 
 
 
+// Marca de "términos, condiciones y riesgos médicos" aceptados desde la
+// app. Se guarda en alumnos.terminos_aceptados_en (la app la vuelve a
+// pedir al socio cuando pasa un año desde esa fecha).
+function estadoTerminos(alumno) {
+  const fecha = alumno.terminos_aceptados_en;
+  if (!fecha) {
+    return { icono: '⚠️', texto: 'Nunca aceptó términos y riesgos médicos desde la app' };
+  }
+  const aceptado = new Date(fecha);
+  const vence = new Date(aceptado);
+  vence.setFullYear(vence.getFullYear() + 1);
+  const vigente = new Date() < vence;
+  const fAceptado = aceptado.toLocaleDateString('es-AR');
+  const fVence = vence.toLocaleDateString('es-AR');
+  return vigente
+    ? { icono: '✅', texto: `Aceptado el ${fAceptado} · vence ${fVence}` }
+    : { icono: '⏰', texto: `Vencido (aceptó el ${fAceptado}, venció ${fVence}) · hay que volver a pedirlo` };
+}
+
 function calcularEstadoPago(alumno) {
   if (alumno.becado) return 'al_dia';
   const ultimo = alumno.ultimo_mes_pagado;
@@ -1042,7 +1063,7 @@ if (!mostrarConDeuda && !hayBusqueda) {
     for (let n = lastNumCraig + 1; n < numero; n++) {
       const trFaltante = document.createElement('tr');
       trFaltante.classList.add('faltante');
-      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-C</td><td colspan="8">❌ Falta este número</td>`;
+      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-C</td><td colspan="9">❌ Falta este número</td>`;
       tbodyCraig.appendChild(trFaltante);
     }
   }
@@ -1050,7 +1071,7 @@ if (!mostrarConDeuda && !hayBusqueda) {
     for (let n = lastNumGoyena + 1; n < numero; n++) {
       const trFaltante = document.createElement('tr');
       trFaltante.classList.add('faltante');
-      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-G</td><td colspan="8">❌ Falta este número</td>`;
+      trFaltante.innerHTML = `<td>${String(n).padStart(2, '0')}-G</td><td colspan="9">❌ Falta este número</td>`;
       tbodyGoyena.appendChild(trFaltante);
     }
   }
@@ -1071,6 +1092,7 @@ if (!mostrarConDeuda && !hayBusqueda) {
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
       <td><span ondblclick="event.stopPropagation(); irARegistrarPago(${alumno.id});" title="Doble clic para registrar el pago" style="display:inline-block;width:14px;height:14px;border-radius:50%;background-color:${color};cursor:pointer;"></span></td>
+      <td title="${estadoTerminos(alumno).texto}">${estadoTerminos(alumno).icono}</td>
       <td>${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}</td>
       <td class="acciones">
         <button onclick="editarAlumno(${alumno.id})">🖉</button>
