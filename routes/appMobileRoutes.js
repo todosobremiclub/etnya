@@ -285,8 +285,14 @@ router.post('/clases/:id/no-asistira', async (req, res) => {
       const m = parseInt(partes[1] || '0', 10);
       fechaHora.setUTCHours(h, m, 0, 0);
     }
-    if (fechaHora.getTime() < Date.now()) {
-      return res.status(400).json({ error: 'La clase ya pasó' });
+    // Solo se puede avisar hasta 1 hora antes de la clase; pasado ese
+    // límite (o si ya pasó), el botón "No voy" tampoco se muestra en la
+    // app, pero igual validamos acá por si el pedido llega igual.
+    const UNA_HORA_MS = 60 * 60 * 1000;
+    if (fechaHora.getTime() - Date.now() < UNA_HORA_MS) {
+      return res.status(400).json({
+        error: 'Ya no se puede avisar: falta menos de una hora para la clase (o ya pasó)'
+      });
     }
     if (clase.estado === 'con_aviso' || clase.estado === 'sin_aviso' || clase.estado === 'asistio') {
       return res.status(400).json({ error: 'Esta clase ya tiene un estado registrado' });
