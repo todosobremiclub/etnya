@@ -49,6 +49,19 @@ const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'cambia-esto';
     // alumnos: registro de aceptación de términos y condiciones desde la app
     await pool.query(`ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS terminos_aceptados_en TIMESTAMP`);
 
+    // noticias: categorías configurables (solapa Configuración del panel)
+    // + vista previa (texto corto que se ve en la tarjeta de la app, antes
+    // de abrir la noticia completa).
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS noticias_categorias (
+        id     SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL UNIQUE,
+        color  TEXT NOT NULL DEFAULT '#B7E4C7'
+      )
+    `);
+    await pool.query(`ALTER TABLE noticias ADD COLUMN IF NOT EXISTS categoria_id INT REFERENCES noticias_categorias(id)`);
+    await pool.query(`ALTER TABLE noticias ADD COLUMN IF NOT EXISTS vista_previa TEXT`);
+
     // no_clases (bloques sin clase por sede/día/hora)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS no_clases (

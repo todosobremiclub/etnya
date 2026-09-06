@@ -309,6 +309,26 @@ td.slot.feriado { background: #d9d9d9 !important; }
       <tbody id="tbodyGastos"></tbody>
     </table>
 
+    <!-- Categorías de novedades (noticias de la app) -->
+    <h2 class="titulo-feriados">Categorías de novedades</h2>
+    <div class="muted" style="margin-bottom:8px">Estas categorías son las que se eligen al crear una noticia (solapa Noticias) y las que agrupan las tarjetas de "Novedades" en la app.</div>
+    <form id="formCategoriaNoticia">
+      <input type="text" name="nombre" placeholder="Ej: Nueva clase, Recordatorio, Promo amigas..." required>
+      <input type="color" name="color" value="#B7E4C7" title="Color de la tarjeta en la app" style="width:60px; padding:2px; height:38px;">
+      <button type="submit">Guardar</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th><span id="flechaCategoriasNoticias" class="toggle-icon" onclick="toggleCategoriasNoticias()">▶</span> Nombre</th>
+          <th>Color</th>
+          <th>Noticias</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyCategoriasNoticias"></tbody>
+    </table>
+
     <!-- Feriados -->
     <h2 class="titulo-feriados">Feriados</h2>
     <form id="formFeriado">
@@ -839,6 +859,83 @@ async function eliminarGasto(id) {
   else alert('Error al eliminar');
 }
 
+// =================== CATEGORÍAS DE NOVEDADES (noticias app) ===================
+let categoriasNoticiasVisibles = false;
+let editandoCategoriaNoticiaId = null;
+
+function toggleCategoriasNoticias() {
+  categoriasNoticiasVisibles = !categoriasNoticiasVisibles;
+  document.getElementById('flechaCategoriasNoticias').textContent = categoriasNoticiasVisibles ? '▼' : '▶';
+  document.querySelectorAll('.fila-categoria-noticia').forEach(f => {
+    f.classList.toggle('fila-oculta', !categoriasNoticiasVisibles);
+  });
+}
+
+async function cargarCategoriasNoticias() {
+  const res = await fetchConToken('/noticias/categorias');
+  const data = await res.json();
+  const tbody = document.getElementById('tbodyCategoriasNoticias');
+  tbody.innerHTML = '';
+
+  data.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.classList.add('fila-categoria-noticia');
+    if (!categoriasNoticiasVisibles) tr.classList.add('fila-oculta');
+    tr.innerHTML = `
+      <td>${(c.nombre || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+      <td><span style="display:inline-block;width:20px;height:20px;border-radius:6px;background:${c.color};border:1px solid #ccc;vertical-align:middle;"></span></td>
+      <td>${c.cantidad ?? 0}</td>
+      <td class="acciones">
+        <button onclick="editarCategoriaNoticia(${c.id}, '${(c.nombre || '').replace(/'/g,"\\'")}', '${c.color}')">✏️</button>
+        <button onclick="eliminarCategoriaNoticia(${c.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function editarCategoriaNoticia(id, nombre, color) {
+  const form = document.getElementById('formCategoriaNoticia');
+  form.nombre.value = nombre;
+  form.color.value = color;
+  editandoCategoriaNoticiaId = id;
+  form.querySelector('button[type="submit"]').textContent = "Actualizar";
+}
+
+document.getElementById('formCategoriaNoticia').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const nombre = this.nombre.value.trim();
+  const color = this.color.value;
+  if (!nombre) return;
+
+  const metodo = editandoCategoriaNoticiaId ? 'PUT' : 'POST';
+  const url = editandoCategoriaNoticiaId ? `/noticias/categorias/${editandoCategoriaNoticiaId}` : '/noticias/categorias';
+
+  const res = await fetchConToken(url, {
+    method: metodo,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, color })
+  });
+
+  if (res.ok) {
+    this.reset();
+    this.color.value = '#B7E4C7';
+    editandoCategoriaNoticiaId = null;
+    this.querySelector('button[type="submit"]').textContent = "Guardar";
+    cargarCategoriasNoticias();
+  } else {
+    const j = await res.json().catch(() => ({}));
+    alert(j.error || 'Error al guardar la categoría');
+  }
+});
+
+async function eliminarCategoriaNoticia(id) {
+  if (!confirm('¿Eliminar esta categoría? Las noticias que la usaban quedarán sin categoría.')) return;
+  const res = await fetchConToken(`/noticias/categorias/${id}`, { method: 'DELETE' });
+  if (res.ok) cargarCategoriasNoticias();
+  else alert('Error al eliminar');
+}
+
 // =================== NO CLASES (sede/día/hora) ===================
 const DIAS_TXT = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 let noClasesVisibles = false;
@@ -985,6 +1082,7 @@ window.addEventListener('load', () => {
   try { cargarAlumnosParaBecado(); }     catch (e) { console.error(e); }
   try { cargarBecados(); }               catch (e) { console.error(e); }
   try { cargarGastos(); }                catch (e) { console.error(e); }
+  try { cargarCategoriasNoticias(); }    catch (e) { console.error(e); }
   try { cargarNoClasesCfg(); }           catch (e) { console.error(e); }
   try { poblarHorasNoClases(); }         catch (e) { console.error(e); }
 
