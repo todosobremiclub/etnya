@@ -174,6 +174,20 @@ router.put('/:id/activo', async (req, res) => {
   }
 });
 
+// Reiniciar la aceptación de las Pautas (T&C): borra la fecha de
+// aceptación para que la app se las vuelva a mostrar a la socia la
+// próxima vez que la abra. Es independiente del vencimiento anual.
+router.put('/:id/terminos/reiniciar', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('UPDATE alumnos SET terminos_aceptados_en = NULL WHERE id = $1', [id]);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error al reiniciar términos:', err);
+    res.status(500).send('Error al reiniciar términos');
+  }
+});
+
 
 // === OBSERVACIONES ===
 

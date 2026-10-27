@@ -982,7 +982,7 @@ async function cargarAlumnos() {
 function estadoTerminos(alumno) {
   const fecha = alumno.terminos_aceptados_en;
   if (!fecha) {
-    return { icono: '⚠️', texto: 'Nunca aceptó términos y riesgos médicos desde la app' };
+    return { icono: '⚠️', texto: 'Pendiente: todavía no aceptó las Pautas desde la app (nunca las aceptó o fueron reiniciadas)' };
   }
   const aceptado = new Date(fecha);
   const vence = new Date(aceptado);
@@ -1092,7 +1092,10 @@ if (!mostrarConDeuda && !hayBusqueda) {
       <td>${alumno.edad || ''}</td>
       <td>${alumno.fecha_inicio ? formatearFecha(alumno.fecha_inicio) : ''}</td>
       <td><span ondblclick="event.stopPropagation(); irARegistrarPago(${alumno.id});" title="Doble clic para registrar el pago" style="display:inline-block;width:14px;height:14px;border-radius:50%;background-color:${color};cursor:pointer;"></span></td>
-      <td title="${estadoTerminos(alumno).texto}">${estadoTerminos(alumno).icono}</td>
+      <td title="${estadoTerminos(alumno).texto}">
+        ${estadoTerminos(alumno).icono}
+        ${alumno.terminos_aceptados_en ? `<button onclick="event.stopPropagation(); reiniciarTerminos(${alumno.id});" title="Reiniciar: se le vuelven a pedir las Pautas en la app" style="padding:0 4px;font-size:12px;cursor:pointer;">↻</button>` : ''}
+      </td>
       <td>${alumno.tiene_adjuntos ? '📎' : ''}${alumno.tiene_observaciones ? ' 📝' : ''}</td>
       <td class="acciones">
         <button onclick="editarAlumno(${alumno.id})">🖉</button>
@@ -1125,6 +1128,17 @@ if (!mostrarConDeuda && !hayBusqueda) {
       await cargarAlumnos();
     } catch {
       alert('Error al cambiar estado');
+    }
+  }
+
+  async function reiniciarTerminos(id) {
+    if (!confirm('¿Reiniciar las Pautas (T&C)? La app se las va a volver a pedir la próxima vez que la abra.')) return;
+    try {
+      const res = await fetch(`/alumnos/${id}/terminos/reiniciar`, { method: 'PUT' });
+      if (!res.ok) throw new Error();
+      await cargarAlumnos();
+    } catch {
+      alert('Error al reiniciar los T&C');
     }
   }
 

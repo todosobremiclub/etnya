@@ -36,7 +36,7 @@ const DURACION_CLASE_MINUTOS = parseInt(process.env.MOBILE_DURACION_CLASE_MIN ||
 
 // clases.fecha/hora son hora de pared de Buenos Aires (sin zona horaria
 // explícita en la base). Para comparar contra "ahora" de forma correcta
-// (ej. el corte de "hasta 1 hora antes" de /clases/:id/no-asistira) hay
+// (ej. el corte de "hasta 24 horas antes" de /clases/:id/no-asistira) hay
 // que decirle a Postgres explícitamente en qué zona horaria están esos
 // valores con "AT TIME ZONE", en vez de armar la fecha a mano en JS.
 const ZONA_HORARIA_ETNYA = 'America/Argentina/Buenos_Aires';
@@ -291,13 +291,13 @@ router.post('/clases/:id/no-asistira', async (req, res) => {
     // mano en JS (eso era lo que causaba el desfasaje de horas).
     const fechaHora = new Date(clase.fecha_hora_real);
 
-    // Solo se puede avisar hasta 1 hora antes de la clase; pasado ese
+    // Solo se puede avisar hasta 24 horas antes de la clase; pasado ese
     // límite (o si ya pasó), el botón "No voy" tampoco se muestra en la
     // app, pero igual validamos acá por si el pedido llega igual.
-    const UNA_HORA_MS = 60 * 60 * 1000;
-    if (fechaHora.getTime() - Date.now() < UNA_HORA_MS) {
+    const LIMITE_AVISO_MS = 24 * 60 * 60 * 1000;
+    if (fechaHora.getTime() - Date.now() < LIMITE_AVISO_MS) {
       return res.status(400).json({
-        error: 'Ya no se puede avisar: falta menos de una hora para la clase (o ya pasó)'
+        error: 'Ya no se puede avisar: falta menos de 24 horas para la clase (o ya pasó)'
       });
     }
     if (clase.estado === 'con_aviso' || clase.estado === 'sin_aviso' || clase.estado === 'asistio') {
