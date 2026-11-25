@@ -406,7 +406,18 @@
     async function cargar(){
       msgForm.textContent='';
       const r = await API.listar();
-      if (!r.ok){ renderTabla([]); msgForm.textContent='No se pudo cargar la lista (¿token vencido?)'; return; }
+      if (r.status === 401 || r.status === 403){
+        alert('Tu sesión expiró. Iniciá sesión nuevamente.');
+        localStorage.removeItem('etnya_login');
+        localStorage.removeItem('etnya_token');
+        localStorage.removeItem('etnya_role');
+        location = 'login.html';
+        return;
+      }
+      if (!r.ok){
+        tablaBody.innerHTML = '<tr><td colspan="7" class="muted">⚠️ No se pudo cargar la lista. Probá con "Refrescar".</td></tr>';
+        return;
+      }
       const data = await r.json();
       cacheListado = data;
       renderTabla(data);
